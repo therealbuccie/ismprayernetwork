@@ -9,29 +9,40 @@ const HeroSection = () => {
 
   useEffect(() => {
     let started = false;
+    let mounted = true;
 
-    const startAudio = () => {
-      if (started) return;
+    const startAudio = (e: Event) => {
+      // Only respond to real user-initiated events
+      if (started || !e.isTrusted) return;
       started = true;
       const audio = new Audio("/audio/tongues.mp3");
       audio.loop = true;
       audio.volume = 0.02;
       audioRef.current = audio;
       audio.play().catch(() => {});
-      document.removeEventListener("click", startAudio);
-      document.removeEventListener("touchstart", startAudio);
-      document.removeEventListener("scroll", startAudio);
+      cleanup();
     };
 
-    // Only start on user interaction — never autoplay
-    document.addEventListener("click", startAudio, { once: true });
-    document.addEventListener("touchstart", startAudio, { once: true });
-    document.addEventListener("scroll", startAudio, { once: true });
+    const cleanup = () => {
+      document.removeEventListener("click", startAudio, true);
+      document.removeEventListener("touchstart", startAudio, true);
+      document.removeEventListener("scroll", startAudio, true);
+      document.removeEventListener("keydown", startAudio, true);
+    };
+
+    // Delay attaching listeners so preloader animations don't trigger them
+    const timeout = setTimeout(() => {
+      if (!mounted) return;
+      document.addEventListener("click", startAudio, true);
+      document.addEventListener("touchstart", startAudio, true);
+      document.addEventListener("scroll", startAudio, true);
+      document.addEventListener("keydown", startAudio, true);
+    }, 3000);
 
     return () => {
-      document.removeEventListener("click", startAudio);
-      document.removeEventListener("touchstart", startAudio);
-      document.removeEventListener("scroll", startAudio);
+      mounted = false;
+      clearTimeout(timeout);
+      cleanup();
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
