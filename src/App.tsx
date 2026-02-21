@@ -7,9 +7,12 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PrayerRequests from "./pages/PrayerRequests";
 import PrayerGroups from "./pages/PrayerGroups";
+import PrayerRoom from "./pages/PrayerRoom";
 import Testimonies from "./pages/Testimonies";
 import Contact from "./pages/Contact";
 import Bookstore from "./pages/Bookstore";
+import LiveTV from "./pages/LiveTV";
+import Partner from "./pages/Partner";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,7 +28,10 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/prayer-requests" element={<PrayerRequests />} />
           <Route path="/groups" element={<PrayerGroups />} />
+          <Route path="/prayer-room" element={<PrayerRoom />} />
           <Route path="/testimonies" element={<Testimonies />} />
+          <Route path="/live-tv" element={<LiveTV />} />
+          <Route path="/partner" element={<Partner />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/bookstore" element={<Bookstore />} />
           <Route path="*" element={<NotFound />} />
