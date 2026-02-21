@@ -1,10 +1,15 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
-import { Flame, Heart, BookOpen, Share2, Copy, Check } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Flame, Heart, BookOpen, Share2, Copy, Check, Users, Send } from "lucide-react";
 import { HeroButton } from "@/components/HeroButton";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GlassCard } from "@/components/GlassCard";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Star, Video } from "lucide-react";
 
 const todaysPrayerPoint = {
   date: new Date().toLocaleDateString("en-US", {
@@ -21,13 +26,46 @@ const todaysPrayerPoint = {
 
 const shareUrl = "https://ismprayernetwork.lovable.app/prayer-room";
 
+const mockRequests = [
+  { id: 1, title: "Healing for my mother", category: "Health", author: "Anonymous", prayers: 42, time: "2 hours ago" },
+  { id: 2, title: "Family restoration and peace", category: "Family", author: "Grace A.", prayers: 28, time: "4 hours ago" },
+  { id: 3, title: "Guidance for career transition", category: "Career", author: "Daniel K.", prayers: 15, time: "6 hours ago" },
+  { id: 4, title: "Financial breakthrough needed", category: "Finances", author: "Anonymous", prayers: 67, time: "1 day ago" },
+  { id: 5, title: "Strength in spiritual warfare", category: "Spiritual", author: "Sarah M.", prayers: 33, time: "1 day ago" },
+  { id: 6, title: "Reconciliation with spouse", category: "Relationships", author: "Anonymous", prayers: 51, time: "2 days ago" },
+];
+
+const mockTestimonies = [
+  { id: 1, title: "Healed from chronic illness", author: "Grace A.", location: "Lagos, Nigeria", text: "After 5 years of battling a chronic condition, prayers from this network led to my complete healing. Doctors confirmed it!", hasVideo: true },
+  { id: 2, title: "Family reconciled after 3 years", author: "Daniel K.", location: "Nairobi, Kenya", text: "My family had been torn apart. Through persistent prayer, God brought us back together. We are now closer than ever.", hasVideo: false },
+  { id: 3, title: "Miraculous financial provision", author: "Sarah M.", location: "London, UK", text: "I was facing bankruptcy when this community prayed with me. Within a month, unexpected doors opened.", hasVideo: true },
+  { id: 4, title: "Delivered from addiction", author: "James O.", location: "Accra, Ghana", text: "10 years of bondage broken through united prayer. I am free and living for Christ.", hasVideo: false },
+];
+
+const ministersPraying = [
+  { id: 1, name: "Pastor Grace", location: "Lagos" },
+  { id: 2, name: "Minister Daniel", location: "Nairobi" },
+  { id: 3, name: "Dcn. Sarah", location: "London" },
+  { id: 4, name: "Pastor James", location: "Accra" },
+  { id: 5, name: "Sister Faith", location: "Houston" },
+  { id: 6, name: "Brother Paul", location: "Toronto" },
+  { id: 7, name: "Pastor Mary", location: "Johannesburg" },
+  { id: 8, name: "Minister Tunde", location: "Abuja" },
+];
+
 const PrayerRoom = () => {
   const [copied, setCopied] = useState(false);
+  const [giveModalOpen, setGiveModalOpen] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -54,7 +92,7 @@ const PrayerRoom = () => {
 
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Video/Prayer Embed */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -74,28 +112,15 @@ const PrayerRoom = () => {
               />
             </div>
 
-            {/* Participant count & actions */}
+            {/* Actions */}
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
-                <Link to="/prayer-room">
-                  <HeroButton variant="gold" size="sm" className="gap-1.5">
-                    <Flame size={14} /> Start Praying
-                  </HeroButton>
-                </Link>
-                <Link to="/partner">
-                  <HeroButton
-                    variant="outline"
-                    size="sm"
-                    className="text-foreground border-border hover:bg-muted gap-1.5"
-                  >
-                    <Heart size={14} /> Give Now
-                  </HeroButton>
-                </Link>
-                <Link to="/prayer-requests">
-                  <HeroButton variant="gold" size="sm" className="gap-1.5">
-                    <BookOpen size={14} /> Prayer Requests
-                  </HeroButton>
-                </Link>
+                <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted gap-1.5" onClick={() => setGiveModalOpen(true)}>
+                  <Heart size={14} /> Give Now
+                </HeroButton>
+                <HeroButton variant="gold" size="sm" className="gap-1.5" onClick={scrollToBottom}>
+                  <BookOpen size={14} /> Prayer Requests
+                </HeroButton>
               </div>
             </div>
 
@@ -137,25 +162,20 @@ const PrayerRoom = () => {
                   Today's Prayer Point
                 </h2>
               </div>
-
               <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
                 📅 {todaysPrayerPoint.date}
               </p>
-
               <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
                 {todaysPrayerPoint.title}
               </h3>
-
               <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
                 {todaysPrayerPoint.scripture}
               </p>
-
               <p className="text-sm text-foreground/80 leading-relaxed">
                 {todaysPrayerPoint.body}
               </p>
             </div>
 
-            {/* Quick Stats */}
             <div className="glass-card rounded-xl p-5 border border-border/50">
               <h3 className="font-serif font-semibold text-sm mb-3">
                 Prayer Room Info
@@ -169,9 +189,124 @@ const PrayerRoom = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* Ministers Praying Now - Horizontal Scroll */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mt-10"
+        >
+          <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">
+            Praying Now
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+            {ministersPraying.map((minister) => (
+              <div
+                key={minister.id}
+                className="flex-shrink-0 w-40 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
+              >
+                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                  <Users size={28} className="text-accent" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{minister.name}</p>
+                  <p className="text-xs text-muted-foreground">{minister.location}</p>
+                </div>
+                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4">
+                  Pray Now
+                </Button>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Prayer Requests & Testimonies Section */}
+        <motion.div
+          ref={bottomRef}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mt-10 mb-8"
+        >
+          <h2 className="text-center font-serif font-bold text-xl mb-6 uppercase tracking-wide">
+            Prayer Requests & Testimonies
+          </h2>
+
+          <Tabs defaultValue="requests" className="w-full max-w-3xl mx-auto">
+            <TabsList className="mb-6">
+              <TabsTrigger value="requests">Prayer Requests</TabsTrigger>
+              <TabsTrigger value="testimonies">Testimonies</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="requests">
+              <div className="space-y-0 divide-y divide-border">
+                {mockRequests.map((req) => (
+                  <div key={req.id} className="py-4">
+                    <h4 className="font-serif font-semibold text-base">{req.author}</h4>
+                    <p className="text-xs text-muted-foreground italic mb-1">
+                      Posted {req.time}
+                    </p>
+                    <p className="text-sm text-foreground/80">{req.title}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Submit Prayer Request */}
+              <div className="mt-6">
+                <textarea
+                  placeholder="Post Your Prayer Requests"
+                  className="w-full border border-border rounded-lg p-3 text-sm bg-background text-foreground resize-y min-h-[80px] focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <Button className="mt-3 gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2">
+                  <Send size={14} /> Submit Prayer Request
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="testimonies">
+              <div className="space-y-0 divide-y divide-border">
+                {mockTestimonies.map((testimony) => (
+                  <div key={testimony.id} className="py-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-serif font-semibold text-base">{testimony.author}</h4>
+                      {testimony.hasVideo && (
+                        <span className="text-xs text-accent flex items-center gap-1">
+                          <Video size={12} /> Video
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground italic mb-1">
+                      {testimony.location}
+                    </p>
+                    <p className="text-sm text-foreground/80">"{testimony.text}"</p>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
       </div>
 
       <Footer />
+
+      {/* Give Now Modal */}
+      <Dialog open={giveModalOpen} onOpenChange={setGiveModalOpen}>
+        <DialogContent className="max-w-2xl h-[80vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="flex items-center gap-2 font-serif">
+              <Heart size={18} className="text-accent" /> Partner With Us
+            </DialogTitle>
+          </DialogHeader>
+          <iframe
+            src="https://christembassy-ism.org/onlinepay/seeds.php"
+            title="Give to ISM Ministers Prayer Network"
+            className="w-full flex-1 border-0"
+            style={{ height: "calc(80vh - 60px)" }}
+            allow="payment"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
