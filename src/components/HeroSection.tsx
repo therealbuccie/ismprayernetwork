@@ -8,26 +8,42 @@ const HeroSection = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    let started = false;
+
     const startAudio = () => {
+      if (started) return;
+      started = true;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
       }
       const audio = new Audio("/audio/tongues.mp3");
       audio.loop = true;
-      audio.volume = 0.01;
+      audio.volume = 0.05;
       audioRef.current = audio;
       audio.play().catch(() => {});
+      // Remove listeners after first play
+      document.removeEventListener("click", startAudio);
+      document.removeEventListener("touchstart", startAudio);
+      document.removeEventListener("scroll", startAudio);
     };
 
-    if (document.readyState === "complete") {
-      startAudio();
-    } else {
-      window.addEventListener("load", startAudio);
-    }
+    // Try autoplay first
+    const audio = new Audio("/audio/tongues.mp3");
+    audio.loop = true;
+    audio.volume = 0.05;
+    audioRef.current = audio;
+    audio.play().then(() => { started = true; }).catch(() => {
+      // Autoplay blocked — wait for first user interaction
+      document.addEventListener("click", startAudio, { once: true });
+      document.addEventListener("touchstart", startAudio, { once: true });
+      document.addEventListener("scroll", startAudio, { once: true });
+    });
 
     return () => {
-      window.removeEventListener("load", startAudio);
+      document.removeEventListener("click", startAudio);
+      document.removeEventListener("touchstart", startAudio);
+      document.removeEventListener("scroll", startAudio);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
