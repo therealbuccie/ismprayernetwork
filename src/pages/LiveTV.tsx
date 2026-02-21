@@ -58,19 +58,19 @@ const LiveTV = () => {
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-accent/3 blur-[120px]" />
       </div>
 
-      <div className="relative z-10 pt-20 pb-16">
+      <div className="relative z-10 pt-18 pb-10">
         <div className="container mx-auto px-4">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="text-center mb-4"
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/30 bg-accent/10 mb-4"
+              className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-accent/30 bg-accent/10 mb-2"
             >
               <Radio size={14} className={`text-accent ${isLive ? "animate-pulse" : ""}`} />
               <span className="text-xs font-semibold uppercase tracking-wider text-accent">
@@ -78,12 +78,12 @@ const LiveTV = () => {
               </span>
             </motion.div>
 
-            <h1 className="text-3xl md:text-5xl font-serif font-bold mb-3">
+            <h1 className="text-2xl md:text-3xl font-serif font-bold mb-1.5">
               ISM Ministers{" "}
               <span className="gold-gradient">Live TV</span>
             </h1>
-            <p className="text-muted-foreground max-w-md mx-auto text-sm md:text-base">
-              Watch live broadcasts, prayer sessions, and ministry events from the ISM Prayer Network.
+            <p className="text-muted-foreground max-w-md mx-auto text-xs md:text-sm">
+              Watch live broadcasts, prayer sessions, and ministry events.
             </p>
           </motion.div>
 
@@ -92,7 +92,7 @@ const LiveTV = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="max-w-5xl mx-auto mb-6"
+            className="max-w-3xl mx-auto mb-4"
           >
             <div className="relative rounded-2xl overflow-hidden border border-border/50 shadow-2xl shadow-accent/10 bg-card">
               {/* Glow ring */}
@@ -125,22 +125,22 @@ const LiveTV = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
-            className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+            className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
           >
             <Link to="/partner">
-              <HeroButton variant="gold" size="lg" className="gap-2 min-w-[180px]">
+              <HeroButton variant="gold" size="default" className="gap-2 min-w-[160px]">
                 <Heart size={18} /> Give / Partner
               </HeroButton>
             </Link>
 
             <Link to="/testimonies">
-              <HeroButton variant="outline" size="lg" className="gap-2 min-w-[180px] text-foreground border-border hover:bg-muted">
+              <HeroButton variant="outline" size="default" className="gap-2 min-w-[160px] text-foreground border-border hover:bg-muted">
                 <MessageSquareHeart size={18} /> Share Testimony
               </HeroButton>
             </Link>
 
             <button onClick={handleShare}>
-              <HeroButton variant="ghost" size="lg" className="gap-2 min-w-[140px] text-foreground">
+              <HeroButton variant="ghost" size="default" className="gap-2 min-w-[120px] text-foreground">
                 <Share2 size={18} /> Share
               </HeroButton>
             </button>
@@ -151,7 +151,7 @@ const LiveTV = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="max-w-5xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-3 gap-4"
+            className="max-w-3xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-3 gap-3"
           >
             {[
               { icon: Tv, title: "24/7 Broadcasting", desc: "Watch ministry content and live prayer sessions around the clock." },
@@ -163,7 +163,7 @@ const LiveTV = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.55 + i * 0.1 }}
-                className="glass-card rounded-xl p-6 border border-border/50 text-center hover:border-accent/30 transition-colors duration-300"
+                className="glass-card rounded-xl p-4 border border-border/50 text-center hover:border-accent/30 transition-colors duration-300"
               >
                 <card.icon size={28} className="mx-auto mb-3 text-accent" />
                 <h3 className="font-serif font-semibold mb-1.5">{card.title}</h3>
