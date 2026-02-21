@@ -13,32 +13,20 @@ const HeroSection = () => {
     const startAudio = () => {
       if (started) return;
       started = true;
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      }
       const audio = new Audio("/audio/tongues.mp3");
       audio.loop = true;
       audio.volume = 0.02;
       audioRef.current = audio;
       audio.play().catch(() => {});
-      // Remove listeners after first play
       document.removeEventListener("click", startAudio);
       document.removeEventListener("touchstart", startAudio);
       document.removeEventListener("scroll", startAudio);
     };
 
-    // Try autoplay first
-    const audio = new Audio("/audio/tongues.mp3");
-    audio.loop = true;
-    audio.volume = 0.02;
-    audioRef.current = audio;
-    audio.play().then(() => { started = true; }).catch(() => {
-      // Autoplay blocked — wait for first user interaction
-      document.addEventListener("click", startAudio, { once: true });
-      document.addEventListener("touchstart", startAudio, { once: true });
-      document.addEventListener("scroll", startAudio, { once: true });
-    });
+    // Only start on user interaction — never autoplay
+    document.addEventListener("click", startAudio, { once: true });
+    document.addEventListener("touchstart", startAudio, { once: true });
+    document.addEventListener("scroll", startAudio, { once: true });
 
     return () => {
       document.removeEventListener("click", startAudio);
