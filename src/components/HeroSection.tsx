@@ -19,7 +19,7 @@ const HeroSection = () => {
       }
       const audio = new Audio("/audio/tongues.mp3");
       audio.loop = true;
-      audio.volume = 0.05;
+      audio.volume = 0.02;
       audioRef.current = audio;
       audio.play().catch(() => {});
       // Remove listeners after first play
@@ -31,7 +31,7 @@ const HeroSection = () => {
     // Try autoplay first
     const audio = new Audio("/audio/tongues.mp3");
     audio.loop = true;
-    audio.volume = 0.05;
+    audio.volume = 0.02;
     audioRef.current = audio;
     audio.play().then(() => { started = true; }).catch(() => {
       // Autoplay blocked — wait for first user interaction
