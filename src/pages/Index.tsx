@@ -5,6 +5,7 @@ import StatsSection from "@/components/StatsSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import TestimoniesSection from "@/components/TestimoniesSection";
 import CTASection from "@/components/CTASection";
+import FeaturedBooksSection from "@/components/FeaturedBooksSection";
 import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
 
@@ -37,6 +38,7 @@ const Index = () => {
         <StatsSection />
         <FeaturesSection />
         <TestimoniesSection />
+        <FeaturedBooksSection />
         <CTASection />
       </main>
       <Footer />
