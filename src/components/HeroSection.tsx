@@ -81,11 +81,9 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mb-4 leading-[1.1] tracking-tight"
+            className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mb-4 leading-[1.1] tracking-tight whitespace-nowrap"
           >
-            Pray.{" "}
-            <span className="gold-gradient">Unite.</span>{" "}
-            Transform.
+            Pray. <span className="gold-gradient">Unite.</span> Transform.
           </motion.h1>
 
           {/* Subline */}
