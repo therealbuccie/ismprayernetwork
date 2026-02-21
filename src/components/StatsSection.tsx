@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { GlassCard } from "./GlassCard";
 
 const stats = [
-  { value: "50K+", label: "Prayer Warriors" },
+  { value: "50K+", label: "Ministers Connected" },
   { value: "120+", label: "Countries" },
   { value: "1M+", label: "Prayers Offered" },
   { value: "10K+", label: "Testimonies" },

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { GlassCard } from "./GlassCard";
 import { Globe, Users, BookOpen, MessageCircle, Video, Shield } from "lucide-react";
+import brandingCollage from "@/assets/branding-collage.png";
 
 const features = [
   {
@@ -11,7 +12,7 @@ const features = [
   {
     icon: Users,
     title: "Prayer Groups",
-    description: "Create or join private and public prayer groups for focused intercession.",
+    description: "Create or join private and public prayer groups for focused ministerial intercession.",
   },
   {
     icon: BookOpen,
@@ -21,12 +22,12 @@ const features = [
   {
     icon: MessageCircle,
     title: "Prayer Requests",
-    description: "Submit and respond to prayer requests from believers around the globe.",
+    description: "Submit and respond to prayer requests from ministers around the globe.",
   },
   {
     icon: Video,
     title: "Video Testimonies",
-    description: "Share powerful video testimonies of answered prayers and breakthroughs.",
+    description: "Share powerful video testimonies of answered prayers and breakthroughs in ministry.",
   },
   {
     icon: Shield,
@@ -48,14 +49,28 @@ const item = {
 const FeaturesSection = () => (
   <section className="py-24 bg-background">
     <div className="container mx-auto px-4">
+      {/* Section header with branding image */}
       <div className="text-center mb-16">
         <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
           Everything You Need to{" "}
           <span className="gold-gradient">Pray Together</span>
         </h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          A complete platform designed to unite believers in prayer, fellowship, and shared testimonies.
+        <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+          A complete platform designed to unite ministers of the gospel in prayer, fellowship, and shared testimonies.
         </p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl"
+        >
+          <img
+            src={brandingCollage}
+            alt="ISM Ministers Prayer Network community"
+            className="w-full h-auto object-cover"
+          />
+        </motion.div>
       </div>
 
       <motion.div

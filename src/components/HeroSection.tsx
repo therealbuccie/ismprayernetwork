@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { Link } from "react-router-dom";
 import HeroGlobe from "./HeroGlobe";
+import logo from "@/assets/logo.png";
 
 const HeroSection = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -53,23 +54,25 @@ const HeroSection = () => {
           className="max-w-3xl mx-auto"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-block mb-6"
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="mb-6"
           >
-            <span className="px-4 py-1.5 rounded-full text-xs font-medium tracking-wider uppercase glass-card text-primary-foreground border border-primary-foreground/20">
-              ISM Ministers Prayer Network
-            </span>
+            <img
+              src={logo}
+              alt="ISM Ministers Prayer Network"
+              className="w-28 h-28 md:w-36 md:h-36 mx-auto object-contain drop-shadow-[0_0_30px_rgba(212,175,55,0.4)]"
+            />
           </motion.div>
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-primary-foreground mb-6 text-balance leading-tight">
-            Unite in Prayer,{" "}
-            <span className="gold-gradient">Transform the World</span>
+            Ministers United in Prayer,{" "}
+            <span className="gold-gradient">Transforming Nations</span>
           </h1>
 
           <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-xl mx-auto">
-            A global platform connecting believers for powerful, united intercession across nations and time zones.
+            A global platform connecting ministers of the gospel for powerful, united intercession across nations and time zones.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
