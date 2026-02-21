@@ -91,7 +91,7 @@ const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.8 }}
-            className="text-lg md:text-xl text-white/70 mb-10 max-w-md font-light"
+            className="text-lg md:text-xl text-white/70 mb-10 max-w-md font-light whitespace-nowrap"
           >
             A global prayer network for ministers of the gospel.
           </motion.p>
