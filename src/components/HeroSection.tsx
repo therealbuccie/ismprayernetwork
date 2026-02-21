@@ -8,20 +8,31 @@ const HeroSection = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
+    const startAudio = () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+      const audio = new Audio("/audio/tongues.mp3");
+      audio.loop = true;
+      audio.volume = 0.01;
+      audioRef.current = audio;
+      audio.play().catch(() => {});
+    };
+
+    if (document.readyState === "complete") {
+      startAudio();
+    } else {
+      window.addEventListener("load", startAudio);
     }
-    const audio = new Audio("/audio/tongues.mp3");
-    audio.loop = true;
-    audio.volume = 0.02;
-    audioRef.current = audio;
-    audio.play().catch(() => {});
 
     return () => {
-      audio.pause();
-      audio.src = "";
-      audioRef.current = null;
+      window.removeEventListener("load", startAudio);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+        audioRef.current = null;
+      }
     };
   }, []);
 
