@@ -8,15 +8,20 @@ const HeroSection = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
     const audio = new Audio("/audio/tongues.mp3");
     audio.loop = true;
-    audio.volume = 0.06;
+    audio.volume = 0.02;
     audioRef.current = audio;
     audio.play().catch(() => {});
 
     return () => {
       audio.pause();
       audio.src = "";
+      audioRef.current = null;
     };
   }, []);
 
