@@ -8,26 +8,15 @@ const HeroSection = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // To enable audio: place your audio file at /public/audio/tongues.mp3
     const audio = new Audio("/audio/tongues.mp3");
     audio.loop = true;
-    audio.volume = 0.1;
+    audio.volume = 0.06;
     audioRef.current = audio;
-
-    const playOnInteraction = () => {
-      audio.play().catch(() => {});
-      window.removeEventListener("click", playOnInteraction);
-      window.removeEventListener("touchstart", playOnInteraction);
-    };
-
-    window.addEventListener("click", playOnInteraction);
-    window.addEventListener("touchstart", playOnInteraction);
+    audio.play().catch(() => {});
 
     return () => {
       audio.pause();
       audio.src = "";
-      window.removeEventListener("click", playOnInteraction);
-      window.removeEventListener("touchstart", playOnInteraction);
     };
   }, []);
 
