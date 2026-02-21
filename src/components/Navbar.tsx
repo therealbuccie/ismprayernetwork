@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -19,9 +20,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full gold-gradient-bg flex items-center justify-center">
-            <span className="text-accent-foreground font-bold text-sm">P</span>
-          </div>
+          <img src={logo} alt="ISM Ministers Prayer Network" className="h-10 w-10 object-contain" />
           <span className="font-serif text-lg font-bold text-foreground">
             Prayer Network
           </span>
