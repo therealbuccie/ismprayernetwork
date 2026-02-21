@@ -9,6 +9,7 @@ import PrayerRequests from "./pages/PrayerRequests";
 import PrayerGroups from "./pages/PrayerGroups";
 import Testimonies from "./pages/Testimonies";
 import Contact from "./pages/Contact";
+import Bookstore from "./pages/Bookstore";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/groups" element={<PrayerGroups />} />
           <Route path="/testimonies" element={<Testimonies />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/bookstore" element={<Bookstore />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

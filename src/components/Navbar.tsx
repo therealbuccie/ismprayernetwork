@@ -7,6 +7,7 @@ import logo from "@/assets/logo.png";
 
 const navItems = [
   { label: "Home", href: "/" },
+  { label: "Bookstore", href: "/bookstore" },
   { label: "Prayer Requests", href: "/prayer-requests" },
   { label: "Prayer Groups", href: "/groups" },
   { label: "Testimonies", href: "/testimonies" },
