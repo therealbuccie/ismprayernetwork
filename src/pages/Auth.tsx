@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
-import { Lock } from "lucide-react";
+import { Lock, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -81,7 +82,25 @@ const Auth = () => {
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" className="mt-1" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
+                <div className="relative mt-1">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <Button type="submit" disabled={submitting} className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90">
                 {submitting ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}

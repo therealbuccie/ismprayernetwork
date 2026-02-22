@@ -97,6 +97,154 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prayer_groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_public: boolean
+          member_count: number
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          member_count?: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          member_count?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      prayer_interactions: {
+        Row: {
+          created_at: string
+          id: string
+          prayer_request_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prayer_request_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prayer_request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_interactions_prayer_request_id_fkey"
+            columns: ["prayer_request_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prayer_requests: {
+        Row: {
+          author_name: string
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_anonymous: boolean
+          prayer_count: number
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          author_name?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_anonymous?: boolean
+          prayer_count?: number
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          author_name?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_anonymous?: boolean
+          prayer_count?: number
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -121,6 +269,42 @@ export type Database = {
           id?: string
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      testimonies: {
+        Row: {
+          author_name: string
+          content: string
+          created_at: string
+          id: string
+          is_approved: boolean
+          location: string | null
+          title: string
+          user_id: string | null
+          video_url: string | null
+        }
+        Insert: {
+          author_name: string
+          content: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          location?: string | null
+          title: string
+          user_id?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          author_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          location?: string | null
+          title?: string
+          user_id?: string | null
+          video_url?: string | null
         }
         Relationships: []
       }

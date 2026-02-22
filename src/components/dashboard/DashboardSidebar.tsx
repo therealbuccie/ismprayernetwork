@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut } from "lucide-react";
+import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
@@ -14,7 +14,9 @@ const tabs = [
   { id: "home" as const, label: "Dashboard", icon: LayoutDashboard },
   { id: "books" as const, label: "Books", icon: BookOpen },
   { id: "categories" as const, label: "Categories", icon: Tag },
-  { id: "users" as const, label: "Users & Roles", icon: Users },
+  { id: "testimonies" as const, label: "Testimonies", icon: MessageSquare },
+  { id: "messages" as const, label: "Messages", icon: Mail },
+  { id: "users" as const, label: "Users & Roles", icon: Users, superAdminOnly: true },
 ];
 
 export function DashboardSidebar({ activeTab, onTabChange, isSuperAdmin }: Props) {
@@ -32,7 +34,7 @@ export function DashboardSidebar({ activeTab, onTabChange, isSuperAdmin }: Props
 
       <nav className="flex-1 p-3 space-y-1">
         {tabs.map((tab) => {
-          if (tab.id === "users" && !isSuperAdmin) return null;
+          if ((tab as any).superAdminOnly && !isSuperAdmin) return null;
           const Icon = tab.icon;
           const active = activeTab === tab.id;
           return (

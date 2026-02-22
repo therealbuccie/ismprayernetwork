@@ -6,8 +6,10 @@ import { BooksManager } from "@/components/dashboard/BooksManager";
 import { CategoriesManager } from "@/components/dashboard/CategoriesManager";
 import { UsersManager } from "@/components/dashboard/UsersManager";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
+import { ContactMessagesManager } from "@/components/dashboard/ContactMessagesManager";
+import { TestimoniesManager } from "@/components/dashboard/TestimoniesManager";
 
-export type DashboardTab = "home" | "books" | "categories" | "users";
+export type DashboardTab = "home" | "books" | "categories" | "users" | "messages" | "testimonies";
 
 const Dashboard = () => {
   const { user, profile, loading, isAdmin } = useAuth();
@@ -39,6 +41,8 @@ const Dashboard = () => {
           {activeTab === "books" && <BooksManager />}
           {activeTab === "categories" && <CategoriesManager />}
           {activeTab === "users" && <UsersManager />}
+          {activeTab === "messages" && <ContactMessagesManager />}
+          {activeTab === "testimonies" && <TestimoniesManager />}
         </div>
       </main>
     </div>
