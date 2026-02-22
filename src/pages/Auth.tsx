@@ -2,14 +2,48 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
-import { Lock, Mail } from "lucide-react";
-import { useState } from "react";
+import { Lock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const { user, signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) navigate("/");
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) throw error;
+        toast.success("Signed in successfully!");
+        navigate("/");
+      } else {
+        const { error } = await signUp(email, password, fullName);
+        if (error) throw error;
+        toast.success("Account created! Please check your email to verify.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,23 +68,23 @@ const Auth = () => {
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
               {!isLogin && (
                 <div>
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="Your full name" className="mt-1" />
+                  <Input id="name" placeholder="Your full name" className="mt-1" value={fullName} onChange={e => setFullName(e.target.value)} required />
                 </div>
               )}
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" className="mt-1" />
+                <Input id="email" type="email" placeholder="you@example.com" className="mt-1" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" className="mt-1" />
+                <Input id="password" type="password" placeholder="••••••••" className="mt-1" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
               </div>
-              <Button className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90">
-                {isLogin ? "Sign In" : "Create Account"}
+              <Button type="submit" disabled={submitting} className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90">
+                {submitting ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
               </Button>
             </form>
 

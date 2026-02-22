@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, ChevronDown, Tv, Heart } from "lucide-react";
+import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
 
 const prayerItems = [
@@ -11,18 +12,12 @@ const prayerItems = [
   { label: "Prayer Room", href: "/prayer-room" },
 ];
 
-const navItems = [
-  { label: "Home", href: "/" },
-  { label: "Bookstore", href: "/bookstore" },
-  { label: "Testimonies", href: "/testimonies" },
-  { label: "Contact", href: "/contact" },
-];
-
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [prayerOpen, setPrayerOpen] = useState(false);
   const [mobilePrayerOpen, setMobilePrayerOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { user, isAdmin, signOut } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -90,16 +85,31 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
+          {isAdmin && (
+            <Link to="/dashboard">
+              <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted gap-1.5">
+                <LayoutDashboard size={14} /> Dashboard
+              </HeroButton>
+            </Link>
+          )}
           <Link to="/partner">
             <HeroButton variant="gold" size="sm" className="gap-1.5">
               <Heart size={14} /> Partner
             </HeroButton>
           </Link>
-          <Link to="/auth">
-            <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted">
-              Sign In
-            </HeroButton>
-          </Link>
+          {user ? (
+            <button onClick={signOut}>
+              <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted gap-1.5">
+                <LogOut size={14} /> Sign Out
+              </HeroButton>
+            </button>
+          ) : (
+            <Link to="/auth">
+              <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted">
+                Sign In
+              </HeroButton>
+            </Link>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -168,17 +178,31 @@ const Navbar = () => {
                 Contact
               </Link>
 
+              {isAdmin && (
+                <Link to="/dashboard" className="text-sm text-accent hover:text-accent/80 py-2 transition-colors flex items-center gap-1" onClick={() => setMobileOpen(false)}>
+                  <LayoutDashboard size={14} /> Dashboard
+                </Link>
+              )}
+
               <div className="flex gap-2 pt-2">
                 <Link to="/partner" className="flex-1" onClick={() => setMobileOpen(false)}>
                   <HeroButton variant="gold" size="sm" className="w-full gap-1.5">
                     <Heart size={14} /> Partner
                   </HeroButton>
                 </Link>
-                <Link to="/auth" className="flex-1" onClick={() => setMobileOpen(false)}>
-                  <HeroButton variant="outline" size="sm" className="w-full text-foreground border-border">
-                    Sign In
-                  </HeroButton>
-                </Link>
+                {user ? (
+                  <button className="flex-1" onClick={() => { signOut(); setMobileOpen(false); }}>
+                    <HeroButton variant="outline" size="sm" className="w-full text-foreground border-border">
+                      Sign Out
+                    </HeroButton>
+                  </button>
+                ) : (
+                  <Link to="/auth" className="flex-1" onClick={() => setMobileOpen(false)}>
+                    <HeroButton variant="outline" size="sm" className="w-full text-foreground border-border">
+                      Sign In
+                    </HeroButton>
+                  </Link>
+                )}
               </div>
             </div>
           </motion.div>
