@@ -98,11 +98,11 @@ const Navbar = () => {
             </HeroButton>
           </Link>
           {user ? (
-            <button onClick={signOut}>
+            <div onClick={signOut} className="cursor-pointer">
               <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted gap-1.5">
                 <LogOut size={14} /> Sign Out
               </HeroButton>
-            </button>
+            </div>
           ) : (
             <Link to="/auth">
               <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted">
@@ -191,11 +191,11 @@ const Navbar = () => {
                   </HeroButton>
                 </Link>
                 {user ? (
-                  <button className="flex-1" onClick={() => { signOut(); setMobileOpen(false); }}>
+                  <div className="flex-1 cursor-pointer" onClick={() => { signOut(); setMobileOpen(false); }}>
                     <HeroButton variant="outline" size="sm" className="w-full text-foreground border-border">
                       Sign Out
                     </HeroButton>
-                  </button>
+                  </div>
                 ) : (
                   <Link to="/auth" className="flex-1" onClick={() => setMobileOpen(false)}>
                     <HeroButton variant="outline" size="sm" className="w-full text-foreground border-border">
