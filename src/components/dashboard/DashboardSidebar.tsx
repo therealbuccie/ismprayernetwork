@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare } from "lucide-react";
+import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
@@ -55,6 +55,12 @@ export function DashboardSidebar({ activeTab, onTabChange, isSuperAdmin }: Props
       </nav>
 
       <div className="p-3 border-t border-border space-y-1">
+        <Link
+          to="/prayer-room"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+        >
+          <Flame size={18} /> Prayer Room
+        </Link>
         <Link
           to="/"
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
