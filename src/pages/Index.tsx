@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
 
 const Index = () => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !sessionStorage.getItem("preloaderShown"));
 
   // Pre-cache the hero video on first visit
   useEffect(() => {
@@ -26,6 +26,7 @@ const Index = () => {
   }, []);
 
   const handlePreloaderComplete = useCallback(() => {
+    sessionStorage.setItem("preloaderShown", "1");
     setLoading(false);
   }, []);
 
