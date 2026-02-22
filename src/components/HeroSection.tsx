@@ -1,11 +1,14 @@
-import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { Link } from "react-router-dom";
+import { Volume2, VolumeX } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const HeroSection = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
 
   useEffect(() => {
     let started = false;
@@ -20,6 +23,7 @@ const HeroSection = () => {
       audio.volume = 0.02;
       audioRef.current = audio;
       audio.play().catch(() => {});
+      setAudioReady(true);
       cleanup();
     };
 
@@ -147,6 +151,27 @@ const HeroSection = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Mute/Unmute button */}
+      <AnimatePresence>
+        {audioReady && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => {
+              if (audioRef.current) {
+                audioRef.current.muted = !muted;
+                setMuted(!muted);
+              }
+            }}
+            className="absolute bottom-6 right-6 z-20 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-colors"
+            aria-label={muted ? "Unmute audio" : "Mute audio"}
+          >
+            {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </motion.button>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
