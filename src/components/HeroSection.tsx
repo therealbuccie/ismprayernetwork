@@ -96,7 +96,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mb-4 leading-[1.1] tracking-tight whitespace-nowrap"
+            className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mb-4 leading-[1.1] tracking-tight"
           >
             Pray. <span className="gold-gradient">Unite.</span> Transform.
           </motion.h1>
@@ -106,7 +106,7 @@ const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.8 }}
-            className="text-lg md:text-xl text-white/70 mb-10 max-w-md font-light whitespace-nowrap"
+            className="text-base sm:text-lg md:text-xl text-white/70 mb-10 max-w-md font-light"
           >
             A global prayer network for ministers of the gospel.
           </motion.p>
