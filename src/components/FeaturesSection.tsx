@@ -83,13 +83,29 @@ const FeaturesSection = () => (
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl"
+          className="max-w-3xl mx-auto"
         >
-          <img
-            src={brandingCollage}
-            alt="ISM Ministers Prayer Network community"
-            className="w-full h-auto object-cover"
-          />
+          <Carousel
+            opts={{ loop: true, align: "center" }}
+            plugins={[Autoplay({ delay: 4000, stopOnInteraction: false })]}
+            className="w-full"
+          >
+            <CarouselContent>
+              {banners.map((banner, idx) => (
+                <CarouselItem key={idx}>
+                  <div className="rounded-2xl overflow-hidden shadow-2xl aspect-video">
+                    <img
+                      src={banner.src}
+                      alt={banner.alt}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden sm:flex -left-4 md:-left-12" />
+            <CarouselNext className="hidden sm:flex -right-4 md:-right-12" />
+          </Carousel>
         </motion.div>
       </div>
 
