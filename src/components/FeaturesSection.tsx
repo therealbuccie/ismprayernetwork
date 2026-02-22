@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { GlassCard } from "./GlassCard";
-import { Globe, Users, BookOpen, MessageCircle, Video, Shield } from "lucide-react";
+import { Globe, Users, BookOpen, MessageCircle, Video, Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -56,10 +56,10 @@ const features = [
     link: "/testimonies",
   },
   {
-    icon: Shield,
-    title: "Admin Dashboard",
-    description: "Manage users, content, and prayer activities with a comprehensive admin panel.",
-    link: "/dashboard",
+    icon: Flame,
+    title: "Prayer Room",
+    description: "Enter a dedicated space for focused prayer, worship, and spiritual connection.",
+    link: "/prayer-room",
   },
 ];
 
