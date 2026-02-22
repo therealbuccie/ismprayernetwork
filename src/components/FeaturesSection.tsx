@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { GlassCard } from "./GlassCard";
 import { Globe, Users, BookOpen, MessageCircle, Video, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import brandingCollage from "@/assets/branding-collage.png";
@@ -28,31 +29,37 @@ const features = [
     icon: Globe,
     title: "Global Prayer Map",
     description: "See prayer activity across the world in real-time with our interactive map.",
+    link: "/global-prayer-map",
   },
   {
     icon: Users,
     title: "Prayer Groups",
     description: "Create or join private and public prayer groups for focused ministerial intercession.",
+    link: "/groups",
   },
   {
     icon: BookOpen,
     title: "Prayer Points",
     description: "Access categorised prayer points for structured and guided prayer sessions.",
+    link: "/prayer-points",
   },
   {
     icon: MessageCircle,
     title: "Prayer Requests",
     description: "Submit and respond to prayer requests from ministers around the globe.",
+    link: "/prayer-requests",
   },
   {
     icon: Video,
     title: "Video Testimonies",
     description: "Share powerful video testimonies of answered prayers and breakthroughs in ministry.",
+    link: "/testimonies",
   },
   {
     icon: Shield,
     title: "Admin Dashboard",
     description: "Manage users, content, and prayer activities with a comprehensive admin panel.",
+    link: "/dashboard",
   },
 ];
 
@@ -66,7 +73,9 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-const FeaturesSection = () => (
+const FeaturesSection = () => {
+  const navigate = useNavigate();
+  return (
   <section className="py-24 bg-background">
     <div className="container mx-auto px-4">
       {/* Section header with branding image */}
@@ -118,7 +127,11 @@ const FeaturesSection = () => (
       >
         {features.map((feature) => (
           <motion.div key={feature.title} variants={item}>
-            <GlassCard variant="hover" className="h-full">
+            <GlassCard
+              variant="hover"
+              className="h-full cursor-pointer"
+              onClick={() => navigate(feature.link)}
+            >
               <div className="w-12 h-12 rounded-lg gold-gradient-bg flex items-center justify-center mb-4">
                 <feature.icon size={22} className="text-accent-foreground" />
               </div>
@@ -131,5 +144,7 @@ const FeaturesSection = () => (
     </div>
   </section>
 );
+
+};
 
 export default FeaturesSection;
