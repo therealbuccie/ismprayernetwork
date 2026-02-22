@@ -22,7 +22,10 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate("/");
+    if (user) {
+      toast.success("You're signed in!");
+      navigate("/", { replace: true });
+    }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
