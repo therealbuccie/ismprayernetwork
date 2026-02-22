@@ -13,6 +13,7 @@ import Contact from "./pages/Contact";
 import Bookstore from "./pages/Bookstore";
 import LiveTV from "./pages/LiveTV";
 import Partner from "./pages/Partner";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/partner" element={<Partner />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/bookstore" element={<Bookstore />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
