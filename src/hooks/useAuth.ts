@@ -22,23 +22,28 @@ export function useAuth() {
     let mounted = true;
 
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .single();
-        if (mounted) setProfile(data as Profile | null);
-      }
-      
-      if (mounted) {
-        setInitialCheckDone(true);
-        setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Don't block loading on profile fetch
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .single()
+            .then(({ data }) => {
+              if (mounted) setProfile(data as Profile | null);
+            });
+        }
+      } finally {
+        if (mounted) {
+          setInitialCheckDone(true);
+          setLoading(false);
+        }
       }
     };
 

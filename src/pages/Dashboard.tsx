@@ -17,12 +17,16 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    // Wait for both session and profile to be resolved before redirecting
+    if (!loading && !user) {
       navigate("/auth");
     }
-  }, [loading, user, isAdmin, navigate]);
+    if (!loading && user && profile && !isAdmin) {
+      navigate("/auth");
+    }
+  }, [loading, user, profile, isAdmin, navigate]);
 
-  if (loading) {
+  if (loading || (user && !profile)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
