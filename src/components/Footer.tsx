@@ -30,14 +30,17 @@ const Footer = () => (
           <h4 className="font-semibold mb-3 text-sm">Community</h4>
           <div className="flex flex-col gap-2">
             <Link to="/prayer-room" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Prayer Room</Link>
-            <Link to="/prayer-points" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Prayer Points</Link>
+            <Link to="/events" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Events</Link>
+            <Link to="/programs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Programs</Link>
             <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link>
           </div>
         </div>
 
         <div>
-          <h4 className="font-semibold mb-3 text-sm">Legal</h4>
+          <h4 className="font-semibold mb-3 text-sm">About</h4>
           <div className="flex flex-col gap-2">
+            <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About Us</Link>
+            <Link to="/our-impact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Our Impact</Link>
             <span className="text-sm text-muted-foreground">Privacy Policy</span>
             <span className="text-sm text-muted-foreground">Terms of Service</span>
           </div>

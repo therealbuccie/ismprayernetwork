@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      birthday_wishes: {
+        Row: {
+          author_name: string
+          created_at: string
+          event_id: string
+          id: string
+          message: string
+          user_id: string | null
+        }
+        Insert: {
+          author_name?: string
+          created_at?: string
+          event_id: string
+          id?: string
+          message: string
+          user_id?: string | null
+        }
+        Update: {
+          author_name?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          message?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "birthday_wishes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       books: {
         Row: {
           author: string
@@ -121,6 +156,39 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          birthday_day: number
+          birthday_month: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          minister_image_url: string | null
+          minister_name: string
+        }
+        Insert: {
+          birthday_day: number
+          birthday_month: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          minister_image_url?: string | null
+          minister_name: string
+        }
+        Update: {
+          birthday_day?: number
+          birthday_month?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          minister_image_url?: string | null
+          minister_name?: string
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string
@@ -149,6 +217,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      newsletter_subscribers: {
+        Row: {
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean
+          subscribed_at: string
+        }
+        Insert: {
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          subscribed_at?: string
+        }
+        Update: {
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          subscribed_at?: string
+        }
+        Relationships: []
       }
       prayer_groups: {
         Row: {
@@ -278,6 +370,42 @@ export type Database = {
           ministry_name?: string | null
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      programs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_date: string | null
+          id: string
+          image_url: string | null
+          is_upcoming: boolean
+          location: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_upcoming?: boolean
+          location?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_upcoming?: boolean
+          location?: string | null
+          title?: string
         }
         Relationships: []
       }
