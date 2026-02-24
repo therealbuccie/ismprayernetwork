@@ -148,7 +148,7 @@ const Navbar = () => {
           </div>
 
           {isAdmin && (
-            <Link to="/dashboard">
+            <Link to="/admin">
               <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted gap-1.5">
                 <LayoutDashboard size={14} /> Dashboard
               </HeroButton>
@@ -248,7 +248,7 @@ const Navbar = () => {
               </AnimatePresence>
 
               {isAdmin && (
-                <Link to="/dashboard" className="text-sm text-accent hover:text-accent/80 py-2 transition-colors flex items-center gap-1" onClick={() => setMobileOpen(false)}>
+                <Link to="/admin" className="text-sm text-accent hover:text-accent/80 py-2 transition-colors flex items-center gap-1" onClick={() => setMobileOpen(false)}>
                   <LayoutDashboard size={14} /> Dashboard
                 </Link>
               )}
