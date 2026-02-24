@@ -23,6 +23,8 @@ import About from "./pages/About";
 import OurImpact from "./pages/OurImpact";
 import AdminHub from "./pages/AdminHub";
 import PrayerDashboard from "./pages/PrayerDashboard";
+import PublicDashboard from "./pages/PublicDashboard";
+import PublicPrayerDashboard from "./pages/PublicPrayerDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +52,8 @@ const App = () => (
           <Route path="/admin" element={<AdminHub />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/prayer-dashboard" element={<PrayerDashboard />} />
+          <Route path="/api/dashboard" element={<PublicDashboard />} />
+          <Route path="/api/prayer-dashboard" element={<PublicPrayerDashboard />} />
           <Route path="/events" element={<Events />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/about" element={<About />} />
