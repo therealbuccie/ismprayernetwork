@@ -248,25 +248,34 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          dob_day: number | null
+          dob_month: number | null
           email: string | null
           full_name: string | null
           id: string
+          ministry_name: string | null
           role: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          dob_day?: number | null
+          dob_month?: number | null
           email?: string | null
           full_name?: string | null
           id?: string
+          ministry_name?: string | null
           role?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          dob_day?: number | null
+          dob_month?: number | null
           email?: string | null
           full_name?: string | null
           id?: string
+          ministry_name?: string | null
           role?: string
           user_id?: string
         }
