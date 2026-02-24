@@ -22,7 +22,7 @@ const todaysPrayerPoint = {
   }),
   title: "PRAY CONCERNING TELEVISION AND RADIO BROADCAST OF THE HEALING STREAMS",
   scripture:
-    'Romans 10:18 NKJV - "But I say, have they not heard? Yes indeed: \'Their sound has gone out to all the earth, and their words to the ends of the world\'"',
+    "Romans 10:18 NKJV - \"But I say, have they not heard? Yes indeed: 'Their sound has gone out to all the earth, and their words to the ends of the world'\"",
   body: "Thank God for the global broadcast of the Healing Streams Live Healing Services with Pastor Chris through television and radio networks around the world. Pray that every viewer and listener receives miracles, salvation, and restoration through every transmission. Pray that the signals are clear and unhindered, reaching every language, territory, and nation.",
 };
 
@@ -86,8 +86,14 @@ const PrayerRoom = () => {
   };
 
   const handleSubmitPrayer = async () => {
-    if (!prayerText.trim()) { toast.error("Please type your prayer request"); return; }
-    if (!user) { toast.error("Please sign in to submit a prayer request"); return; }
+    if (!prayerText.trim()) {
+      toast.error("Please type your prayer request");
+      return;
+    }
+    if (!user) {
+      toast.error("Please sign in to submit a prayer request");
+      return;
+    }
     setSubmittingPrayer(true);
     try {
       const { error } = await supabase.from("prayer_requests").insert({
@@ -128,12 +134,9 @@ const PrayerRoom = () => {
             <div>
               <h1 className="text-lg md:text-xl font-serif font-bold text-primary-foreground flex items-center gap-2">
                 <Flame size={20} className="text-accent" />
-                Welcome to the ISM Prayer{" "}
-                <span className="gold-gradient">Room</span>
+                Welcome to the ISM Prayer <span className="gold-gradient">Room</span>
               </h1>
-              <p className="text-primary-foreground/70 text-xs md:text-sm">
-                Hosted by ISM Ministers Prayer Network
-              </p>
+              <p className="text-primary-foreground/70 text-xs md:text-sm">Hosted by ISM Ministers Prayer Network</p>
             </div>
           </div>
         </div>
@@ -150,7 +153,7 @@ const PrayerRoom = () => {
           >
             <div className="glass-card rounded-xl overflow-hidden flex-1 min-h-[500px] lg:min-h-[600px]">
               <iframe
-                src="https://jcontrol.pro/join"
+                src="https://jcontrol.pro/join?session=ism-prayer-network"
                 width="100%"
                 height="100%"
                 frameBorder="0"
@@ -164,7 +167,12 @@ const PrayerRoom = () => {
             {/* Actions */}
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
-                <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted gap-1.5" onClick={() => setGiveModalOpen(true)}>
+                <HeroButton
+                  variant="outline"
+                  size="sm"
+                  className="text-foreground border-border hover:bg-muted gap-1.5"
+                  onClick={() => setGiveModalOpen(true)}
+                >
                   <Heart size={14} /> Give Now
                 </HeroButton>
                 <HeroButton variant="gold" size="sm" className="gap-1.5" onClick={scrollToBottom}>
@@ -209,9 +217,15 @@ const PrayerRoom = () => {
               <div className="bg-accent/10 rounded-lg p-3 mb-4 text-center">
                 <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
               </div>
-              <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">📅 {todaysPrayerPoint.date}</p>
-              <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">{todaysPrayerPoint.title}</h3>
-              <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">{todaysPrayerPoint.scripture}</p>
+              <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
+                📅 {todaysPrayerPoint.date}
+              </p>
+              <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
+                {todaysPrayerPoint.title}
+              </h3>
+              <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
+                {todaysPrayerPoint.scripture}
+              </p>
               <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
             </div>
             <div className="glass-card rounded-xl p-5 border border-border/50">
@@ -227,11 +241,19 @@ const PrayerRoom = () => {
         </div>
 
         {/* Ministers Praying Now */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mt-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mt-10"
+        >
           <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
             {ministersPraying.map((minister) => (
-              <div key={minister.id} className="flex-shrink-0 w-40 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center">
+              <div
+                key={minister.id}
+                className="flex-shrink-0 w-40 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
+              >
                 <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
                   <Users size={28} className="text-accent" />
                 </div>
@@ -239,7 +261,10 @@ const PrayerRoom = () => {
                   <p className="text-sm font-semibold text-foreground">{minister.name}</p>
                   <p className="text-xs text-muted-foreground">{minister.location}</p>
                 </div>
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4">
+                <Button
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4"
+                >
                   Pray Now
                 </Button>
               </div>
@@ -248,8 +273,16 @@ const PrayerRoom = () => {
         </motion.div>
 
         {/* Prayer Requests & Testimonies */}
-        <motion.div ref={bottomRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mt-10 mb-8">
-          <h2 className="text-center font-serif font-bold text-xl mb-6 uppercase tracking-wide">Prayer Requests & Testimonies</h2>
+        <motion.div
+          ref={bottomRef}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mt-10 mb-8"
+        >
+          <h2 className="text-center font-serif font-bold text-xl mb-6 uppercase tracking-wide">
+            Prayer Requests & Testimonies
+          </h2>
 
           <Tabs defaultValue="requests" className="w-full max-w-3xl mx-auto">
             <TabsList className="mb-6">
@@ -259,13 +292,15 @@ const PrayerRoom = () => {
 
             <TabsContent value="requests">
               <div className="space-y-0 divide-y divide-border">
-                {requests?.length ? requests.map((req) => (
-                  <div key={req.id} className="py-4">
-                    <h4 className="font-serif font-semibold text-base">{req.author_name}</h4>
-                    <p className="text-xs text-muted-foreground italic mb-1">Posted {timeAgo(req.created_at)}</p>
-                    <p className="text-sm text-foreground/80">{req.title}</p>
-                  </div>
-                )) : (
+                {requests?.length ? (
+                  requests.map((req) => (
+                    <div key={req.id} className="py-4">
+                      <h4 className="font-serif font-semibold text-base">{req.author_name}</h4>
+                      <p className="text-xs text-muted-foreground italic mb-1">Posted {timeAgo(req.created_at)}</p>
+                      <p className="text-sm text-foreground/80">{req.title}</p>
+                    </div>
+                  ))
+                ) : (
                   <p className="text-sm text-muted-foreground py-4">No prayer requests yet.</p>
                 )}
               </div>
@@ -275,7 +310,7 @@ const PrayerRoom = () => {
                   placeholder="Post Your Prayer Requests"
                   className="w-full border border-border rounded-lg p-3 text-sm bg-background text-foreground resize-y min-h-[80px] focus:outline-none focus:ring-2 focus:ring-accent"
                   value={prayerText}
-                  onChange={e => setPrayerText(e.target.value)}
+                  onChange={(e) => setPrayerText(e.target.value)}
                 />
                 <Button
                   className="mt-3 gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2"
@@ -289,20 +324,24 @@ const PrayerRoom = () => {
 
             <TabsContent value="testimonies">
               <div className="space-y-0 divide-y divide-border">
-                {testimonies?.length ? testimonies.map((testimony) => (
-                  <div key={testimony.id} className="py-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-serif font-semibold text-base">{testimony.author_name}</h4>
-                      {testimony.video_url && (
-                        <span className="text-xs text-accent flex items-center gap-1">
-                          <Video size={12} /> Video
-                        </span>
+                {testimonies?.length ? (
+                  testimonies.map((testimony) => (
+                    <div key={testimony.id} className="py-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-serif font-semibold text-base">{testimony.author_name}</h4>
+                        {testimony.video_url && (
+                          <span className="text-xs text-accent flex items-center gap-1">
+                            <Video size={12} /> Video
+                          </span>
+                        )}
+                      </div>
+                      {testimony.location && (
+                        <p className="text-xs text-muted-foreground italic mb-1">{testimony.location}</p>
                       )}
+                      <p className="text-sm text-foreground/80">"{testimony.content}"</p>
                     </div>
-                    {testimony.location && <p className="text-xs text-muted-foreground italic mb-1">{testimony.location}</p>}
-                    <p className="text-sm text-foreground/80">"{testimony.content}"</p>
-                  </div>
-                )) : (
+                  ))
+                ) : (
                   <p className="text-sm text-muted-foreground py-4">No testimonies yet.</p>
                 )}
               </div>
