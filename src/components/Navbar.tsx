@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut } from "lucide
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
+import GoogleTranslate from "./GoogleTranslate";
 import logo from "@/assets/logo.png";
 
 const prayerItems = [
@@ -85,6 +86,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
+          <GoogleTranslate />
           {isAdmin && (
             <Link to="/dashboard">
               <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted gap-1.5">
@@ -184,6 +186,9 @@ const Navbar = () => {
                 </Link>
               )}
 
+              <div className="pt-2 pb-2 md:hidden">
+                <GoogleTranslate />
+              </div>
               <div className="flex gap-2 pt-2">
                 <Link to="/partner" className="flex-1" onClick={() => setMobileOpen(false)}>
                   <HeroButton variant="gold" size="sm" className="w-full gap-1.5">
