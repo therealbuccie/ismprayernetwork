@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut } from "lucide-react";
+import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,17 +13,36 @@ const prayerItems = [
   { label: "Prayer Room", href: "/prayer-room" },
 ];
 
+const moreItems = [
+  { label: "Testimonies", href: "/testimonies" },
+  { label: "Events", href: "/events" },
+  { label: "Programs", href: "/programs" },
+  { label: "Our Impact", href: "/our-impact" },
+  { label: "About", href: "/about" },
+];
+
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [prayerOpen, setPrayerOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [translateOpen, setTranslateOpen] = useState(false);
   const [mobilePrayerOpen, setMobilePrayerOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const translateRef = useRef<HTMLDivElement>(null);
   const { user, isAdmin, signOut } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setPrayerOpen(false);
+      }
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+      if (translateRef.current && !translateRef.current.contains(e.target as Node)) {
+        setTranslateOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -32,6 +51,9 @@ const Navbar = () => {
 
   const linkClass =
     "text-sm font-medium text-foreground/90 hover:text-accent transition-colors duration-200 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-accent after:scale-x-0 after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left";
+
+  const dropdownMenuClass = "absolute top-full left-0 mt-2 w-48 rounded-xl border border-border/60 bg-popover/95 backdrop-blur-xl shadow-lg z-[100] overflow-hidden py-1";
+  const dropdownItemClass = "block px-4 py-2.5 text-sm text-popover-foreground hover:bg-accent/10 hover:text-accent transition-colors";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50">
@@ -60,15 +82,10 @@ const Navbar = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 8 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 mt-2 w-48 rounded-lg border border-border bg-popover shadow-lg z-[100] overflow-hidden"
+                  className={dropdownMenuClass}
                 >
                   {prayerItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      onClick={() => setPrayerOpen(false)}
-                      className="block px-4 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                    >
+                    <Link key={item.href} to={item.href} onClick={() => setPrayerOpen(false)} className={dropdownItemClass}>
                       {item.label}
                     </Link>
                   ))}
@@ -78,19 +95,66 @@ const Navbar = () => {
           </div>
 
           <Link to="/bookstore" className={linkClass}>Bookstore</Link>
-          <Link to="/testimonies" className={linkClass}>Testimonies</Link>
-          <Link to="/events" className={linkClass}>Events</Link>
-          <Link to="/programs" className={linkClass}>Programs</Link>
-          <Link to="/about" className={linkClass}>About</Link>
-          <Link to="/our-impact" className={linkClass}>Impact</Link>
+          <Link to="/contact" className={linkClass}>Contact</Link>
           <Link to="/live-tv" className={`${linkClass} flex items-center gap-1`}>
             <Tv size={14} /> LiveTV
           </Link>
-          <Link to="/contact" className={linkClass}>Contact</Link>
+
+          {/* More Dropdown (three dots) */}
+          <div ref={moreRef} className="relative">
+            <button
+              onClick={() => setMoreOpen(!moreOpen)}
+              className={`${linkClass} flex items-center gap-1 cursor-pointer`}
+              title="More"
+            >
+              <MoreHorizontal size={20} className={`transition-transform duration-200 ${moreOpen ? "text-accent" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {moreOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.15 }}
+                  className={dropdownMenuClass}
+                >
+                  {moreItems.map((item) => (
+                    <Link key={item.href} to={item.href} onClick={() => setMoreOpen(false)} className={dropdownItemClass}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <GoogleTranslate />
+          {/* Globe translate button */}
+          <div ref={translateRef} className="relative">
+            <button
+              onClick={() => setTranslateOpen(!translateOpen)}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-foreground/70 hover:text-accent hover:bg-accent/10 transition-all duration-200"
+              title="Translate"
+            >
+              <Globe size={18} />
+            </button>
+            <AnimatePresence>
+              {translateOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full right-0 mt-2 rounded-xl border border-border/60 bg-popover/95 backdrop-blur-xl shadow-lg z-[100] p-3 min-w-[200px]"
+                >
+                  <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Translate Page</p>
+                  <GoogleTranslate />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           {isAdmin && (
             <Link to="/dashboard">
               <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted gap-1.5">
@@ -151,19 +215,9 @@ const Navbar = () => {
               </button>
               <AnimatePresence>
                 {mobilePrayerOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden pl-4"
-                  >
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden pl-4">
                     {prayerItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        className="block text-sm text-muted-foreground hover:text-foreground py-1.5 transition-colors"
-                        onClick={() => setMobileOpen(false)}
-                      >
+                      <Link key={item.href} to={item.href} className="block text-sm text-muted-foreground hover:text-foreground py-1.5 transition-colors" onClick={() => setMobileOpen(false)}>
                         {item.label}
                       </Link>
                     ))}
@@ -174,27 +228,32 @@ const Navbar = () => {
               <Link to="/bookstore" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
                 Bookstore
               </Link>
-              <Link to="/testimonies" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
-                Testimonies
-              </Link>
-              <Link to="/events" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
-                Events
-              </Link>
-              <Link to="/programs" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
-                Programs
-              </Link>
-              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
-                About
-              </Link>
-              <Link to="/our-impact" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
-                Our Impact
+              <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
+                Contact
               </Link>
               <Link to="/live-tv" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors flex items-center gap-1" onClick={() => setMobileOpen(false)}>
                 <Tv size={14} /> LiveTV
               </Link>
-              <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
-                Contact
-              </Link>
+
+              {/* Mobile More Accordion */}
+              <button
+                onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
+                className="flex items-center justify-between text-sm text-muted-foreground hover:text-foreground py-2 transition-colors"
+              >
+                <span className="flex items-center gap-1.5"><MoreHorizontal size={14} /> More</span>
+                <ChevronDown size={14} className={`transition-transform duration-200 ${mobileMoreOpen ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence>
+                {mobileMoreOpen && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden pl-4">
+                    {moreItems.map((item) => (
+                      <Link key={item.href} to={item.href} className="block text-sm text-muted-foreground hover:text-foreground py-1.5 transition-colors" onClick={() => setMobileOpen(false)}>
+                        {item.label}
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {isAdmin && (
                 <Link to="/dashboard" className="text-sm text-accent hover:text-accent/80 py-2 transition-colors flex items-center gap-1" onClick={() => setMobileOpen(false)}>
@@ -202,9 +261,13 @@ const Navbar = () => {
                 </Link>
               )}
 
-              <div className="pt-2 pb-2 md:hidden">
+              <div className="pt-2 pb-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                  <Globe size={14} /> Translate
+                </div>
                 <GoogleTranslate />
               </div>
+
               <div className="flex gap-2 pt-2">
                 <Link to="/partner" className="flex-1" onClick={() => setMobileOpen(false)}>
                   <HeroButton variant="gold" size="sm" className="w-full gap-1.5">
