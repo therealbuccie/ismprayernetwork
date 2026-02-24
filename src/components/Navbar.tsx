@@ -79,6 +79,10 @@ const Navbar = () => {
 
           <Link to="/bookstore" className={linkClass}>Bookstore</Link>
           <Link to="/testimonies" className={linkClass}>Testimonies</Link>
+          <Link to="/events" className={linkClass}>Events</Link>
+          <Link to="/programs" className={linkClass}>Programs</Link>
+          <Link to="/about" className={linkClass}>About</Link>
+          <Link to="/our-impact" className={linkClass}>Impact</Link>
           <Link to="/live-tv" className={`${linkClass} flex items-center gap-1`}>
             <Tv size={14} /> LiveTV
           </Link>
@@ -172,6 +176,18 @@ const Navbar = () => {
               </Link>
               <Link to="/testimonies" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
                 Testimonies
+              </Link>
+              <Link to="/events" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
+                Events
+              </Link>
+              <Link to="/programs" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
+                Programs
+              </Link>
+              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
+                About
+              </Link>
+              <Link to="/our-impact" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors" onClick={() => setMobileOpen(false)}>
+                Our Impact
               </Link>
               <Link to="/live-tv" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors flex items-center gap-1" onClick={() => setMobileOpen(false)}>
                 <Tv size={14} /> LiveTV
