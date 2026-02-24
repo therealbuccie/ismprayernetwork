@@ -134,25 +134,17 @@ const Navbar = () => {
           <div ref={translateRef} className="relative">
             <button
               onClick={() => setTranslateOpen(!translateOpen)}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-foreground/70 hover:text-accent hover:bg-accent/10 transition-all duration-200"
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${translateOpen ? "text-accent bg-accent/10" : "text-foreground/70 hover:text-accent hover:bg-accent/10"}`}
               title="Translate"
             >
               <Globe size={18} />
             </button>
-            <AnimatePresence>
-              {translateOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full right-0 mt-2 rounded-xl border border-border/60 bg-popover/95 backdrop-blur-xl shadow-lg z-[100] p-3 min-w-[200px]"
-                >
-                  <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Translate Page</p>
-                  <GoogleTranslate />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div
+              className={`absolute top-full right-0 mt-2 rounded-xl border border-border/60 bg-popover backdrop-blur-xl shadow-lg z-[100] p-3 min-w-[220px] transition-all duration-200 ${translateOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"}`}
+            >
+              <p className="text-xs font-medium text-muted-foreground mb-2 px-1">🌐 Translate Page</p>
+              <GoogleTranslate />
+            </div>
           </div>
 
           {isAdmin && (

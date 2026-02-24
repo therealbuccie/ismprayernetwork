@@ -31,15 +31,21 @@ const GoogleTranslate = () => {
     script.async = true;
     document.body.appendChild(script);
 
-    // Inject styles to hide Google branding and beautify the widget
     const style = document.createElement("style");
     style.textContent = `
-      .goog-te-gadget > span { display: none !important; }
-      .goog-te-gadget { font-size: 0 !important; }
-      .goog-te-gadget .goog-te-combo {
+      /* Hide the Google top bar that shifts the page */
+      body > .skiptranslate { display: none !important; }
+      body { top: 0 !important; }
+
+      /* Style the widget inside our container */
+      #google_translate_element .goog-te-gadget > span,
+      #google_translate_element .goog-logo-link,
+      #google_translate_element .goog-te-gadget > div > a { display: none !important; }
+      #google_translate_element .goog-te-gadget { font-size: 0 !important; line-height: 0 !important; }
+      #google_translate_element .goog-te-combo {
         font-family: inherit !important;
         font-size: 13px !important;
-        padding: 6px 10px !important;
+        padding: 8px 12px !important;
         border-radius: 8px !important;
         border: 1px solid hsl(var(--border)) !important;
         background: hsl(var(--background)) !important;
@@ -47,28 +53,20 @@ const GoogleTranslate = () => {
         outline: none !important;
         cursor: pointer !important;
         width: 100% !important;
-        appearance: auto !important;
         transition: border-color 0.2s, box-shadow 0.2s !important;
       }
-      .goog-te-gadget .goog-te-combo:hover {
+      #google_translate_element .goog-te-combo:hover {
         border-color: hsl(var(--accent)) !important;
       }
-      .goog-te-gadget .goog-te-combo:focus {
+      #google_translate_element .goog-te-combo:focus {
         border-color: hsl(var(--accent)) !important;
         box-shadow: 0 0 0 2px hsl(var(--accent) / 0.15) !important;
       }
-      .goog-logo-link { display: none !important; }
-      .goog-te-banner-frame { display: none !important; }
-      body { top: 0 !important; }
-      .skiptranslate { display: none !important; }
-      .skiptranslate + div #google_translate_element { display: block !important; }
-      #google_translate_element .skiptranslate { display: block !important; }
-      #google_translate_element { min-height: 32px; }
     `;
     document.head.appendChild(style);
   }, []);
 
-  return <div id="google_translate_element" />;
+  return <div id="google_translate_element" className="min-h-[34px]" />;
 };
 
 export default GoogleTranslate;
