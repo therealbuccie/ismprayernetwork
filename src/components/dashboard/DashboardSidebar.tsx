@@ -62,10 +62,10 @@ export function DashboardSidebar({ activeTab, onTabChange, isSuperAdmin }: Props
           <Flame size={18} /> Prayer Room
         </Link>
         <Link
-          to="/"
+          to="/admin"
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
         >
-          <ArrowLeft size={18} /> Back to Site
+          <ArrowLeft size={18} /> Back to Hub
         </Link>
         <button
           onClick={signOut}

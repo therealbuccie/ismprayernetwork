@@ -21,6 +21,8 @@ import Events from "./pages/Events";
 import Programs from "./pages/Programs";
 import About from "./pages/About";
 import OurImpact from "./pages/OurImpact";
+import AdminHub from "./pages/AdminHub";
+import PrayerDashboard from "./pages/PrayerDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,7 +47,9 @@ const App = () => (
           <Route path="/bookstore" element={<Bookstore />} />
           <Route path="/global-prayer-map" element={<GlobalPrayerMap />} />
           <Route path="/prayer-points" element={<PrayerPoints />} />
+          <Route path="/admin" element={<AdminHub />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/prayer-dashboard" element={<PrayerDashboard />} />
           <Route path="/events" element={<Events />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/about" element={<About />} />
