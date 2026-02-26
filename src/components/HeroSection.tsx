@@ -127,9 +127,9 @@ const HeroSection = () => {
                 Join the Network
               </HeroButton>
             </Link>
-            <Link to="/prayer-requests">
+            <Link to="/prayer-room">
               <HeroButton variant="outline" size="lg">
-                Submit a Prayer
+                Prayer Room
               </HeroButton>
             </Link>
           </motion.div>
