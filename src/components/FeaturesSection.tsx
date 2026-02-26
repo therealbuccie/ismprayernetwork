@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { Globe, Users, BookOpen, MessageCircle, Video, Flame, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
+import { useState, useEffect, useCallback } from "react";
 import brandingCollage from "@/assets/branding-collage.png";
 import bannerPrayerNetwork from "@/assets/banner-prayer-network.png";
 import bannerInsideIsm from "@/assets/banner-inside-ism.png";
@@ -24,62 +23,29 @@ const banners = [
 ];
 
 const features = [
-  {
-    icon: Globe,
-    title: "Global Prayer Map",
-    description: "See prayer activity across the world in real-time.",
-    link: "/global-prayer-map",
-    color: "from-blue-500/20 to-cyan-500/20",
-    iconColor: "text-blue-400",
-  },
-  {
-    icon: Users,
-    title: "Prayer Groups",
-    description: "Create or join groups for focused intercession.",
-    link: "/groups",
-    color: "from-purple-500/20 to-pink-500/20",
-    iconColor: "text-purple-400",
-  },
-  {
-    icon: BookOpen,
-    title: "Prayer Points",
-    description: "Structured and guided prayer sessions.",
-    link: "/prayer-points",
-    color: "from-emerald-500/20 to-teal-500/20",
-    iconColor: "text-emerald-400",
-  },
-  {
-    icon: MessageCircle,
-    title: "Prayer Requests",
-    description: "Submit and respond to requests from ministers globally.",
-    link: "/prayer-requests",
-    color: "from-amber-500/20 to-orange-500/20",
-    iconColor: "text-amber-400",
-  },
-  {
-    icon: Video,
-    title: "Video Testimonies",
-    description: "Share powerful testimonies of answered prayers.",
-    link: "/testimonies",
-    color: "from-rose-500/20 to-red-500/20",
-    iconColor: "text-rose-400",
-  },
-  {
-    icon: Flame,
-    title: "Prayer Room",
-    description: "A dedicated space for worship and spiritual connection.",
-    link: "/prayer-room",
-    color: "from-yellow-500/20 to-amber-500/20",
-    iconColor: "text-yellow-400",
-  },
+  { icon: Globe, title: "Global Prayer Map", description: "See prayer activity across the world in real-time.", link: "/global-prayer-map", color: "from-blue-500/20 to-cyan-500/20", iconColor: "text-blue-400" },
+  { icon: Users, title: "Prayer Groups", description: "Create or join groups for focused intercession.", link: "/groups", color: "from-purple-500/20 to-pink-500/20", iconColor: "text-purple-400" },
+  { icon: BookOpen, title: "Prayer Points", description: "Structured and guided prayer sessions.", link: "/prayer-points", color: "from-emerald-500/20 to-teal-500/20", iconColor: "text-emerald-400" },
+  { icon: MessageCircle, title: "Prayer Requests", description: "Submit and respond to requests from ministers globally.", link: "/prayer-requests", color: "from-amber-500/20 to-orange-500/20", iconColor: "text-amber-400" },
+  { icon: Video, title: "Video Testimonies", description: "Share powerful testimonies of answered prayers.", link: "/testimonies", color: "from-rose-500/20 to-red-500/20", iconColor: "text-rose-400" },
+  { icon: Flame, title: "Prayer Room", description: "A dedicated space for worship and spiritual connection.", link: "/prayer-room", color: "from-yellow-500/20 to-amber-500/20", iconColor: "text-yellow-400" },
 ];
 
 const FeaturesSection = () => {
   const navigate = useNavigate();
+  const [active, setActive] = useState(0);
+
+  const next = useCallback(() => setActive((p) => (p + 1) % banners.length), []);
+
+  useEffect(() => {
+    const timer = setInterval(next, 3500);
+    return () => clearInterval(timer);
+  }, [next]);
+
+  const getIndex = (offset: number) => (active + offset + banners.length) % banners.length;
 
   return (
     <section className="relative py-24 overflow-hidden">
-      {/* Background texture */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
       <div className="absolute inset-0 opacity-[0.03]" style={{
         backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)`,
@@ -87,13 +53,13 @@ const FeaturesSection = () => {
       }} />
 
       <div className="relative container mx-auto px-4">
-        {/* Section header */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="text-center mb-16"
+          className="text-center mb-14"
         >
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase border border-accent/30 text-accent mb-6 bg-accent/5">
             Our Platform
@@ -108,58 +74,77 @@ const FeaturesSection = () => {
           </p>
         </motion.div>
 
-        {/* Immersive carousel with tilted perspective */}
+        {/* Coverflow-style carousel */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-4xl mx-auto mb-20"
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="mb-20"
         >
-          <div className="relative" style={{ perspective: '1200px' }}>
-            <Carousel
-              opts={{ loop: true, align: "center" }}
-              plugins={[Autoplay({ delay: 3500, stopOnInteraction: false })]}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-4">
-                {banners.map((banner, idx) => (
-                  <CarouselItem key={idx} className="pl-4">
+          <div
+            className="relative mx-auto flex items-center justify-center h-[200px] sm:h-[240px] md:h-[280px]"
+            style={{ perspective: '1000px' }}
+          >
+            {[-2, -1, 0, 1, 2].map((offset) => {
+              const idx = getIndex(offset);
+              const isCenter = offset === 0;
+              const absOffset = Math.abs(offset);
+              return (
+                <motion.div
+                  key={`${idx}-${offset}`}
+                  onClick={() => {
+                    if (offset !== 0) setActive(idx);
+                  }}
+                  animate={{
+                    x: `${offset * 110}%`,
+                    z: isCenter ? 0 : -absOffset * 120,
+                    rotateY: offset * -15,
+                    scale: isCenter ? 1 : 0.75 - absOffset * 0.05,
+                    opacity: absOffset > 1 ? 0.4 : 1,
+                  }}
+                  transition={{ type: "spring", stiffness: 260, damping: 26 }}
+                  className={`absolute w-[55%] sm:w-[45%] md:w-[38%] aspect-video rounded-xl overflow-hidden shadow-xl ${!isCenter ? 'cursor-pointer' : ''}`}
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  <img
+                    src={banners[idx].src}
+                    alt={banners[idx].alt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {/* Darken non-center slides */}
+                  {!isCenter && (
+                    <div className="absolute inset-0 bg-black/30" />
+                  )}
+                  {/* Label on center */}
+                  {isCenter && (
                     <motion.div
-                      whileHover={{ scale: 1.02, rotateY: 0 }}
-                      className="relative rounded-2xl overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] aspect-video group"
-                      style={{ transformStyle: 'preserve-3d' }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 sm:p-4"
                     >
-                      <img
-                        src={banner.src}
-                        alt={banner.alt}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      {/* Bottom label */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-                        <p className="text-white text-sm font-medium drop-shadow-lg">{banner.alt}</p>
-                      </div>
+                      <p className="text-white text-xs sm:text-sm font-medium drop-shadow-lg">{banners[idx].alt}</p>
                     </motion.div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden sm:flex -left-5 md:-left-14 w-10 h-10 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground" />
-              <CarouselNext className="hidden sm:flex -right-5 md:-right-14 w-10 h-10 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground" />
-            </Carousel>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
 
-            {/* Dots / progress indicator */}
-            <div className="flex justify-center gap-1.5 mt-6">
-              {banners.map((_, i) => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full bg-accent/30" />
-              ))}
-            </div>
+          {/* Navigation dots */}
+          <div className="flex justify-center gap-2 mt-6">
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActive(i)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === active ? 'w-6 bg-accent' : 'w-1.5 bg-accent/25 hover:bg-accent/50'}`}
+              />
+            ))}
           </div>
         </motion.div>
 
-        {/* Feature cards — bento-style grid */}
+        {/* Feature cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {features.map((feature, idx) => (
             <motion.div
@@ -171,9 +156,7 @@ const FeaturesSection = () => {
               onClick={() => navigate(feature.link)}
               className={`group relative rounded-2xl border border-border/50 bg-gradient-to-br ${feature.color} backdrop-blur-sm p-6 cursor-pointer overflow-hidden transition-all duration-300 hover:border-accent/40 hover:shadow-[0_8px_30px_-12px] hover:shadow-accent/20 hover:-translate-y-1`}
             >
-              {/* Glow effect on hover */}
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-accent/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
               <div className="relative z-10">
                 <div className={`w-11 h-11 rounded-xl bg-background/80 border border-border/50 flex items-center justify-center mb-4 ${feature.iconColor} group-hover:scale-110 transition-transform duration-300`}>
                   <feature.icon size={20} />
