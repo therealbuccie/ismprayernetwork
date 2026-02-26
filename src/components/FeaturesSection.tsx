@@ -86,45 +86,48 @@ const FeaturesSection = () => {
             className="relative mx-auto flex items-center justify-center h-[200px] sm:h-[240px] md:h-[280px]"
             style={{ perspective: '1000px' }}
           >
-            {[-2, -1, 0, 1, 2].map((offset) => {
-              const idx = getIndex(offset);
+            {banners.map((banner, idx) => {
+              let offset = idx - active;
+              // Wrap around for looping
+              if (offset > banners.length / 2) offset -= banners.length;
+              if (offset < -banners.length / 2) offset += banners.length;
               const isCenter = offset === 0;
               const absOffset = Math.abs(offset);
+              const isVisible = absOffset <= 2;
+
               return (
                 <motion.div
-                  key={`${idx}-${offset}`}
+                  key={idx}
                   onClick={() => {
-                    if (offset !== 0) setActive(idx);
+                    if (!isCenter) setActive(idx);
                   }}
                   animate={{
                     x: `${offset * 110}%`,
                     z: isCenter ? 0 : -absOffset * 120,
                     rotateY: offset * -15,
-                    scale: isCenter ? 1 : 0.75 - absOffset * 0.05,
-                    opacity: absOffset > 1 ? 0.4 : 1,
+                    scale: isCenter ? 1 : Math.max(0.65, 0.75 - absOffset * 0.05),
+                    opacity: isVisible ? (absOffset > 1 ? 0.4 : 1) : 0,
                   }}
-                  transition={{ type: "spring", stiffness: 260, damping: 26 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 24 }}
                   className={`absolute w-[55%] sm:w-[45%] md:w-[38%] aspect-video rounded-xl overflow-hidden shadow-xl ${!isCenter ? 'cursor-pointer' : ''}`}
-                  style={{ transformStyle: 'preserve-3d' }}
+                  style={{ transformStyle: 'preserve-3d', pointerEvents: isVisible ? 'auto' : 'none' }}
                 >
                   <img
-                    src={banners[idx].src}
-                    alt={banners[idx].alt}
+                    src={banner.src}
+                    alt={banner.alt}
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  {/* Darken non-center slides */}
                   {!isCenter && (
-                    <div className="absolute inset-0 bg-black/30" />
+                    <div className="absolute inset-0 bg-black/30 transition-opacity duration-300" />
                   )}
-                  {/* Label on center */}
                   {isCenter && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 sm:p-4"
                     >
-                      <p className="text-white text-xs sm:text-sm font-medium drop-shadow-lg">{banners[idx].alt}</p>
+                      <p className="text-white text-xs sm:text-sm font-medium drop-shadow-lg">{banner.alt}</p>
                     </motion.div>
                   )}
                 </motion.div>
