@@ -26,10 +26,13 @@ const FloatingTranslate = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-14 right-0 w-[240px] rounded-xl border border-border/60 bg-popover/95 backdrop-blur-xl shadow-xl p-4"
+            className="absolute bottom-14 right-0 w-[260px] rounded-xl border border-border/60 bg-popover shadow-xl p-4 overflow-visible"
+            style={{ zIndex: 99999 }}
           >
             <p className="text-xs font-medium text-muted-foreground mb-2">🌐 Translate Page</p>
-            <GoogleTranslate />
+            <div className="overflow-visible">
+              <GoogleTranslate />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
