@@ -10,8 +10,13 @@ const CategoriesManager = lazy(() => import("@/components/dashboard/CategoriesMa
 const UsersManager = lazy(() => import("@/components/dashboard/UsersManager").then(m => ({ default: m.UsersManager })));
 const ContactMessagesManager = lazy(() => import("@/components/dashboard/ContactMessagesManager").then(m => ({ default: m.ContactMessagesManager })));
 const TestimoniesManager = lazy(() => import("@/components/dashboard/TestimoniesManager").then(m => ({ default: m.TestimoniesManager })));
+const EventsManager = lazy(() => import("@/components/dashboard/EventsManager").then(m => ({ default: m.EventsManager })));
+const ProgramsManager = lazy(() => import("@/components/dashboard/ProgramsManager").then(m => ({ default: m.ProgramsManager })));
+const NewsletterManager = lazy(() => import("@/components/dashboard/NewsletterManager").then(m => ({ default: m.NewsletterManager })));
+const PrayerRequestsManager = lazy(() => import("@/components/dashboard/PrayerRequestsManager").then(m => ({ default: m.PrayerRequestsManager })));
+const PrayerGroupsManager = lazy(() => import("@/components/dashboard/PrayerGroupsManager").then(m => ({ default: m.PrayerGroupsManager })));
 
-export type DashboardTab = "home" | "books" | "categories" | "users" | "messages" | "testimonies";
+export type DashboardTab = "home" | "books" | "categories" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups";
 
 function TabSkeleton() {
   return (
@@ -63,6 +68,11 @@ const Dashboard = () => {
             {activeTab === "users" && <UsersManager />}
             {activeTab === "messages" && <ContactMessagesManager />}
             {activeTab === "testimonies" && <TestimoniesManager />}
+            {activeTab === "events" && <EventsManager />}
+            {activeTab === "programs" && <ProgramsManager />}
+            {activeTab === "newsletter" && <NewsletterManager />}
+            {activeTab === "prayer-requests" && <PrayerRequestsManager />}
+            {activeTab === "prayer-groups" && <PrayerGroupsManager />}
           </Suspense>
         </div>
       </main>
