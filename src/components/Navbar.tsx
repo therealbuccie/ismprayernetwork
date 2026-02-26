@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import GoogleTranslate from "./GoogleTranslate";
 import logo from "@/assets/logo.png";
 
@@ -32,6 +33,17 @@ const Navbar = () => {
   const moreRef = useRef<HTMLDivElement>(null);
   const translateRef = useRef<HTMLDivElement>(null);
   const { user, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error("Failed to sign out");
+    } else {
+      toast.success("Signed out successfully");
+      navigate("/");
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -160,7 +172,7 @@ const Navbar = () => {
             </HeroButton>
           </Link>
           {user ? (
-              <HeroButton variant="outline" size="sm" onClick={() => signOut()} className="text-foreground border-border hover:bg-muted gap-1.5 cursor-pointer">
+              <HeroButton variant="outline" size="sm" onClick={handleSignOut} className="text-foreground border-border hover:bg-muted gap-1.5 cursor-pointer">
                 <LogOut size={14} /> Sign Out
               </HeroButton>
           ) : (
@@ -266,7 +278,7 @@ const Navbar = () => {
                 </Link>
                 {user ? (
                   <div className="flex-1">
-                    <HeroButton variant="outline" size="sm" onClick={() => { signOut(); setMobileOpen(false); }} className="w-full text-foreground border-border cursor-pointer">
+                    <HeroButton variant="outline" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }} className="w-full text-foreground border-border cursor-pointer">
                       Sign Out
                     </HeroButton>
                   </div>
