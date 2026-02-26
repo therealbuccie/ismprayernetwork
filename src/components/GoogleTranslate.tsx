@@ -44,8 +44,8 @@ const GoogleTranslate = () => {
       #google_translate_element .goog-te-gadget { font-size: 0 !important; line-height: 0 !important; }
       #google_translate_element .goog-te-combo {
         font-family: inherit !important;
-        font-size: 13px !important;
-        padding: 8px 12px !important;
+        font-size: 14px !important;
+        padding: 10px 12px !important;
         border-radius: 8px !important;
         border: 1px solid hsl(var(--border)) !important;
         background: hsl(var(--background)) !important;
@@ -53,6 +53,10 @@ const GoogleTranslate = () => {
         outline: none !important;
         cursor: pointer !important;
         width: 100% !important;
+        -webkit-appearance: menulist !important;
+        appearance: menulist !important;
+        position: relative !important;
+        z-index: 999999 !important;
         transition: border-color 0.2s, box-shadow 0.2s !important;
       }
       #google_translate_element .goog-te-combo:hover {
