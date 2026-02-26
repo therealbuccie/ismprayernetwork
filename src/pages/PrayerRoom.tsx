@@ -1,9 +1,9 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { motion } from "framer-motion";
-import { Flame, Heart, BookOpen, Share2, Copy, Check, Users, Send } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Flame, Heart, BookOpen, Share2, Copy, Check, Users, Send, UserPlus } from "lucide-react";
 import { HeroButton } from "@/components/HeroButton";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ const todaysPrayerPoint = {
   body: "Thank God for the global broadcast of the Healing Streams Live Healing Services with Pastor Chris through television and radio networks around the world. Pray that every viewer and listener receives miracles, salvation, and restoration through every transmission. Pray that the signals are clear and unhindered, reaching every language, territory, and nation.",
 };
 
-const shareUrl = "https://ismprayernetwork.lovable.app/prayer-room";
+const BASE_URL = "https://ismprayernetwork.lovable.app";
 
 const ministersPraying = [
   { id: 1, name: "Pastor Grace", location: "Lagos" },
@@ -44,6 +44,8 @@ const PrayerRoom = () => {
   const [giveModalOpen, setGiveModalOpen] = useState(false);
   const [prayerText, setPrayerText] = useState("");
   const [submittingPrayer, setSubmittingPrayer] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [mySessionSlug, setMySessionSlug] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
@@ -74,6 +76,99 @@ const PrayerRoom = () => {
       return data;
     },
   });
+
+  // Fetch or create the user's prayer session
+  useEffect(() => {
+    if (!user) return;
+    const fetchOrCreateSession = async () => {
+      const { data } = await supabase
+        .from("prayer_room_sessions")
+        .select("slug")
+        .eq("owner_id", user.id)
+        .eq("is_active", true)
+        .limit(1)
+        .single();
+      if (data) setMySessionSlug(data.slug);
+    };
+    fetchOrCreateSession();
+  }, [user]);
+
+  const shareUrl = mySessionSlug
+    ? `${BASE_URL}/pray/${mySessionSlug}`
+    : `${BASE_URL}/prayer-room`;
+
+  // Query participants for current session
+  const { data: mySession } = useQuery({
+    queryKey: ["my-prayer-session", mySessionSlug],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("prayer_room_sessions")
+        .select("id")
+        .eq("slug", mySessionSlug!)
+        .single();
+      return data;
+    },
+    enabled: !!mySessionSlug,
+  });
+
+  const { data: participants } = useQuery({
+    queryKey: ["session-participants", mySession?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("prayer_room_participants")
+        .select("*")
+        .eq("session_id", mySession!.id)
+        .order("joined_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!mySession?.id,
+  });
+
+  // Realtime subscription for new participants
+  useEffect(() => {
+    if (!mySession?.id) return;
+    const channel = supabase
+      .channel("prayer-participants")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "prayer_room_participants",
+          filter: `session_id=eq.${mySession.id}`,
+        },
+        (payload) => {
+          const p = payload.new as any;
+          toast.success(`${p.full_name} joined your prayer! 🙏`);
+          queryClient.invalidateQueries({ queryKey: ["session-participants", mySession.id] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [mySession?.id, queryClient]);
+
+  const generateUniqueLink = async () => {
+    if (!user) {
+      toast.error("Please sign in to generate your unique prayer link");
+      return;
+    }
+    setGeneratingLink(true);
+    try {
+      const slug = `${(profile?.full_name || "minister").toLowerCase().replace(/[^a-z0-9]/g, "-")}-${Date.now().toString(36)}`;
+      const { error } = await supabase.from("prayer_room_sessions").insert({
+        slug,
+        owner_id: user.id,
+        owner_name: profile?.full_name || "A Minister",
+      });
+      if (error) throw error;
+      setMySessionSlug(slug);
+      toast.success("Your unique prayer link is ready! Share it with loved ones.");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -181,29 +276,75 @@ const PrayerRoom = () => {
               </div>
             </div>
 
-            {/* Share Link */}
-            <div className="mt-4 flex items-center gap-2">
-              <div className="flex-1 glass-card rounded-lg px-3 py-2 text-xs text-muted-foreground truncate border border-border/50">
-                {shareUrl}
-              </div>
-              <button
-                onClick={handleCopy}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium hover:opacity-90 transition-opacity"
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? "Copied!" : "Share Link"}
-              </button>
-              <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: "ISM Prayer Room", url: shareUrl });
-                  }
-                }}
-                className="p-2 rounded-lg border border-border hover:bg-muted transition-colors"
-              >
-                <Share2 size={14} className="text-muted-foreground" />
-              </button>
+            {/* Unique Prayer Link */}
+            <div className="mt-4">
+              {!mySessionSlug && user ? (
+                <Button
+                  onClick={generateUniqueLink}
+                  disabled={generatingLink}
+                  className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2"
+                >
+                  <UserPlus size={16} /> {generatingLink ? "Generating..." : "Generate Your Unique Prayer Link"}
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 glass-card rounded-lg px-3 py-2 text-xs text-muted-foreground truncate border border-border/50">
+                    {shareUrl}
+                  </div>
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium hover:opacity-90 transition-opacity"
+                  >
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copied ? "Copied!" : "Share Link"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({ title: "ISM Prayer Room", url: shareUrl });
+                      }
+                    }}
+                    className="p-2 rounded-lg border border-border hover:bg-muted transition-colors"
+                  >
+                    <Share2 size={14} className="text-muted-foreground" />
+                  </button>
+                </div>
+              )}
+              {!user && (
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Sign in to generate your unique prayer link to share with loved ones.
+                </p>
+              )}
             </div>
+
+            {/* Participants who joined via your link */}
+            {participants && participants.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 glass-card rounded-xl p-4 border border-accent/30"
+              >
+                <h3 className="font-serif font-semibold text-sm mb-3 flex items-center gap-2">
+                  <Users size={16} className="text-accent" />
+                  Joined Your Prayer ({participants.length})
+                </h3>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  <AnimatePresence>
+                    {participants.map((p) => (
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="font-medium text-foreground">{p.full_name}</span>
+                        <span className="text-xs text-muted-foreground">{p.location || ""}</span>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Right Sidebar */}

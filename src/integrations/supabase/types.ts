@@ -337,6 +337,65 @@ export type Database = {
         }
         Relationships: []
       }
+      prayer_room_participants: {
+        Row: {
+          full_name: string
+          id: string
+          joined_at: string
+          location: string | null
+          session_id: string
+        }
+        Insert: {
+          full_name: string
+          id?: string
+          joined_at?: string
+          location?: string | null
+          session_id: string
+        }
+        Update: {
+          full_name?: string
+          id?: string
+          joined_at?: string
+          location?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_room_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_room_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prayer_room_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          owner_id: string
+          owner_name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          owner_id: string
+          owner_name?: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          owner_id?: string
+          owner_name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
