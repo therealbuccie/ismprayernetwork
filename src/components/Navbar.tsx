@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Globe } from "lucide-react";
+import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Globe, Radio } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +18,7 @@ const moreItems = [
   { label: "Testimonies", href: "/testimonies" },
   { label: "Events", href: "/events" },
   { label: "Programs", href: "/programs" },
+  { label: "Online Radio", href: "/radio" },
   { label: "Our Impact", href: "/our-impact" },
   { label: "About", href: "/about" },
 ];
