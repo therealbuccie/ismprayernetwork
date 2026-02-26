@@ -25,6 +25,7 @@ import AdminHub from "./pages/AdminHub";
 import PrayerDashboard from "./pages/PrayerDashboard";
 import PublicDashboard from "./pages/PublicDashboard";
 import PublicPrayerDashboard from "./pages/PublicPrayerDashboard";
+import PublicBookstoreDashboard from "./pages/PublicBookstoreDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/prayer-dashboard" element={<PrayerDashboard />} />
           <Route path="/api/dashboard" element={<PublicDashboard />} />
           <Route path="/api/prayer-dashboard" element={<PublicPrayerDashboard />} />
+          <Route path="/api/bookstore" element={<PublicBookstoreDashboard />} />
           <Route path="/events" element={<Events />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/about" element={<About />} />
