@@ -65,7 +65,9 @@ export type Database = {
           isbn: string | null
           pages: number | null
           price: number
+          short_description: string | null
           stock: number
+          subtitle: string | null
           title: string
           updated_at: string
         }
@@ -84,7 +86,9 @@ export type Database = {
           isbn?: string | null
           pages?: number | null
           price?: number
+          short_description?: string | null
           stock?: number
+          subtitle?: string | null
           title: string
           updated_at?: string
         }
@@ -103,7 +107,9 @@ export type Database = {
           isbn?: string | null
           pages?: number | null
           price?: number
+          short_description?: string | null
           stock?: number
+          subtitle?: string | null
           title?: string
           updated_at?: string
         }

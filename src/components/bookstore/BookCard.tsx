@@ -1,7 +1,6 @@
 import { Book } from "@/hooks/useBooks";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Download, ShoppingCart, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface BookCardProps {
@@ -10,7 +9,7 @@ interface BookCardProps {
   onAddToCart: (book: Book, format: "physical" | "digital") => void;
 }
 
-export function BookCard({ book, onSelect, onAddToCart }: BookCardProps) {
+export function BookCard({ book, onSelect }: BookCardProps) {
   return (
     <motion.div
       layout
@@ -32,58 +31,31 @@ export function BookCard({ book, onSelect, onAddToCart }: BookCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-          {book.featured && (
+        {/* Featured badge only */}
+        {book.featured && (
+          <div className="absolute top-3 left-3">
             <Badge className="bg-accent text-accent-foreground text-[10px] gap-1">
               <Star className="w-3 h-3" /> Featured
             </Badge>
-          )}
-          {book.is_digital && (
-            <Badge variant="secondary" className="text-[10px] gap-1">
-              <Download className="w-3 h-3" /> Digital
-            </Badge>
-          )}
-          {book.is_physical && (
-            <Badge variant="secondary" className="text-[10px] gap-1">
-              <BookOpen className="w-3 h-3" /> Physical
-            </Badge>
-          )}
-        </div>
-
-        {/* Quick add */}
-        <div className="absolute bottom-3 left-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-          {book.is_physical && book.stock > 0 && (
-            <Button
-              size="sm"
-              className="flex-1 text-xs bg-primary/90 backdrop-blur-sm"
-              onClick={(e) => { e.stopPropagation(); onAddToCart(book, "physical"); }}
-            >
-              <ShoppingCart className="w-3 h-3 mr-1" /> Physical
-            </Button>
-          )}
-          {book.is_digital && (
-            <Button
-              size="sm"
-              variant="secondary"
-              className="flex-1 text-xs backdrop-blur-sm"
-              onClick={(e) => { e.stopPropagation(); onAddToCart(book, "digital"); }}
-            >
-              <Download className="w-3 h-3 mr-1" /> Digital
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Info */}
-      <div className="p-4 space-y-2">
+      <div className="p-4 space-y-1.5">
         <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
           {book.categories?.name || "Uncategorized"}
         </p>
         <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-foreground group-hover:text-accent transition-colors">
           {book.title}
         </h3>
+        {book.subtitle && (
+          <p className="text-xs text-muted-foreground/80 line-clamp-1 italic">{book.subtitle}</p>
+        )}
         <p className="text-xs text-muted-foreground">{book.author}</p>
+        {book.short_description && (
+          <p className="text-xs text-muted-foreground/70 line-clamp-2 pt-1">{book.short_description}</p>
+        )}
         <div className="flex items-center justify-between pt-1">
           <span className="text-lg font-bold gold-gradient">${book.price.toFixed(2)}</span>
           {book.is_physical && book.stock <= 10 && book.stock > 0 && (

@@ -15,8 +15,10 @@ import { toast } from "sonner";
 
 interface BookForm {
   title: string;
+  subtitle: string;
   author: string;
   description: string;
+  short_description: string;
   price: string;
   stock: string;
   pages: string;
@@ -30,8 +32,10 @@ interface BookForm {
 }
 
 const emptyForm: BookForm = {
-  title: "", author: "", description: "", price: "0", stock: "0", pages: "",
-  isbn: "", cover_image_url: "", cloudpdf_document_id: "", category_id: "", is_digital: false, is_physical: true, featured: false,
+  title: "", subtitle: "", author: "", description: "", short_description: "",
+  price: "0", stock: "0", pages: "",
+  isbn: "", cover_image_url: "", cloudpdf_document_id: "", category_id: "",
+  is_digital: false, is_physical: true, featured: false,
 };
 
 export function BooksManager() {
@@ -48,8 +52,13 @@ export function BooksManager() {
 
   const openEdit = (book: Book) => {
     setForm({
-      title: book.title, author: book.author, description: book.description || "",
-      price: String(book.price), stock: String(book.stock), pages: book.pages ? String(book.pages) : "",
+      title: book.title,
+      subtitle: book.subtitle || "",
+      author: book.author,
+      description: book.description || "",
+      short_description: book.short_description || "",
+      price: String(book.price), stock: String(book.stock),
+      pages: book.pages ? String(book.pages) : "",
       isbn: book.isbn || "", cover_image_url: book.cover_image_url || "",
       cloudpdf_document_id: book.cloudpdf_document_id || "",
       category_id: book.category_id || "", is_digital: book.is_digital,
@@ -75,10 +84,17 @@ export function BooksManager() {
       }
 
       const record = {
-        title: form.title, author: form.author, description: form.description || null,
-        price: parseFloat(form.price) || 0, stock: parseInt(form.stock) || 0,
-        pages: form.pages ? parseInt(form.pages) : null, isbn: form.isbn || null,
-        cover_image_url: coverUrl || null, cloudpdf_document_id: form.cloudpdf_document_id || null,
+        title: form.title,
+        subtitle: form.subtitle || null,
+        author: form.author,
+        description: form.description || null,
+        short_description: form.short_description || null,
+        price: parseFloat(form.price) || 0,
+        stock: parseInt(form.stock) || 0,
+        pages: form.pages ? parseInt(form.pages) : null,
+        isbn: form.isbn || null,
+        cover_image_url: coverUrl || null,
+        cloudpdf_document_id: form.cloudpdf_document_id || null,
         category_id: form.category_id || null,
         is_digital: form.is_digital, is_physical: form.is_physical, featured: form.featured,
       };
@@ -164,7 +180,12 @@ export function BooksManager() {
                       <div className="w-10 h-14 bg-muted rounded" />
                     )}
                   </TableCell>
-                  <TableCell className="font-medium">{book.title}</TableCell>
+                  <TableCell>
+                    <div>
+                      <span className="font-medium">{book.title}</span>
+                      {book.subtitle && <p className="text-xs text-muted-foreground">{book.subtitle}</p>}
+                    </div>
+                  </TableCell>
                   <TableCell>{book.author}</TableCell>
                   <TableCell>${book.price}</TableCell>
                   <TableCell>{book.stock}</TableCell>
@@ -188,11 +209,26 @@ export function BooksManager() {
             <DialogTitle>{editingId ? "Edit Book" : "Add Book"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div><Label>Title *</Label><Input value={form.title} onChange={e => set("title", e.target.value)} /></div>
-              <div><Label>Author *</Label><Input value={form.author} onChange={e => set("author", e.target.value)} /></div>
+            <div>
+              <Label>Title *</Label>
+              <Input value={form.title} onChange={e => set("title", e.target.value)} />
             </div>
-            <div><Label>Description</Label><textarea className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm" rows={3} value={form.description} onChange={e => set("description", e.target.value)} /></div>
+            <div>
+              <Label>Subtitle</Label>
+              <Input value={form.subtitle} onChange={e => set("subtitle", e.target.value)} placeholder="e.g. A Guide for Spiritual Growth" />
+            </div>
+            <div>
+              <Label>Author *</Label>
+              <Input value={form.author} onChange={e => set("author", e.target.value)} />
+            </div>
+            <div>
+              <Label>Short Description <span className="text-muted-foreground text-xs">(shown on card)</span></Label>
+              <Input value={form.short_description} onChange={e => set("short_description", e.target.value)} placeholder="Brief one-liner about the book" />
+            </div>
+            <div>
+              <Label>Long Description <span className="text-muted-foreground text-xs">(shown in detail view)</span></Label>
+              <textarea className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm" rows={4} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Full description of the book..." />
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div><Label>Price ($)</Label><Input type="number" step="0.01" value={form.price} onChange={e => set("price", e.target.value)} /></div>
               <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={e => set("stock", e.target.value)} /></div>
