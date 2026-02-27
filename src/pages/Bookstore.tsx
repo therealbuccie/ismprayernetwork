@@ -253,6 +253,7 @@ const Bookstore = () => {
         totalPrice={cart.totalPrice}
         onUpdateQuantity={cart.updateQuantity}
         onRemove={cart.removeFromCart}
+        onClearCart={cart.clearCart}
       />
     </div>
   );

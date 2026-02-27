@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag } from "lucide-react";
+import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
@@ -15,6 +15,7 @@ const tabs = [
   { id: "books" as const, label: "Books", icon: BookOpen },
   { id: "categories" as const, label: "Categories", icon: Tag },
   { id: "purchases" as const, label: "Purchases", icon: ShoppingBag },
+  { id: "orders" as const, label: "Orders", icon: ClipboardList },
   { id: "events" as const, label: "Events", icon: CalendarHeart },
   { id: "programs" as const, label: "Programs", icon: CalendarDays },
   { id: "testimonies" as const, label: "Testimonies", icon: MessageSquare },
@@ -23,6 +24,7 @@ const tabs = [
   { id: "prayer-requests" as const, label: "Prayer Requests", icon: HandHeart },
   { id: "prayer-groups" as const, label: "Prayer Groups", icon: UsersRound },
   { id: "users" as const, label: "Users & Roles", icon: Users, superAdminOnly: true },
+  { id: "settings" as const, label: "Settings", icon: Settings },
 ];
 
 export function DashboardSidebar({ activeTab, onTabChange, isSuperAdmin }: Props) {
