@@ -1,14 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useBooks, useCategories, Book } from "@/hooks/useBooks";
 import { useCart } from "@/hooks/useCart";
 import { BookCard } from "@/components/bookstore/BookCard";
 import { BookDetailModal } from "@/components/bookstore/BookDetailModal";
 import { CartSidebar } from "@/components/bookstore/CartSidebar";
+import { BookstoreAuthModal } from "@/components/bookstore/BookstoreAuthModal";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
@@ -18,6 +17,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const Bookstore = () => {
   const { data: books, isLoading } = useBooks();
@@ -28,6 +29,35 @@ const Bookstore = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [formatFilter, setFormatFilter] = useState<"all" | "digital" | "physical">("all");
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pendingCartAction, setPendingCartAction] = useState<{ book: Book; format: "physical" | "digital" } | null>(null);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // When user logs in and there's a pending cart action, execute it
+  useEffect(() => {
+    if (user && pendingCartAction) {
+      cart.addToCart(pendingCartAction.book, pendingCartAction.format);
+      toast({ title: "Added to cart", description: `${pendingCartAction.book.title} added to your cart.` });
+      setPendingCartAction(null);
+    }
+  }, [user, pendingCartAction]);
+
+  const handleAddToCart = (book: Book, format: "physical" | "digital") => {
+    if (!user) {
+      setPendingCartAction({ book, format });
+      setAuthModalOpen(true);
+      return;
+    }
+    cart.addToCart(book, format);
+    toast({ title: "Added to cart", description: `${book.title} (${format}) added to your cart.` });
+    setSelectedBook(null);
+  };
 
   const filteredBooks = useMemo(() => {
     if (!books) return [];
@@ -89,10 +119,7 @@ const Bookstore = () => {
                 className="pl-12 pr-4 h-12 rounded-full bg-background/90 backdrop-blur-sm border-border/50 text-foreground shadow-lg"
               />
               {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2"
-                >
+                <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2">
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               )}
@@ -124,7 +151,6 @@ const Bookstore = () => {
             <span className="hidden sm:inline">Filter:</span>
           </div>
 
-          {/* Categories */}
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory(null)}
@@ -177,12 +203,7 @@ const Bookstore = () => {
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {featuredBooks.map((book) => (
-              <BookCard
-                key={book.id}
-                book={book}
-                onSelect={setSelectedBook}
-                onAddToCart={cart.addToCart}
-              />
+              <BookCard key={book.id} book={book} onSelect={setSelectedBook} onAddToCart={handleAddToCart} />
             ))}
           </div>
         </section>
@@ -221,12 +242,7 @@ const Bookstore = () => {
           <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             <AnimatePresence>
               {filteredBooks.map((book) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  onSelect={setSelectedBook}
-                  onAddToCart={cart.addToCart}
-                />
+                <BookCard key={book.id} book={book} onSelect={setSelectedBook} onAddToCart={handleAddToCart} />
               ))}
             </AnimatePresence>
           </motion.div>
@@ -240,10 +256,7 @@ const Bookstore = () => {
         book={selectedBook}
         open={!!selectedBook}
         onClose={() => setSelectedBook(null)}
-        onAddToCart={(book, format) => {
-          cart.addToCart(book, format);
-          setSelectedBook(null);
-        }}
+        onAddToCart={handleAddToCart}
       />
 
       <CartSidebar
@@ -254,6 +267,12 @@ const Bookstore = () => {
         onUpdateQuantity={cart.updateQuantity}
         onRemove={cart.removeFromCart}
         onClearCart={cart.clearCart}
+      />
+
+      <BookstoreAuthModal
+        open={authModalOpen}
+        onClose={() => { setAuthModalOpen(false); setPendingCartAction(null); }}
+        onSuccess={() => {}}
       />
     </div>
   );

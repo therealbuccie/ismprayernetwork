@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 export interface Book {
   id: string;
   title: string;
+  subtitle: string | null;
   author: string;
   description: string | null;
+  short_description: string | null;
   price: number;
   cover_image_url: string | null;
   is_digital: boolean;

@@ -3,7 +3,6 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Download, ShoppingCart, Star, X } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface BookDetailModalProps {
   book: Book | null;
@@ -48,12 +47,18 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
 
             <div>
               <h2 className="text-2xl font-bold text-foreground mb-1">{book.title}</h2>
+              {book.subtitle && (
+                <p className="text-sm text-muted-foreground italic mb-1">{book.subtitle}</p>
+              )}
               <p className="text-muted-foreground">by {book.author}</p>
             </div>
 
             <p className="text-3xl font-bold gold-gradient">${book.price.toFixed(2)}</p>
 
-            <p className="text-sm text-muted-foreground leading-relaxed">{book.description}</p>
+            {/* Long description */}
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+              {book.description || book.short_description || "No description available."}
+            </p>
 
             {/* Meta */}
             <div className="grid grid-cols-2 gap-3 text-sm">
@@ -69,13 +74,6 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
                   <p className="font-semibold text-foreground text-xs">{book.isbn}</p>
                 </div>
               )}
-              <div className="glass-card rounded-lg p-3">
-                <p className="text-muted-foreground text-xs">Formats</p>
-                <div className="flex gap-1 mt-1">
-                  {book.is_physical && <Badge variant="secondary" className="text-[10px]"><BookOpen className="w-3 h-3 mr-1" />Physical</Badge>}
-                  {book.is_digital && <Badge variant="secondary" className="text-[10px]"><Download className="w-3 h-3 mr-1" />Digital</Badge>}
-                </div>
-              </div>
               {book.is_physical && (
                 <div className="glass-card rounded-lg p-3">
                   <p className="text-muted-foreground text-xs">Stock</p>
@@ -86,15 +84,21 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
               )}
             </div>
 
-            {/* Actions */}
+            {/* Add to Cart - format choice happens here */}
             <div className="flex flex-col gap-2 mt-auto pt-4">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Choose format</p>
               {book.is_physical && book.stock > 0 && (
                 <Button
                   size="lg"
                   className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90 font-semibold"
                   onClick={() => onAddToCart(book, "physical")}
                 >
-                  <ShoppingCart className="w-4 h-4 mr-2" /> Add Physical Copy to Cart
+                  <ShoppingCart className="w-4 h-4 mr-2" /> Add Physical Copy — ${book.price.toFixed(2)}
+                </Button>
+              )}
+              {book.is_physical && book.stock === 0 && (
+                <Button size="lg" disabled className="w-full font-semibold">
+                  <BookOpen className="w-4 h-4 mr-2" /> Physical — Out of Stock
                 </Button>
               )}
               {book.is_digital && (
@@ -104,8 +108,11 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
                   className="w-full border-accent text-accent hover:bg-accent/10 font-semibold"
                   onClick={() => onAddToCart(book, "digital")}
                 >
-                  <Download className="w-4 h-4 mr-2" /> Add Digital Copy to Cart
+                  <Download className="w-4 h-4 mr-2" /> Add Digital Copy — ${book.price.toFixed(2)}
                 </Button>
+              )}
+              {!book.is_physical && !book.is_digital && (
+                <p className="text-sm text-muted-foreground text-center">No formats available</p>
               )}
             </div>
           </div>
