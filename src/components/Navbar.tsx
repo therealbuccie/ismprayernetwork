@@ -40,15 +40,15 @@ const Navbar = () => {
   const handleSignOut = async () => {
     console.log("Sign out clicked");
     try {
+      // Clear all Supabase storage first to ensure session is gone
+      const storageKeys = Object.keys(localStorage).filter(k => k.startsWith('sb-'));
+      storageKeys.forEach(k => localStorage.removeItem(k));
       await supabase.auth.signOut();
-      toast.success("Signed out successfully");
-      // Force full reload to clear all state
-      window.location.href = "/";
     } catch (err) {
       console.error("Sign out exception:", err);
-      localStorage.clear();
-      window.location.href = "/";
     }
+    // Force full reload after clearing
+    window.location.href = "/";
   };
 
   useEffect(() => {
