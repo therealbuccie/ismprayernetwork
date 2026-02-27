@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizonta
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import GoogleTranslate from "./GoogleTranslate";
 import logo from "@/assets/logo.png";
@@ -37,18 +38,14 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
+    console.log("Sign out clicked");
     try {
-      const { error } = await signOut();
-      if (error) {
-        console.error("Sign out error:", error);
-        toast.error("Failed to sign out");
-      } else {
-        toast.success("Signed out successfully");
-        navigate("/");
-      }
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      // Force full reload to clear all state
+      window.location.href = "/";
     } catch (err) {
       console.error("Sign out exception:", err);
-      // Force sign out by clearing local storage and reloading
       localStorage.clear();
       window.location.href = "/";
     }
