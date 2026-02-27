@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Tags } from "lucide-react";
+import { BookstorePinGate } from "@/components/dashboard/BookstorePinGate";
 
 const BooksManager = lazy(() =>
   import("@/components/dashboard/BooksManager").then((m) => ({ default: m.BooksManager }))
@@ -22,6 +23,9 @@ function TabSkeleton() {
 
 const PublicBookstoreDashboard = () => {
   const [tab, setTab] = useState<Tab>("books");
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("bookstore_unlocked") === "1");
+
+  if (!unlocked) return <BookstorePinGate onUnlock={() => setUnlocked(true)} />;
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "books", label: "Books", icon: <BookOpen size={16} /> },
