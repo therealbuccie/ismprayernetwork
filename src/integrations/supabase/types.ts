@@ -53,6 +53,7 @@ export type Database = {
         Row: {
           author: string
           category_id: string | null
+          cloudpdf_document_id: string | null
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -71,6 +72,7 @@ export type Database = {
         Insert: {
           author: string
           category_id?: string | null
+          cloudpdf_document_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -89,6 +91,7 @@ export type Database = {
         Update: {
           author?: string
           category_id?: string | null
+          cloudpdf_document_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -467,6 +470,50 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      purchases: {
+        Row: {
+          amount: number
+          book_id: string
+          created_at: string
+          format: string
+          granted_by: string | null
+          id: string
+          status: string
+          stripe_payment_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          book_id: string
+          created_at?: string
+          format?: string
+          granted_by?: string | null
+          id?: string
+          status?: string
+          stripe_payment_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          book_id?: string
+          created_at?: string
+          format?: string
+          granted_by?: string | null
+          id?: string
+          status?: string
+          stripe_payment_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       testimonies: {
         Row: {
