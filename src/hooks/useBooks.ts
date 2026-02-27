@@ -11,6 +11,7 @@ export interface Book {
   is_digital: boolean;
   is_physical: boolean;
   digital_file_url: string | null;
+  cloudpdf_document_id: string | null;
   category_id: string | null;
   stock: number;
   pages: number | null;

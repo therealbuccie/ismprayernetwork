@@ -15,8 +15,9 @@ const ProgramsManager = lazy(() => import("@/components/dashboard/ProgramsManage
 const NewsletterManager = lazy(() => import("@/components/dashboard/NewsletterManager").then(m => ({ default: m.NewsletterManager })));
 const PrayerRequestsManager = lazy(() => import("@/components/dashboard/PrayerRequestsManager").then(m => ({ default: m.PrayerRequestsManager })));
 const PrayerGroupsManager = lazy(() => import("@/components/dashboard/PrayerGroupsManager").then(m => ({ default: m.PrayerGroupsManager })));
+const PurchasesManager = lazy(() => import("@/components/dashboard/PurchasesManager").then(m => ({ default: m.PurchasesManager })));
 
-export type DashboardTab = "home" | "books" | "categories" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups";
+export type DashboardTab = "home" | "books" | "categories" | "purchases" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups";
 
 function TabSkeleton() {
   return (
@@ -73,6 +74,7 @@ const Dashboard = () => {
             {activeTab === "newsletter" && <NewsletterManager />}
             {activeTab === "prayer-requests" && <PrayerRequestsManager />}
             {activeTab === "prayer-groups" && <PrayerGroupsManager />}
+            {activeTab === "purchases" && <PurchasesManager />}
           </Suspense>
         </div>
       </main>

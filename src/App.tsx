@@ -29,6 +29,7 @@ import PublicPrayerDashboard from "./pages/PublicPrayerDashboard";
 import PublicBookstoreDashboard from "./pages/PublicBookstoreDashboard";
 import OnlineRadio from "./pages/OnlineRadio";
 import JoinPrayerRoom from "./pages/JoinPrayerRoom";
+import MyLibrary from "./pages/MyLibrary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/our-impact" element={<OurImpact />} />
           <Route path="/radio" element={<OnlineRadio />} />
+          <Route path="/my-library" element={<MyLibrary />} />
           <Route path="/prayer-room/:slug" element={<JoinPrayerRoom />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

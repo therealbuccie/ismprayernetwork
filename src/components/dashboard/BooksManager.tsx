@@ -21,6 +21,7 @@ interface BookForm {
   pages: string;
   isbn: string;
   cover_image_url: string;
+  cloudpdf_document_id: string;
   category_id: string;
   is_digital: boolean;
   is_physical: boolean;
@@ -29,7 +30,7 @@ interface BookForm {
 
 const emptyForm: BookForm = {
   title: "", author: "", description: "", price: "0", stock: "0", pages: "",
-  isbn: "", cover_image_url: "", category_id: "", is_digital: false, is_physical: true, featured: false,
+  isbn: "", cover_image_url: "", cloudpdf_document_id: "", category_id: "", is_digital: false, is_physical: true, featured: false,
 };
 
 export function BooksManager() {
@@ -49,6 +50,7 @@ export function BooksManager() {
       title: book.title, author: book.author, description: book.description || "",
       price: String(book.price), stock: String(book.stock), pages: book.pages ? String(book.pages) : "",
       isbn: book.isbn || "", cover_image_url: book.cover_image_url || "",
+      cloudpdf_document_id: book.cloudpdf_document_id || "",
       category_id: book.category_id || "", is_digital: book.is_digital,
       is_physical: book.is_physical, featured: book.featured,
     });
@@ -75,7 +77,8 @@ export function BooksManager() {
         title: form.title, author: form.author, description: form.description || null,
         price: parseFloat(form.price) || 0, stock: parseInt(form.stock) || 0,
         pages: form.pages ? parseInt(form.pages) : null, isbn: form.isbn || null,
-        cover_image_url: coverUrl || null, category_id: form.category_id || null,
+        cover_image_url: coverUrl || null, cloudpdf_document_id: form.cloudpdf_document_id || null,
+        category_id: form.category_id || null,
         is_digital: form.is_digital, is_physical: form.is_physical, featured: form.featured,
       };
 
@@ -175,6 +178,7 @@ export function BooksManager() {
               <div><Label>Pages</Label><Input type="number" value={form.pages} onChange={e => set("pages", e.target.value)} /></div>
             </div>
             <div><Label>ISBN</Label><Input value={form.isbn} onChange={e => set("isbn", e.target.value)} /></div>
+            <div><Label>CloudPDF Document ID</Label><Input value={form.cloudpdf_document_id} onChange={e => set("cloudpdf_document_id", e.target.value)} placeholder="e.g. dfbd936c-2956-41a3-9e98-233ac431dd13" /></div>
             <div>
               <Label>Category</Label>
               <Select value={form.category_id} onValueChange={v => set("category_id", v)}>
