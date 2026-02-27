@@ -65,7 +65,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/our-impact" element={<OurImpact />} />
           <Route path="/radio" element={<OnlineRadio />} />
-          <Route path="/pray/:slug" element={<JoinPrayerRoom />} />
+          <Route path="/prayer-room/:slug" element={<JoinPrayerRoom />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

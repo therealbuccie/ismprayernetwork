@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Heart, BookOpen, Share2, Copy, Check, Users, Send, UserPlus } from "lucide-react";
+import { Flame, Heart, BookOpen, Share2, Copy, Check, Users, Send } from "lucide-react";
 import { HeroButton } from "@/components/HeroButton";
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,7 +26,7 @@ const todaysPrayerPoint = {
   body: "Thank God for the global broadcast of the Healing Streams Live Healing Services with Pastor Chris through television and radio networks around the world. Pray that every viewer and listener receives miracles, salvation, and restoration through every transmission. Pray that the signals are clear and unhindered, reaching every language, territory, and nation.",
 };
 
-const BASE_URL = "https://ismprayernetwork.lovable.app";
+const BASE_URL = "https://ismprayernetwork.org";
 
 const ministersPraying = [
   { id: 1, name: "Pastor Grace", location: "Lagos" },
@@ -44,7 +44,6 @@ const PrayerRoom = () => {
   const [giveModalOpen, setGiveModalOpen] = useState(false);
   const [prayerText, setPrayerText] = useState("");
   const [submittingPrayer, setSubmittingPrayer] = useState(false);
-  const [generatingLink, setGeneratingLink] = useState(false);
   const [mySessionSlug, setMySessionSlug] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user, profile } = useAuth();
@@ -77,10 +76,11 @@ const PrayerRoom = () => {
     },
   });
 
-  // Fetch or create the user's prayer session
+  // Auto-create the user's prayer session based on their name
   useEffect(() => {
-    if (!user) return;
+    if (!user || !profile?.full_name) return;
     const fetchOrCreateSession = async () => {
+      // Check for existing session
       const { data } = await supabase
         .from("prayer_room_sessions")
         .select("slug")
@@ -88,13 +88,35 @@ const PrayerRoom = () => {
         .eq("is_active", true)
         .limit(1)
         .single();
-      if (data) setMySessionSlug(data.slug);
+      if (data) {
+        setMySessionSlug(data.slug);
+        return;
+      }
+      // Auto-create one using their name
+      const slug = profile.full_name!.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const { error } = await supabase.from("prayer_room_sessions").insert({
+        slug,
+        owner_id: user.id,
+        owner_name: profile.full_name || "A Minister",
+      });
+      if (error) {
+        // If slug conflict, append a short suffix
+        const uniqueSlug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+        await supabase.from("prayer_room_sessions").insert({
+          slug: uniqueSlug,
+          owner_id: user.id,
+          owner_name: profile.full_name || "A Minister",
+        });
+        setMySessionSlug(uniqueSlug);
+      } else {
+        setMySessionSlug(slug);
+      }
     };
     fetchOrCreateSession();
-  }, [user]);
+  }, [user, profile?.full_name]);
 
   const shareUrl = mySessionSlug
-    ? `${BASE_URL}/pray/${mySessionSlug}`
+    ? `${BASE_URL}/prayer-room/${mySessionSlug}`
     : `${BASE_URL}/prayer-room`;
 
   // Query participants for current session
@@ -147,28 +169,6 @@ const PrayerRoom = () => {
     return () => { supabase.removeChannel(channel); };
   }, [mySession?.id, queryClient]);
 
-  const generateUniqueLink = async () => {
-    if (!user) {
-      toast.error("Please sign in to generate your unique prayer link");
-      return;
-    }
-    setGeneratingLink(true);
-    try {
-      const slug = `${(profile?.full_name || "minister").toLowerCase().replace(/[^a-z0-9]/g, "-")}-${Date.now().toString(36)}`;
-      const { error } = await supabase.from("prayer_room_sessions").insert({
-        slug,
-        owner_id: user.id,
-        owner_name: profile?.full_name || "A Minister",
-      });
-      if (error) throw error;
-      setMySessionSlug(slug);
-      toast.success("Your unique prayer link is ready! Share it with loved ones.");
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setGeneratingLink(false);
-    }
-  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -278,15 +278,7 @@ const PrayerRoom = () => {
 
             {/* Unique Prayer Link */}
             <div className="mt-4">
-              {!mySessionSlug && user ? (
-                <Button
-                  onClick={generateUniqueLink}
-                  disabled={generatingLink}
-                  className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2"
-                >
-                  <UserPlus size={16} /> {generatingLink ? "Generating..." : "Generate Your Unique Prayer Link"}
-                </Button>
-              ) : (
+              {mySessionSlug ? (
                 <div className="flex items-center gap-2">
                   <div className="flex-1 glass-card rounded-lg px-3 py-2 text-xs text-muted-foreground truncate border border-border/50">
                     {shareUrl}
@@ -309,10 +301,9 @@ const PrayerRoom = () => {
                     <Share2 size={14} className="text-muted-foreground" />
                   </button>
                 </div>
-              )}
-              {!user && (
+              ) : (
                 <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Sign in to generate your unique prayer link to share with loved ones.
+                  Sign in to get your unique prayer link to share with loved ones.
                 </p>
               )}
             </div>
