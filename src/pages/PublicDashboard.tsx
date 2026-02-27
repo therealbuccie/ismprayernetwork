@@ -2,6 +2,8 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, lazy, Suspense } from "react";
 import type { DashboardTab } from "./Dashboard";
+import { BookstorePinGate } from "@/components/dashboard/BookstorePinGate";
+import { storePin } from "@/hooks/useBookstoreAdmin";
 
 const DashboardHome = lazy(() => import("@/components/dashboard/DashboardHome").then(m => ({ default: m.DashboardHome })));
 const BooksManager = lazy(() => import("@/components/dashboard/BooksManager").then(m => ({ default: m.BooksManager })));
@@ -14,6 +16,9 @@ const ProgramsManager = lazy(() => import("@/components/dashboard/ProgramsManage
 const NewsletterManager = lazy(() => import("@/components/dashboard/NewsletterManager").then(m => ({ default: m.NewsletterManager })));
 const PrayerRequestsManager = lazy(() => import("@/components/dashboard/PrayerRequestsManager").then(m => ({ default: m.PrayerRequestsManager })));
 const PrayerGroupsManager = lazy(() => import("@/components/dashboard/PrayerGroupsManager").then(m => ({ default: m.PrayerGroupsManager })));
+const OrdersManager = lazy(() => import("@/components/dashboard/OrdersManager").then(m => ({ default: m.OrdersManager })));
+const PurchasesManager = lazy(() => import("@/components/dashboard/PurchasesManager").then(m => ({ default: m.PurchasesManager })));
+const SiteSettingsManager = lazy(() => import("@/components/dashboard/SiteSettingsManager").then(m => ({ default: m.SiteSettingsManager })));
 
 function TabSkeleton() {
   return (
@@ -29,6 +34,20 @@ function TabSkeleton() {
 
 const PublicDashboard = () => {
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("dashboard_unlocked") === "1");
+
+  if (!unlocked) {
+    return (
+      <BookstorePinGate
+        onUnlock={() => {
+          sessionStorage.setItem("dashboard_unlocked", "1");
+          storePin("2323", "dashboard_pin");
+          setUnlocked(true);
+        }}
+        title="Admin Dashboard"
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -47,6 +66,9 @@ const PublicDashboard = () => {
             {activeTab === "newsletter" && <NewsletterManager />}
             {activeTab === "prayer-requests" && <PrayerRequestsManager />}
             {activeTab === "prayer-groups" && <PrayerGroupsManager />}
+            {activeTab === "orders" && <OrdersManager />}
+            {activeTab === "purchases" && <PurchasesManager />}
+            {activeTab === "settings" && <SiteSettingsManager />}
           </Suspense>
         </div>
       </main>

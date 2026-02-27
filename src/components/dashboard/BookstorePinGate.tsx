@@ -6,7 +6,7 @@ import { storePin } from "@/hooks/useBookstoreAdmin";
 
 const CORRECT_PIN = "2323";
 
-export function BookstorePinGate({ onUnlock }: { onUnlock: () => void }) {
+export function BookstorePinGate({ onUnlock, title = "Bookstore Dashboard" }: { onUnlock: () => void; title?: string }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
 
@@ -15,7 +15,6 @@ export function BookstorePinGate({ onUnlock }: { onUnlock: () => void }) {
     if (pin === CORRECT_PIN) {
       sessionStorage.setItem("bookstore_unlocked", "1");
       storePin(pin);
-      onUnlock();
       onUnlock();
     } else {
       setError(true);
@@ -29,7 +28,7 @@ export function BookstorePinGate({ onUnlock }: { onUnlock: () => void }) {
         <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
           <Lock className="w-6 h-6 text-primary" />
         </div>
-        <h1 className="text-xl font-semibold text-foreground">Bookstore Dashboard</h1>
+        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
         <p className="text-sm text-muted-foreground">Enter PIN to continue</p>
         <Input
           type="password"

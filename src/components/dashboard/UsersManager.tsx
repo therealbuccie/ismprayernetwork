@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isPublicDashboard, adminQuery, adminUpdate } from "@/hooks/useBookstoreAdmin";
 import { useAuth, Profile } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,14 +26,13 @@ export function UsersManager() {
   const { profile: currentProfile } = useAuth();
   const queryClient = useQueryClient();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const isPublic = isPublicDashboard();
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (isPublic) return adminQuery("profiles", "*", undefined, [{ column: "created_at", ascending: false }]);
+      const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data as Profile[];
     },
@@ -41,18 +41,15 @@ export function UsersManager() {
   const changeRole = async (profileId: string, newRole: string) => {
     setUpdatingId(profileId);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: newRole })
-        .eq("id", profileId);
-      if (error) throw error;
+      if (isPublic) {
+        await adminUpdate("profiles", { id: profileId, role: newRole });
+      } else {
+        const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", profileId);
+        if (error) throw error;
+      }
       toast.success("Role updated");
       queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setUpdatingId(null);
-    }
+    } catch (err: any) { toast.error(err.message); } finally { setUpdatingId(null); }
   };
 
   return (
@@ -61,51 +58,25 @@ export function UsersManager() {
         <h1 className="text-3xl font-bold">Users & Roles</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage user roles and permissions</p>
       </div>
-
-      {isLoading ? (
-        <p className="text-muted-foreground">Loading...</p>
-      ) : (
+      {isLoading ? <p className="text-muted-foreground">Loading...</p> : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Current Role</TableHead>
-                <TableHead>Change Role</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Name</TableHead><TableHead>Current Role</TableHead><TableHead>Change Role</TableHead></TableRow></TableHeader>
             <TableBody>
-              {profiles?.map((p) => {
-                const isSelf = p.user_id === currentProfile?.user_id;
+              {profiles?.map((p: any) => {
+                const isSelf = !isPublic && p.user_id === currentProfile?.user_id;
                 return (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.email}</TableCell>
                     <TableCell>{p.full_name || "—"}</TableCell>
-                    <TableCell>
-                      <Badge className={roleBadgeColor[p.role] || "bg-muted"}>
-                        {p.role}
-                      </Badge>
-                    </TableCell>
+                    <TableCell><Badge className={roleBadgeColor[p.role] || "bg-muted"}>{p.role}</Badge></TableCell>
                     <TableCell>
                       {isSelf ? (
                         <span className="text-xs text-muted-foreground">Can't change own role</span>
                       ) : (
-                        <Select
-                          value={p.role}
-                          onValueChange={(val) => changeRole(p.id, val)}
-                          disabled={updatingId === p.id}
-                        >
-                          <SelectTrigger className="w-40">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {roleOptions.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
+                        <Select value={p.role} onValueChange={(val) => changeRole(p.id, val)} disabled={updatingId === p.id}>
+                          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                          <SelectContent>{roleOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                         </Select>
                       )}
                     </TableCell>

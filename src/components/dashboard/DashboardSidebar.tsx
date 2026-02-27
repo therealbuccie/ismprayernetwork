@@ -28,7 +28,8 @@ const tabs = [
 ];
 
 export function DashboardSidebar({ activeTab, onTabChange, isSuperAdmin }: Props) {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const isPublic = window.location.pathname.startsWith("/api/");
 
   return (
     <aside className="w-64 shrink-0 border-r border-border bg-sidebar-background flex flex-col h-screen sticky top-0">
@@ -63,24 +64,28 @@ export function DashboardSidebar({ activeTab, onTabChange, isSuperAdmin }: Props
       </nav>
 
       <div className="p-3 border-t border-border space-y-1">
-        <Link
-          to="/prayer-room"
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
-        >
-          <Flame size={18} /> Prayer Room
-        </Link>
-        <Link
-          to="/admin"
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
-        >
-          <ArrowLeft size={18} /> Back to Hub
-        </Link>
-        <button
-          onClick={signOut}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
-        >
-          <LogOut size={18} /> Sign Out
-        </button>
+        {!isPublic && (
+          <>
+            <Link
+              to="/prayer-room"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+            >
+              <Flame size={18} /> Prayer Room
+            </Link>
+            <Link
+              to="/admin"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+            >
+              <ArrowLeft size={18} /> Back to Hub
+            </Link>
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut size={18} /> Sign Out
+            </button>
+          </>
+        )}
       </div>
     </aside>
   );
