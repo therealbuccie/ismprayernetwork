@@ -29,7 +29,7 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
           {/* Cover */}
           <div className="relative aspect-[3/4] md:aspect-auto bg-muted">
             <img
-              src={book.cover_image_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400"}
+              src={book.cover_image_url || "/placeholder.svg"}
               alt={book.title}
               className="w-full h-full object-cover"
             />
