@@ -471,6 +471,48 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_orders: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          espees_code: string | null
+          id: string
+          items: Json
+          payment_method: string
+          pop_image_url: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          espees_code?: string | null
+          id?: string
+          items?: Json
+          payment_method?: string
+          pop_image_url?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          espees_code?: string | null
+          id?: string
+          items?: Json
+          payment_method?: string
+          pop_image_url?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       purchases: {
         Row: {
           amount: number
@@ -514,6 +556,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
       }
       testimonies: {
         Row: {
