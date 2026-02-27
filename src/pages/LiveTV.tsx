@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { HeroButton } from "@/components/HeroButton";
 import Hls from "hls.js";
 
-const HLS_URL = "https://app.viloud.tv/hls/channel/115a7990a44a876c8aeda01a99cf32c5.m3u8";
+const HLS_URL = "https://netshiftstudiokit.online:5443/LiveApp/streams/mopc_main.m3u8";
 
 const LiveTV = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
