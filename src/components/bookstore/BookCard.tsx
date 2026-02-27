@@ -25,7 +25,7 @@ export function BookCard({ book, onSelect, onAddToCart }: BookCardProps) {
       {/* Cover */}
       <div className="relative aspect-[3/4] overflow-hidden bg-muted">
         <img
-          src={book.cover_image_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400"}
+          src={book.cover_image_url || "/placeholder.svg"}
           alt={book.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           loading="lazy"

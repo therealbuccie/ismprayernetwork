@@ -47,7 +47,7 @@ export function CartSidebar({ open, onClose, items, totalPrice, onUpdateQuantity
                     className="glass-card rounded-lg p-3 flex gap-3"
                   >
                     <img
-                      src={item.book.cover_image_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100"}
+                      src={item.book.cover_image_url || "/placeholder.svg"}
                       alt={item.book.title}
                       className="w-16 h-20 rounded-md object-cover flex-shrink-0"
                     />
