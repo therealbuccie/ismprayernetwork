@@ -78,16 +78,21 @@ const PrayerRoom = () => {
 
   // Auto-create the user's prayer session based on their name
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      console.log("Prayer session: no user");
+      return;
+    }
+    console.log("Prayer session: user found", user.id, "profile:", profile?.full_name);
     const fetchOrCreateSession = async () => {
       // Check for existing session
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from("prayer_room_sessions")
         .select("slug")
         .eq("owner_id", user.id)
         .eq("is_active", true)
         .limit(1)
         .single();
+      console.log("Prayer session fetch:", data, fetchError);
       if (data) {
         setMySessionSlug(data.slug);
         return;
@@ -95,20 +100,23 @@ const PrayerRoom = () => {
       // Auto-create one using their name (or email fallback)
       const displayName = profile?.full_name || user.email?.split("@")[0] || "minister";
       const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      console.log("Creating prayer session with slug:", slug);
       const { error } = await supabase.from("prayer_room_sessions").insert({
         slug,
         owner_id: user.id,
         owner_name: profile?.full_name || displayName,
       });
+      console.log("Insert result:", error);
       if (error) {
         // If slug conflict, append a short suffix
         const uniqueSlug = `${slug}-${Date.now().toString(36).slice(-4)}`;
-        await supabase.from("prayer_room_sessions").insert({
+        const { error: error2 } = await supabase.from("prayer_room_sessions").insert({
           slug: uniqueSlug,
           owner_id: user.id,
           owner_name: profile?.full_name || displayName,
         });
-        setMySessionSlug(uniqueSlug);
+        console.log("Fallback insert:", uniqueSlug, error2);
+        if (!error2) setMySessionSlug(uniqueSlug);
       } else {
         setMySessionSlug(slug);
       }
