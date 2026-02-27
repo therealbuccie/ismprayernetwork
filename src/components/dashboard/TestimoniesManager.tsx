@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isPublicDashboard, adminQuery, adminUpdate, adminDelete } from "@/hooks/useBookstoreAdmin";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -8,38 +9,50 @@ import { toast } from "sonner";
 
 export function TestimoniesManager() {
   const queryClient = useQueryClient();
+  const isPublic = isPublicDashboard();
 
   const { data: testimonies, isLoading } = useQuery({
     queryKey: ["admin-testimonies"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("testimonies")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (isPublic) {
+        return adminQuery("testimonies", "*", undefined, [{ column: "created_at", ascending: false }]);
+      }
+      const { data, error } = await supabase.from("testimonies").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
   const toggleApproval = async (id: string, currentStatus: boolean) => {
-    const { error } = await supabase.from("testimonies").update({ is_approved: !currentStatus }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(currentStatus ? "Testimony unapproved" : "Testimony approved!");
-    queryClient.invalidateQueries({ queryKey: ["admin-testimonies"] });
+    try {
+      if (isPublic) {
+        await adminUpdate("testimonies", { id, is_approved: !currentStatus });
+      } else {
+        const { error } = await supabase.from("testimonies").update({ is_approved: !currentStatus }).eq("id", id);
+        if (error) throw error;
+      }
+      toast.success(currentStatus ? "Testimony unapproved" : "Testimony approved!");
+      queryClient.invalidateQueries({ queryKey: ["admin-testimonies"] });
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this testimony?")) return;
-    const { error } = await supabase.from("testimonies").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Testimony deleted");
-    queryClient.invalidateQueries({ queryKey: ["admin-testimonies"] });
+    try {
+      if (isPublic) {
+        await adminDelete("testimonies", id);
+      } else {
+        const { error } = await supabase.from("testimonies").delete().eq("id", id);
+        if (error) throw error;
+      }
+      toast.success("Testimony deleted");
+      queryClient.invalidateQueries({ queryKey: ["admin-testimonies"] });
+    } catch (err: any) { toast.error(err.message); }
   };
 
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Testimonies</h1>
-
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
       ) : !testimonies?.length ? (
@@ -56,7 +69,7 @@ export function TestimoniesManager() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {testimonies.map((t) => (
+              {testimonies.map((t: any) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium max-w-xs truncate">{t.title}</TableCell>
                   <TableCell>{t.author_name}</TableCell>
@@ -70,9 +83,7 @@ export function TestimoniesManager() {
                       <Button variant="ghost" size="icon" onClick={() => toggleApproval(t.id, t.is_approved)}>
                         {t.is_approved ? <XCircle size={15} className="text-muted-foreground" /> : <CheckCircle size={15} className="text-green-600" />}
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)} className="text-destructive">
-                        <Trash2 size={15} />
-                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)} className="text-destructive"><Trash2 size={15} /></Button>
                     </div>
                   </TableCell>
                 </TableRow>

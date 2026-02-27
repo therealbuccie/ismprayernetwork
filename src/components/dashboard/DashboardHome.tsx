@@ -1,51 +1,347 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Tag, Users } from "lucide-react";
+import { isPublicDashboard, dashboardAdminCall, adminQuery } from "@/hooks/useBookstoreAdmin";
+import {
+  BookOpen, Tag, Users, Mail, MessageSquare, CalendarDays, Newspaper,
+  HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
+  Clock, CheckCircle, XCircle, ArrowUpRight, Flame
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+
+interface DashboardStats {
+  counts: Record<string, number>;
+  testimonies: { total: number; pending: number; approved: number };
+  messages: { total: number; recent: any[] };
+  prayerRequests: { total: number; totalPrayers: number };
+  orders: { total: number; pending: number; approved: number; rejected: number; totalRevenue: number; recent: any[] };
+  purchases: { total: number; recent: any[] };
+}
 
 export function DashboardHome() {
-  const { data: bookCount } = useQuery({
-    queryKey: ["admin-book-count"],
+  const isPublic = isPublicDashboard();
+
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const { count } = await supabase.from("books").select("*", { count: "exact", head: true });
-      return count ?? 0;
+      if (isPublic) {
+        return dashboardAdminCall("dashboard_stats", {});
+      }
+
+      // Authenticated admin path
+      const [books, categories, profiles, testimoniesRes, programs, events,
+             messages, subscribers, prayerRequests, prayerGroups, orders, purchases] = await Promise.all([
+        supabase.from("books").select("*", { count: "exact", head: true }),
+        supabase.from("categories").select("*", { count: "exact", head: true }),
+        supabase.from("profiles").select("*", { count: "exact", head: true }),
+        supabase.from("testimonies").select("*"),
+        supabase.from("programs").select("*", { count: "exact", head: true }),
+        supabase.from("events").select("*", { count: "exact", head: true }),
+        supabase.from("contact_messages").select("*"),
+        supabase.from("newsletter_subscribers").select("*", { count: "exact", head: true }),
+        supabase.from("prayer_requests").select("*"),
+        supabase.from("prayer_groups").select("*", { count: "exact", head: true }),
+        supabase.from("purchase_orders").select("*"),
+        supabase.from("purchases").select("*, books(title)"),
+      ]);
+
+      return {
+        counts: {
+          books: books.count ?? 0,
+          categories: categories.count ?? 0,
+          users: profiles.count ?? 0,
+          programs: programs.count ?? 0,
+          events: events.count ?? 0,
+          subscribers: subscribers.count ?? 0,
+          prayerGroups: prayerGroups.count ?? 0,
+        },
+        testimonies: {
+          total: testimoniesRes.data?.length ?? 0,
+          pending: testimoniesRes.data?.filter(t => !t.is_approved).length ?? 0,
+          approved: testimoniesRes.data?.filter(t => t.is_approved).length ?? 0,
+        },
+        messages: {
+          total: messages.data?.length ?? 0,
+          recent: messages.data?.slice(0, 5) ?? [],
+        },
+        prayerRequests: {
+          total: prayerRequests.data?.length ?? 0,
+          totalPrayers: prayerRequests.data?.reduce((sum, r) => sum + (r.prayer_count || 0), 0) ?? 0,
+        },
+        orders: {
+          total: orders.data?.length ?? 0,
+          pending: orders.data?.filter(o => o.status === "pending").length ?? 0,
+          approved: orders.data?.filter(o => o.status === "approved").length ?? 0,
+          rejected: orders.data?.filter(o => o.status === "rejected").length ?? 0,
+          totalRevenue: orders.data?.filter(o => o.status === "approved").reduce((sum, o) => sum + (o.total_amount || 0), 0) ?? 0,
+          recent: orders.data?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
+        },
+        purchases: {
+          total: purchases.data?.length ?? 0,
+          recent: purchases.data?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
+        },
+      };
     },
   });
 
-  const { data: categoryCount } = useQuery({
-    queryKey: ["admin-category-count"],
-    queryFn: async () => {
-      const { count } = await supabase.from("categories").select("*", { count: "exact", head: true });
-      return count ?? 0;
-    },
-  });
+  if (isLoading || !stats) {
+    return (
+      <div className="space-y-6">
+        <div className="h-9 w-48 bg-muted rounded animate-pulse" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-28 bg-muted rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  const { data: userCount } = useQuery({
-    queryKey: ["admin-user-count"],
-    queryFn: async () => {
-      const { count } = await supabase.from("profiles").select("*", { count: "exact", head: true });
-      return count ?? 0;
-    },
-  });
-
-  const stats = [
-    { label: "Total Books", value: bookCount ?? 0, icon: BookOpen, color: "text-accent" },
-    { label: "Categories", value: categoryCount ?? 0, icon: Tag, color: "text-primary" },
-    { label: "Users", value: userCount ?? 0, icon: Users, color: "text-green-500" },
+  const statCards = [
+    { label: "Total Users", value: stats.counts.users, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "Total Books", value: stats.counts.books, icon: BookOpen, color: "text-accent", bg: "bg-accent/10" },
+    { label: "Revenue", value: `$${stats.orders.totalRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { label: "Orders", value: stats.orders.total, icon: ShoppingBag, color: "text-violet-500", bg: "bg-violet-500/10" },
+    { label: "Subscribers", value: stats.counts.subscribers, icon: Newspaper, color: "text-pink-500", bg: "bg-pink-500/10" },
+    { label: "Prayer Requests", value: stats.prayerRequests.total, icon: HandHeart, color: "text-orange-500", bg: "bg-orange-500/10" },
+    { label: "Testimonies", value: stats.testimonies.total, icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-500/10" },
+    { label: "Prayer Groups", value: stats.counts.prayerGroups, icon: UsersRound, color: "text-teal-500", bg: "bg-teal-500/10" },
   ];
 
+  const pendingItems = [
+    stats.orders.pending > 0 && { label: "Pending Orders", count: stats.orders.pending, color: "bg-yellow-500/20 text-yellow-600" },
+    stats.testimonies.pending > 0 && { label: "Pending Testimonies", count: stats.testimonies.pending, color: "bg-orange-500/20 text-orange-600" },
+  ].filter(Boolean) as { label: string; count: number; color: string }[];
+
+  const orderPieData = [
+    { name: "Approved", value: stats.orders.approved, color: "hsl(142, 71%, 45%)" },
+    { name: "Pending", value: stats.orders.pending, color: "hsl(48, 96%, 53%)" },
+    { name: "Rejected", value: stats.orders.rejected, color: "hsl(0, 84%, 60%)" },
+  ].filter(d => d.value > 0);
+
+  const statusColor = (s: string) => {
+    if (s === "approved") return "text-emerald-500";
+    if (s === "rejected") return "text-destructive";
+    return "text-yellow-500";
+  };
+
+  const timeAgo = (date: string) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <s.icon className={`w-5 h-5 ${s.color}`} />
-              <span className="text-sm text-muted-foreground">{s.label}</span>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
+        <p className="text-muted-foreground text-sm mt-1">Platform analytics and management at a glance</p>
+      </div>
+
+      {/* Pending Alerts */}
+      {pendingItems.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {pendingItems.map(item => (
+            <div key={item.label} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${item.color}`}>
+              <Clock size={14} />
+              {item.count} {item.label}
             </div>
-            <p className="text-3xl font-bold">{s.value}</p>
+          ))}
+        </div>
+      )}
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {statCards.map((s) => (
+          <div key={s.label} className="rounded-xl border border-border bg-card p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
+                <s.icon className={`w-5 h-5 ${s.color}`} />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-muted-foreground/40" />
+            </div>
+            <p className="text-2xl font-bold text-foreground">{s.value}</p>
+            <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Middle Row - Orders Chart + Quick Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Order Status Breakdown */}
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Order Status</h3>
+          {stats.orders.total === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No orders yet</p>
+          ) : (
+            <div className="flex items-center justify-center">
+              <ResponsiveContainer width={180} height={180}>
+                <PieChart>
+                  <Pie
+                    data={orderPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {orderPieData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          <div className="flex justify-center gap-4 mt-3">
+            {orderPieData.map(d => (
+              <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
+                {d.name} ({d.value})
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Key Metrics</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Total Prayers Offered</span>
+              <span className="text-lg font-bold text-foreground">{stats.prayerRequests.totalPrayers.toLocaleString()}</span>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Book Access Granted</span>
+              <span className="text-lg font-bold text-foreground">{stats.purchases.total}</span>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Contact Messages</span>
+              <span className="text-lg font-bold text-foreground">{stats.messages.total}</span>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Categories</span>
+              <span className="text-lg font-bold text-foreground">{stats.counts.categories}</span>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Programs</span>
+              <span className="text-lg font-bold text-foreground">{stats.counts.programs}</span>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Events</span>
+              <span className="text-lg font-bold text-foreground">{stats.counts.events}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Testimonies Breakdown */}
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Testimonies</h3>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">Approved</span>
+                  <span className="font-medium text-foreground">{stats.testimonies.approved}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all"
+                    style={{ width: stats.testimonies.total > 0 ? `${(stats.testimonies.approved / stats.testimonies.total) * 100}%` : "0%" }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">Pending Review</span>
+                  <span className="font-medium text-foreground">{stats.testimonies.pending}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-yellow-500 rounded-full transition-all"
+                    style={{ width: stats.testimonies.total > 0 ? `${(stats.testimonies.pending / stats.testimonies.total) * 100}%` : "0%" }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 pt-4 border-t border-border">
+            <div className="text-center">
+              <p className="text-3xl font-bold text-foreground">{stats.testimonies.total}</p>
+              <p className="text-xs text-muted-foreground mt-1">Total Testimonies</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Orders */}
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <ClipboardList size={16} /> Recent Orders
+            </h3>
+            <Badge variant="outline" className="text-xs">{stats.orders.total} total</Badge>
+          </div>
+          {stats.orders.recent.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No orders yet</p>
+          ) : (
+            <div className="space-y-3">
+              {stats.orders.recent.map((order: any) => (
+                <div key={order.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-foreground capitalize">
+                      {order.payment_method.replace("_", " ")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{timeAgo(order.created_at)} · {order.items?.length || 0} item(s)</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-foreground">${order.total_amount?.toFixed(2)}</p>
+                    <p className={`text-xs font-medium capitalize ${statusColor(order.status)}`}>{order.status}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Messages */}
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Mail size={16} /> Recent Messages
+            </h3>
+            <Badge variant="outline" className="text-xs">{stats.messages.total} total</Badge>
+          </div>
+          {stats.messages.recent.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No messages yet</p>
+          ) : (
+            <div className="space-y-3">
+              {stats.messages.recent.map((msg: any) => (
+                <div key={msg.id} className="py-2 border-b border-border/50 last:border-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-medium text-foreground">{msg.name}</p>
+                    <span className="text-xs text-muted-foreground">{timeAgo(msg.created_at)}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{msg.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

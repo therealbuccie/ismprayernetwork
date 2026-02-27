@@ -1,16 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isPublicDashboard, adminQuery } from "@/hooks/useBookstoreAdmin";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Mail } from "lucide-react";
 
 export function ContactMessagesManager() {
+  const isPublic = isPublicDashboard();
+
   const { data: messages, isLoading } = useQuery({
     queryKey: ["admin-contact-messages"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contact_messages")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (isPublic) return adminQuery("contact_messages", "*", undefined, [{ column: "created_at", ascending: false }]);
+      const { data, error } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -25,11 +26,7 @@ export function ContactMessagesManager() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <Mail className="w-6 h-6 text-accent" />
-        <h1 className="text-3xl font-bold">Contact Messages</h1>
-      </div>
-
+      <div className="flex items-center gap-3 mb-6"><Mail className="w-6 h-6 text-accent" /><h1 className="text-3xl font-bold">Contact Messages</h1></div>
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
       ) : !messages?.length ? (
@@ -37,16 +34,9 @@ export function ContactMessagesManager() {
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Message</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Message</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
             <TableBody>
-              {messages.map((msg) => (
+              {messages.map((msg: any) => (
                 <TableRow key={msg.id}>
                   <TableCell className="font-medium">{msg.name}</TableCell>
                   <TableCell>{msg.email}</TableCell>
