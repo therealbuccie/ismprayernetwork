@@ -56,37 +56,50 @@ const Auth = () => {
         password: DUMMY_PASS,
       });
 
-      if (signInError) {
-        // If user doesn't exist, sign up
-        if (!isSignup) {
-          setIsSignup(true);
-          setSubmitting(false);
-          return;
-        }
-
-        if (!fullName) {
-          toast.error("Please enter your full name");
-          setSubmitting(false);
-          return;
-        }
-
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: DUMMY_PASS,
-          options: {
-            data: {
-              full_name: fullName,
-              ministry_name: ministryName,
-              dob_day: dobDay ? parseInt(dobDay) : null,
-              dob_month: dobMonth ? parseInt(dobMonth) : null,
-            },
-          },
-        });
-        if (signUpError) throw signUpError;
-        toast.success("Welcome! You're now signed in.");
-      } else {
+      if (!signInError) {
         toast.success("Welcome back!");
+        navigate("/", { replace: true });
+        return;
       }
+
+      // Sign-in failed — if not in signup mode yet, show signup fields
+      if (!isSignup) {
+        setIsSignup(true);
+        setSubmitting(false);
+        return;
+      }
+
+      if (!fullName) {
+        toast.error("Please enter your full name");
+        setSubmitting(false);
+        return;
+      }
+
+      // Try to sign up
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password: DUMMY_PASS,
+        options: {
+          data: {
+            full_name: fullName,
+            ministry_name: ministryName,
+            dob_day: dobDay ? parseInt(dobDay) : null,
+            dob_month: dobMonth ? parseInt(dobMonth) : null,
+          },
+        },
+      });
+
+      if (signUpError) {
+        // User already exists but wrong password — update password via re-signup
+        if (signUpError.message?.includes("already") || signUpError.status === 422) {
+          toast.error("This email is already registered. Please use admin login if you're an admin.");
+        } else {
+          throw signUpError;
+        }
+        return;
+      }
+
+      toast.success("Welcome! You're now signed in.");
       navigate("/", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "An error occurred");
