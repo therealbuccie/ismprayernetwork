@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCategories, Category } from "@/hooks/useBooks";
 import { supabase } from "@/integrations/supabase/client";
+import { isPublicBookstoreDashboard, bookstoreAdminCall } from "@/hooks/useBookstoreAdmin";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,13 +25,22 @@ export function CategoriesManager() {
     if (!name.trim()) { toast.error("Name is required"); return; }
     setSaving(true);
     try {
+      const isPublic = isPublicBookstoreDashboard();
       if (editingId) {
-        const { error } = await supabase.from("categories").update({ name: name.trim() }).eq("id", editingId);
-        if (error) throw error;
+        if (isPublic) {
+          await bookstoreAdminCall("update_category", { id: editingId, name: name.trim() });
+        } else {
+          const { error } = await supabase.from("categories").update({ name: name.trim() }).eq("id", editingId);
+          if (error) throw error;
+        }
         toast.success("Category updated");
       } else {
-        const { error } = await supabase.from("categories").insert({ name: name.trim() });
-        if (error) throw error;
+        if (isPublic) {
+          await bookstoreAdminCall("insert_category", { name: name.trim() });
+        } else {
+          const { error } = await supabase.from("categories").insert({ name: name.trim() });
+          if (error) throw error;
+        }
         toast.success("Category created");
       }
       queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -44,10 +54,18 @@ export function CategoriesManager() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this category?")) return;
-    const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Category deleted");
-    queryClient.invalidateQueries({ queryKey: ["categories"] });
+    try {
+      if (isPublicBookstoreDashboard()) {
+        await bookstoreAdminCall("delete_category", { id });
+      } else {
+        const { error } = await supabase.from("categories").delete().eq("id", id);
+        if (error) throw error;
+      }
+      toast.success("Category deleted");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   return (

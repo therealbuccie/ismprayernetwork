@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
+import { storePin } from "@/hooks/useBookstoreAdmin";
 
 const CORRECT_PIN = "2323";
 
@@ -13,6 +14,8 @@ export function BookstorePinGate({ onUnlock }: { onUnlock: () => void }) {
     e.preventDefault();
     if (pin === CORRECT_PIN) {
       sessionStorage.setItem("bookstore_unlocked", "1");
+      storePin(pin);
+      onUnlock();
       onUnlock();
     } else {
       setError(true);

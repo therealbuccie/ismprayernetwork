@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useBooks, useCategories, Book } from "@/hooks/useBooks";
 import { supabase } from "@/integrations/supabase/client";
+import { isPublicBookstoreDashboard, bookstoreAdminCall } from "@/hooks/useBookstoreAdmin";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,14 +83,24 @@ export function BooksManager() {
         is_digital: form.is_digital, is_physical: form.is_physical, featured: form.featured,
       };
 
+      const isPublic = isPublicBookstoreDashboard();
+
       if (editingId) {
-        const { error, data } = await supabase.from("books").update(record).eq("id", editingId).select("id");
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error("Update blocked — you must be logged in as an admin.");
+        if (isPublic) {
+          await bookstoreAdminCall("update_book", { id: editingId, ...record });
+        } else {
+          const { error, data } = await supabase.from("books").update(record).eq("id", editingId).select("id");
+          if (error) throw error;
+          if (!data || data.length === 0) throw new Error("Update blocked — you must be logged in as an admin.");
+        }
         toast.success("Book updated");
       } else {
-        const { error } = await supabase.from("books").insert(record).select("id");
-        if (error) throw error;
+        if (isPublic) {
+          await bookstoreAdminCall("insert_book", record);
+        } else {
+          const { error } = await supabase.from("books").insert(record).select("id");
+          if (error) throw error;
+        }
         toast.success("Book created");
       }
       queryClient.invalidateQueries({ queryKey: ["books"] });
@@ -103,11 +114,19 @@ export function BooksManager() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this book?")) return;
-    const { error, data } = await supabase.from("books").delete().eq("id", id).select("id");
-    if (error) { toast.error(error.message); return; }
-    if (!data || data.length === 0) { toast.error("Delete blocked — you must be logged in as an admin."); return; }
-    toast.success("Book deleted");
-    queryClient.invalidateQueries({ queryKey: ["books"] });
+    try {
+      if (isPublicBookstoreDashboard()) {
+        await bookstoreAdminCall("delete_book", { id });
+      } else {
+        const { error, data } = await supabase.from("books").delete().eq("id", id).select("id");
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error("Delete blocked — you must be logged in as an admin.");
+      }
+      toast.success("Book deleted");
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   const set = (key: keyof BookForm, val: any) => setForm(prev => ({ ...prev, [key]: val }));
