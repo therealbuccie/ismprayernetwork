@@ -37,12 +37,20 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      toast.error("Failed to sign out");
-    } else {
-      toast.success("Signed out successfully");
-      navigate("/");
+    try {
+      const { error } = await signOut();
+      if (error) {
+        console.error("Sign out error:", error);
+        toast.error("Failed to sign out");
+      } else {
+        toast.success("Signed out successfully");
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Sign out exception:", err);
+      // Force sign out by clearing local storage and reloading
+      localStorage.clear();
+      window.location.href = "/";
     }
   };
 

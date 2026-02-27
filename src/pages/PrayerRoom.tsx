@@ -78,7 +78,7 @@ const PrayerRoom = () => {
 
   // Auto-create the user's prayer session based on their name
   useEffect(() => {
-    if (!user || !profile?.full_name) return;
+    if (!user) return;
     const fetchOrCreateSession = async () => {
       // Check for existing session
       const { data } = await supabase
@@ -92,12 +92,13 @@ const PrayerRoom = () => {
         setMySessionSlug(data.slug);
         return;
       }
-      // Auto-create one using their name
-      const slug = profile.full_name!.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      // Auto-create one using their name (or email fallback)
+      const displayName = profile?.full_name || user.email?.split("@")[0] || "minister";
+      const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const { error } = await supabase.from("prayer_room_sessions").insert({
         slug,
         owner_id: user.id,
-        owner_name: profile.full_name || "A Minister",
+        owner_name: profile?.full_name || displayName,
       });
       if (error) {
         // If slug conflict, append a short suffix
@@ -105,7 +106,7 @@ const PrayerRoom = () => {
         await supabase.from("prayer_room_sessions").insert({
           slug: uniqueSlug,
           owner_id: user.id,
-          owner_name: profile.full_name || "A Minister",
+          owner_name: profile?.full_name || displayName,
         });
         setMySessionSlug(uniqueSlug);
       } else {
