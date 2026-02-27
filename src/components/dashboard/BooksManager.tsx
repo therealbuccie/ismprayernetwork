@@ -83,11 +83,12 @@ export function BooksManager() {
       };
 
       if (editingId) {
-        const { error } = await supabase.from("books").update(record).eq("id", editingId);
+        const { error, data } = await supabase.from("books").update(record).eq("id", editingId).select("id");
         if (error) throw error;
+        if (!data || data.length === 0) throw new Error("Update blocked — you must be logged in as an admin.");
         toast.success("Book updated");
       } else {
-        const { error } = await supabase.from("books").insert(record);
+        const { error } = await supabase.from("books").insert(record).select("id");
         if (error) throw error;
         toast.success("Book created");
       }
@@ -102,8 +103,9 @@ export function BooksManager() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this book?")) return;
-    const { error } = await supabase.from("books").delete().eq("id", id);
+    const { error, data } = await supabase.from("books").delete().eq("id", id).select("id");
     if (error) { toast.error(error.message); return; }
+    if (!data || data.length === 0) { toast.error("Delete blocked — you must be logged in as an admin."); return; }
     toast.success("Book deleted");
     queryClient.invalidateQueries({ queryKey: ["books"] });
   };
