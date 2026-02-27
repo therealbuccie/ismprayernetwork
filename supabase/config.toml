@@ -1,1 +1,4 @@
 project_id = "ryitxoymayasdlabojsx"
+
+[functions.partner-api]
+verify_jwt = false
