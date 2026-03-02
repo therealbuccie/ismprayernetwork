@@ -16,7 +16,7 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden border-border/50 bg-card">
+      <DialogContent className="max-w-3xl p-0 overflow-hidden border-border/50 bg-card max-h-[90vh]">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-background/80 backdrop-blur-sm hover:bg-muted transition-colors"
@@ -24,18 +24,18 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
           <X className="w-4 h-4" />
         </button>
 
-        <div className="grid md:grid-cols-[280px_1fr] gap-0">
+        <div className="grid md:grid-cols-[280px_1fr] gap-0 overflow-y-auto max-h-[90vh]">
           {/* Cover */}
-          <div className="relative aspect-[3/4] md:aspect-auto bg-muted">
+          <div className="relative w-full bg-muted flex-shrink-0">
             <img
               src={book.cover_image_url || "/placeholder.svg"}
               alt={book.title}
-              className="w-full h-full object-cover"
+              className="w-full h-auto max-h-[40vh] md:max-h-none md:h-full object-contain md:object-cover"
             />
           </div>
 
           {/* Details */}
-          <div className="p-6 md:p-8 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
+          <div className="p-6 md:p-8 flex flex-col gap-4">
             <div className="flex flex-wrap gap-2">
               {book.featured && (
                 <Badge className="bg-accent text-accent-foreground gap-1">
