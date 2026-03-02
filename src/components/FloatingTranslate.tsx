@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Globe, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import GoogleTranslate from "./GoogleTranslate";
+import LanguageSelector from "./LanguageSelector";
 
 const FloatingTranslate = () => {
   const [open, setOpen] = useState(false);
@@ -26,13 +26,9 @@ const FloatingTranslate = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-14 right-0 w-[260px] rounded-xl border border-border/60 bg-popover shadow-xl p-4 overflow-visible"
-            style={{ zIndex: 99999 }}
+            className="absolute bottom-14 right-0 w-[260px] rounded-xl border border-border/60 bg-popover shadow-xl p-4"
           >
-            <p className="text-xs font-medium text-muted-foreground mb-2">🌐 Translate Page</p>
-            <div className="overflow-visible">
-              <GoogleTranslate />
-            </div>
+            <LanguageSelector variant="inline" />
           </motion.div>
         )}
       </AnimatePresence>
