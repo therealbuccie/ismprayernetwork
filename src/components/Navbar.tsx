@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Globe, Radio } from "lucide-react";
+import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Radio } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import GoogleTranslate from "./GoogleTranslate";
+import LanguageSelector from "./LanguageSelector";
 import logo from "@/assets/logo.png";
 
 const prayerItems = [
@@ -28,12 +28,12 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [prayerOpen, setPrayerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [translateOpen, setTranslateOpen] = useState(false);
+  
   const [mobilePrayerOpen, setMobilePrayerOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
-  const translateRef = useRef<HTMLDivElement>(null);
+  
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -59,9 +59,7 @@ const Navbar = () => {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
         setMoreOpen(false);
       }
-      if (translateRef.current && !translateRef.current.contains(e.target as Node)) {
-        setTranslateOpen(false);
-      }
+      
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -148,22 +146,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          {/* Globe translate button */}
-          <div ref={translateRef} className="relative">
-            <button
-              onClick={() => setTranslateOpen(!translateOpen)}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${translateOpen ? "text-accent bg-accent/10" : "text-foreground/70 hover:text-accent hover:bg-accent/10"}`}
-              title="Translate"
-            >
-              <Globe size={18} />
-            </button>
-            <div
-              className={`absolute top-full right-0 mt-2 rounded-xl border border-border/60 bg-popover backdrop-blur-xl shadow-lg z-[100] p-3 min-w-[220px] transition-all duration-200 ${translateOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"}`}
-            >
-              <p className="text-xs font-medium text-muted-foreground mb-2 px-1">🌐 Translate Page</p>
-              <GoogleTranslate />
-            </div>
-          </div>
+          <LanguageSelector />
 
           {isAdmin && (
             <Link to="/admin">
@@ -270,10 +253,7 @@ const Navbar = () => {
               )}
 
               <div className="pt-2 pb-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                  <Globe size={14} /> Translate
-                </div>
-                <GoogleTranslate />
+                <LanguageSelector variant="inline" />
               </div>
 
               <div className="flex gap-2 pt-2">
