@@ -297,9 +297,12 @@ const ApiDocs = () => (
         <div className="border border-border/50 rounded-xl p-5 bg-card/50 space-y-3">
           <p className="text-sm text-muted-foreground">
             All requests must include your API key in the <code className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">x-api-key</code> header.
-            Contact the ISM Prayer Network admin to receive your key.
           </p>
-          <CodeBlock code={`curl -H "x-api-key: YOUR_API_KEY" ${BASE_URL}/books`} />
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/20">
+            <span className="text-xs font-medium text-muted-foreground">Your API Key:</span>
+            <code className="px-2 py-1 bg-background rounded text-sm font-mono text-foreground select-all">ism-partner-2024-a7f3e9b1c4d8</code>
+          </div>
+          <CodeBlock code={`curl -H "x-api-key: ism-partner-2024-a7f3e9b1c4d8" ${BASE_URL}/books`} />
           <p className="text-xs text-muted-foreground">
             ⚠️ Keep your API key secure. Do not expose it in client-side code. Use it from your server only.
           </p>
