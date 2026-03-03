@@ -5,8 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VALID_PIN = "2323";
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -15,7 +13,8 @@ Deno.serve(async (req) => {
   try {
     const { pin, action, data } = await req.json();
 
-    if (pin !== VALID_PIN) {
+    const VALID_PIN = Deno.env.get("ADMIN_PIN");
+    if (!VALID_PIN || pin !== VALID_PIN) {
       return new Response(JSON.stringify({ error: "Invalid PIN" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

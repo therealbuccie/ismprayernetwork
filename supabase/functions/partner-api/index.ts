@@ -66,7 +66,11 @@ Deno.serve(async (req) => {
       if (format === "digital") query = query.eq("is_digital", true);
       if (format === "physical") query = query.eq("is_physical", true);
       if (featured === "true") query = query.eq("featured", true);
-      if (search) query = query.or(`title.ilike.%${search}%,author.ilike.%${search}%`);
+      if (search) {
+        // Sanitize search input to prevent injection
+        const sanitized = search.replace(/[%_\\]/g, '').slice(0, 100);
+        if (sanitized) query = query.or(`title.ilike.%${sanitized}%,author.ilike.%${sanitized}%`);
+      }
 
       const { data, error } = await query.range(offset, offset + limit - 1).order("created_at", { ascending: false });
       if (error) throw error;

@@ -4,21 +4,33 @@ import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { storePin } from "@/hooks/useBookstoreAdmin";
 
-const CORRECT_PIN = "2323";
-
 export function BookstorePinGate({ onUnlock, title = "Bookstore Dashboard" }: { onUnlock: () => void; title?: string }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin === CORRECT_PIN) {
-      sessionStorage.setItem("bookstore_unlocked", "1");
-      storePin(pin);
-      onUnlock();
-    } else {
+    setLoading(true);
+    try {
+      // Validate PIN server-side via the dashboard-admin function
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error: fnError } = await supabase.functions.invoke("dashboard-admin", {
+        body: { pin, action: "count", table: "books" },
+      });
+      if (fnError || data?.error) {
+        setError(true);
+        setPin("");
+      } else {
+        sessionStorage.setItem("bookstore_unlocked", "1");
+        storePin(pin);
+        onUnlock();
+      }
+    } catch {
       setError(true);
       setPin("");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,7 +53,7 @@ export function BookstorePinGate({ onUnlock, title = "Bookstore Dashboard" }: { 
           autoFocus
         />
         {error && <p className="text-sm text-destructive">Incorrect PIN</p>}
-        <Button type="submit" className="w-full" disabled={pin.length < 4}>Unlock</Button>
+        <Button type="submit" className="w-full" disabled={pin.length < 4 || loading}>{loading ? "Verifying…" : "Unlock"}</Button>
       </form>
     </div>
   );
