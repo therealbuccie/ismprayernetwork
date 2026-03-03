@@ -398,6 +398,185 @@ const ApiDocs = () => (
         </div>
       </motion.section>
 
+      {/* Code Samples */}
+      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+            <Code2 className="w-4 h-4 text-accent" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Integration Samples</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-6">
+          Copy-paste these samples into your project to get started quickly. Replace <code className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">YOUR_API_KEY</code> with your actual key.
+        </p>
+
+        <div className="space-y-6">
+          {/* PHP */}
+          <div className="border border-border/50 rounded-xl overflow-hidden bg-card/50">
+            <div className="px-5 py-3 border-b border-border/50 flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 text-xs font-bold">PHP</span>
+              <span className="text-sm text-muted-foreground">Server-side integration</span>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Fetch All Books</p>
+                <CodeBlock code={`<?php
+$apiKey = 'YOUR_API_KEY';
+$baseUrl = '${BASE_URL}';
+
+// Fetch featured books
+$ch = curl_init();
+curl_setopt_array($ch, [
+    CURLOPT_URL => $baseUrl . '/books?featured=true&limit=10',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'x-api-key: ' . $apiKey,
+        'Content-Type: application/json',
+    ],
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 200) {
+    $data = json_decode($response, true);
+    foreach ($data['books'] as $book) {
+        echo $book['title'] . ' — $' . $book['price'] . "\\n";
+    }
+} else {
+    echo 'Error: ' . $response;
+}`} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Place an Order</p>
+                <CodeBlock code={`<?php
+$apiKey = 'YOUR_API_KEY';
+$baseUrl = '${BASE_URL}';
+
+$orderData = [
+    'external_user_id' => 'user-123',
+    'external_user_name' => 'Jane Smith',
+    'total_amount' => 10,
+    'items' => [
+        [
+            'book_id' => 'd5cc8d4a-88fd-4ea8-a735-1b4756484c7e',
+            'title' => 'Prophecy',
+            'quantity' => 1,
+            'format' => 'digital',
+            'price' => 10,
+        ],
+    ],
+];
+
+$ch = curl_init();
+curl_setopt_array($ch, [
+    CURLOPT_URL => $baseUrl . '/orders',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => json_encode($orderData),
+    CURLOPT_HTTPHEADER => [
+        'x-api-key: ' . $apiKey,
+        'Content-Type: application/json',
+    ],
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 201) {
+    $order = json_decode($response, true);
+    echo 'Order created! ID: ' . $order['id'];
+} else {
+    echo 'Error: ' . $response;
+}`} />
+              </div>
+            </div>
+          </div>
+
+          {/* JavaScript */}
+          <div className="border border-border/50 rounded-xl overflow-hidden bg-card/50">
+            <div className="px-5 py-3 border-b border-border/50 flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 text-xs font-bold">JavaScript</span>
+              <span className="text-sm text-muted-foreground">Node.js / Server-side fetch</span>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Fetch All Books</p>
+                <CodeBlock code={`const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = '${BASE_URL}';
+
+async function getBooks() {
+  const res = await fetch(\`\${BASE_URL}/books?featured=true&limit=10\`, {
+    headers: {
+      'x-api-key': API_KEY,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Request failed');
+  }
+
+  const data = await res.json();
+  console.log(\`Found \${data.count} books\`);
+  data.books.forEach(book => {
+    console.log(\`\${book.title} — $\${book.price}\`);
+  });
+  return data.books;
+}
+
+getBooks();`} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Place an Order</p>
+                <CodeBlock code={`const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = '${BASE_URL}';
+
+async function placeOrder() {
+  const res = await fetch(\`\${BASE_URL}/orders\`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      external_user_id: 'user-123',
+      external_user_name: 'Jane Smith',
+      total_amount: 10,
+      items: [
+        {
+          book_id: 'd5cc8d4a-88fd-4ea8-a735-1b4756484c7e',
+          title: 'Prophecy',
+          quantity: 1,
+          format: 'digital',
+          price: 10,
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Order failed');
+  }
+
+  const order = await res.json();
+  console.log('Order created! ID:', order.id);
+  return order;
+}
+
+placeOrder();`} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
       {/* Rate Limits / Notes */}
       <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="pb-8">
         <h2 className="text-xl font-bold text-foreground mb-4">Notes</h2>
