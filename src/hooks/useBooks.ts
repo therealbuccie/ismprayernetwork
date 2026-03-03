@@ -18,6 +18,8 @@ export interface Book {
   stock: number;
   pages: number | null;
   isbn: string | null;
+  espees_price: number | null;
+  ngn_price: number | null;
   featured: boolean;
   created_at: string;
   updated_at: string;

@@ -20,6 +20,8 @@ interface BookForm {
   description: string;
   short_description: string;
   price: string;
+  espees_price: string;
+  ngn_price: string;
   stock: string;
   pages: string;
   isbn: string;
@@ -33,7 +35,7 @@ interface BookForm {
 
 const emptyForm: BookForm = {
   title: "", subtitle: "", author: "", description: "", short_description: "",
-  price: "0", stock: "0", pages: "",
+  price: "0", espees_price: "", ngn_price: "", stock: "0", pages: "",
   isbn: "", cover_image_url: "", cloudpdf_document_id: "", category_id: "",
   is_digital: false, is_physical: true, featured: false,
 };
@@ -57,7 +59,9 @@ export function BooksManager() {
       author: book.author,
       description: book.description || "",
       short_description: book.short_description || "",
-      price: String(book.price), stock: String(book.stock),
+      price: String(book.price), espees_price: book.espees_price != null ? String(book.espees_price) : "",
+      ngn_price: book.ngn_price != null ? String(book.ngn_price) : "",
+      stock: String(book.stock),
       pages: book.pages ? String(book.pages) : "",
       isbn: book.isbn || "", cover_image_url: book.cover_image_url || "",
       cloudpdf_document_id: book.cloudpdf_document_id || "",
@@ -90,6 +94,8 @@ export function BooksManager() {
         description: form.description || null,
         short_description: form.short_description || null,
         price: parseFloat(form.price) || 0,
+        espees_price: form.espees_price ? parseFloat(form.espees_price) : null,
+        ngn_price: form.ngn_price ? parseFloat(form.ngn_price) : null,
         stock: parseInt(form.stock) || 0,
         pages: form.pages ? parseInt(form.pages) : null,
         isbn: form.isbn || null,
@@ -187,7 +193,13 @@ export function BooksManager() {
                     </div>
                   </TableCell>
                   <TableCell>{book.author}</TableCell>
-                  <TableCell>${book.price}</TableCell>
+                  <TableCell>
+                    <div className="text-xs space-y-0.5">
+                      <p className="font-medium">${book.price}</p>
+                      {book.espees_price != null && <p className="text-muted-foreground">{book.espees_price} ESP</p>}
+                      {book.ngn_price != null && <p className="text-muted-foreground">₦{book.ngn_price.toLocaleString()}</p>}
+                    </div>
+                  </TableCell>
                   <TableCell>{book.stock}</TableCell>
                   <TableCell>{book.featured ? "⭐" : "—"}</TableCell>
                   <TableCell className="text-right">
@@ -230,11 +242,15 @@ export function BooksManager() {
               <textarea className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm" rows={4} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Full description of the book..." />
             </div>
             <div className="grid grid-cols-3 gap-4">
-              <div><Label>Price ($)</Label><Input type="number" step="0.01" value={form.price} onChange={e => set("price", e.target.value)} /></div>
+              <div><Label>USD Price ($)</Label><Input type="number" step="0.01" value={form.price} onChange={e => set("price", e.target.value)} /></div>
+              <div><Label>ESPEES Price</Label><Input type="number" step="0.01" value={form.espees_price} onChange={e => set("espees_price", e.target.value)} placeholder="e.g. 2.0" /></div>
+              <div><Label>NGN Price (₦)</Label><Input type="number" step="1" value={form.ngn_price} onChange={e => set("ngn_price", e.target.value)} placeholder="e.g. 3600" /></div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
               <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={e => set("stock", e.target.value)} /></div>
               <div><Label>Pages</Label><Input type="number" value={form.pages} onChange={e => set("pages", e.target.value)} /></div>
+              <div><Label>ISBN</Label><Input value={form.isbn} onChange={e => set("isbn", e.target.value)} /></div>
             </div>
-            <div><Label>ISBN</Label><Input value={form.isbn} onChange={e => set("isbn", e.target.value)} /></div>
             <div><Label>CloudPDF Document ID</Label><Input value={form.cloudpdf_document_id} onChange={e => set("cloudpdf_document_id", e.target.value)} placeholder="e.g. dfbd936c-2956-41a3-9e98-233ac431dd13" /></div>
             <div>
               <Label>Category</Label>

@@ -58,11 +58,13 @@ export type Database = {
           created_at: string
           description: string | null
           digital_file_url: string | null
+          espees_price: number | null
           featured: boolean
           id: string
           is_digital: boolean
           is_physical: boolean
           isbn: string | null
+          ngn_price: number | null
           pages: number | null
           price: number
           short_description: string | null
@@ -79,11 +81,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           digital_file_url?: string | null
+          espees_price?: number | null
           featured?: boolean
           id?: string
           is_digital?: boolean
           is_physical?: boolean
           isbn?: string | null
+          ngn_price?: number | null
           pages?: number | null
           price?: number
           short_description?: string | null
@@ -100,11 +104,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           digital_file_url?: string | null
+          espees_price?: number | null
           featured?: boolean
           id?: string
           is_digital?: boolean
           is_physical?: boolean
           isbn?: string | null
+          ngn_price?: number | null
           pages?: number | null
           price?: number
           short_description?: string | null

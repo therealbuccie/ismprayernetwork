@@ -71,7 +71,17 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
               <p className="text-muted-foreground">by {book.author}</p>
             </div>
 
-            <p className="text-3xl font-bold gold-gradient">${book.price.toFixed(2)}</p>
+            <div className="space-y-1">
+              <p className="text-3xl font-bold gold-gradient">${book.price.toFixed(2)}</p>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                {book.espees_price != null && (
+                  <span className="font-medium">{book.espees_price} ESPEES</span>
+                )}
+                {book.ngn_price != null && (
+                  <span className="font-medium">₦{book.ngn_price.toLocaleString()}</span>
+                )}
+              </div>
+            </div>
 
             {/* Combo highlight */}
             {combo && (
@@ -128,7 +138,7 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
                   onClick={() => onAddToCart(book, "physical")}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {combo ? "Add Combo Pack (Physical)" : "Add Physical Copy"} — ${book.price.toFixed(2)}
+                  {combo ? "Add Combo Pack (Physical)" : "Add Physical Copy"} — ${book.price.toFixed(2)}{book.ngn_price != null && ` / ₦${book.ngn_price.toLocaleString()}`}
                 </Button>
               )}
               {book.is_physical && book.stock === 0 && (
@@ -144,7 +154,7 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
                   onClick={() => onAddToCart(book, "digital")}
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  {combo ? "Add Combo Pack (Digital)" : "Add Digital Copy"} — ${book.price.toFixed(2)}
+                  {combo ? "Add Combo Pack (Digital)" : "Add Digital Copy"} — ${book.price.toFixed(2)}{book.ngn_price != null && ` / ₦${book.ngn_price.toLocaleString()}`}
                 </Button>
               )}
               {!book.is_physical && !book.is_digital && (

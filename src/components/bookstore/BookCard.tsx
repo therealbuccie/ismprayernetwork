@@ -73,17 +73,27 @@ export function BookCard({ book, onSelect }: BookCardProps) {
             📦 {book.description.split('\n')[0]}
           </p>
         )}
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-lg font-bold gold-gradient">${book.price.toFixed(2)}</span>
-          {combo && (
-            <span className="text-[10px] text-accent font-semibold">Bundle Deal</span>
+        <div className="space-y-1 pt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-lg font-bold gold-gradient">${book.price.toFixed(2)}</span>
+            {book.espees_price != null && (
+              <span className="text-[11px] text-muted-foreground font-medium">| {book.espees_price} ESPEES</span>
+            )}
+          </div>
+          {book.ngn_price != null && (
+            <p className="text-[11px] text-muted-foreground font-medium">₦{book.ngn_price.toLocaleString()}</p>
           )}
-          {!combo && book.is_physical && book.stock <= 10 && book.stock > 0 && (
-            <span className="text-[10px] text-destructive font-medium">Only {book.stock} left</span>
-          )}
-          {!combo && book.is_physical && book.stock === 0 && (
-            <span className="text-[10px] text-muted-foreground font-medium">Out of stock</span>
-          )}
+          <div className="flex items-center justify-between">
+            {combo && (
+              <span className="text-[10px] text-accent font-semibold">Bundle Deal</span>
+            )}
+            {!combo && book.is_physical && book.stock <= 10 && book.stock > 0 && (
+              <span className="text-[10px] text-destructive font-medium">Only {book.stock} left</span>
+            )}
+            {!combo && book.is_physical && book.stock === 0 && (
+              <span className="text-[10px] text-muted-foreground font-medium">Out of stock</span>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
