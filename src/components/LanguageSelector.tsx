@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, ChevronDown } from "lucide-react";
+import { Globe } from "lucide-react";
 
 const languages = [
   { code: "en", label: "English" },
@@ -113,6 +113,23 @@ const languages = [
   { code: "zu", label: "isiZulu" },
 ];
 
+const triggerGoogleTranslate = (langCode: string) => {
+  // Set the googtrans cookie for Google Translate
+  const value = langCode === "en" ? "" : `/en/${langCode}`;
+  document.cookie = `googtrans=${value};path=/`;
+  document.cookie = `googtrans=${value};path=/;domain=${window.location.hostname}`;
+
+  // Try to use the Google Translate combo box if available
+  const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+  if (select) {
+    select.value = langCode === "en" ? "" : langCode;
+    select.dispatchEvent(new Event("change"));
+  } else {
+    // Fallback: reload to let the cookie take effect
+    window.location.reload();
+  }
+};
+
 interface LanguageSelectorProps {
   variant?: "dropdown" | "inline";
 }
@@ -122,17 +139,7 @@ const LanguageSelector = ({ variant = "dropdown" }: LanguageSelectorProps) => {
 
   const handleSelect = (code: string) => {
     setOpen(false);
-    if (code === "en") {
-      // If English, just reload the original page
-      window.location.href = window.location.origin + window.location.pathname;
-      return;
-    }
-    const currentUrl = window.location.href;
-    window.open(
-      `https://translate.google.com/translate?sl=en&tl=${code}&u=${encodeURIComponent(currentUrl)}`,
-      "_blank",
-      "noopener"
-    );
+    triggerGoogleTranslate(code);
   };
 
   if (variant === "inline") {

@@ -197,3 +197,11 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+/* Hide Google Translate toolbar */
+.goog-te-banner-frame, .skiptranslate {
+  display: none !important;
+}
+body {
+  top: 0 !important;
+}
