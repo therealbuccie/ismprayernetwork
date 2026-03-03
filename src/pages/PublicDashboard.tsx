@@ -20,6 +20,8 @@ const OrdersManager = lazy(() => import("@/components/dashboard/OrdersManager").
 const PurchasesManager = lazy(() => import("@/components/dashboard/PurchasesManager").then(m => ({ default: m.PurchasesManager })));
 const SiteSettingsManager = lazy(() => import("@/components/dashboard/SiteSettingsManager").then(m => ({ default: m.SiteSettingsManager })));
 const CampaignsManager = lazy(() => import("@/components/dashboard/CampaignsManager").then(m => ({ default: m.CampaignsManager })));
+const LiveTVManager = lazy(() => import("@/components/dashboard/LiveTVManager").then(m => ({ default: m.LiveTVManager })));
+const PaymentSettingsManager = lazy(() => import("@/components/dashboard/PaymentSettingsManager").then(m => ({ default: m.PaymentSettingsManager })));
 
 function TabSkeleton() {
   return (
@@ -70,6 +72,8 @@ const PublicDashboard = () => {
             {activeTab === "orders" && <OrdersManager />}
             {activeTab === "purchases" && <PurchasesManager />}
             {activeTab === "campaigns" && <CampaignsManager />}
+            {activeTab === "live-tv" && <LiveTVManager />}
+            {activeTab === "payment-settings" && <PaymentSettingsManager />}
             {activeTab === "settings" && <SiteSettingsManager />}
           </Suspense>
         </div>
