@@ -79,9 +79,16 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
 
   const handleEspeesSubmit = async () => {
     if (!user) { toast.error("Please log in first"); navigate("/auth"); return; }
+    if (!popFile) { toast.error("Please upload your proof of payment"); return; }
 
     setSubmitting(true);
     try {
+      const ext = popFile.name.split(".").pop();
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("pop-uploads").upload(path, popFile);
+      if (uploadErr) throw uploadErr;
+      const { data: { publicUrl } } = supabase.storage.from("pop-uploads").getPublicUrl(path);
+
       const orderItems = items.map(i => ({
         book_id: i.book.id,
         title: i.book.title,
@@ -96,14 +103,12 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
         total_amount: totalPrice,
         payment_method: "espees",
         espees_code: "ISMNT",
+        pop_image_url: publicUrl,
       });
       if (error) throw error;
 
-      toast.success("Order created! Redirecting to ESPEES...");
+      toast.success("Order submitted! Awaiting admin approval.");
       queryClient.invalidateQueries({ queryKey: ["my-orders"] });
-      
-      // Open ESPEES in new tab, then close modal
-      window.open("https://web.espees.org", "_blank");
       onSuccess();
     } catch (err: any) {
       toast.error(err.message);
@@ -240,7 +245,8 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
                 <ExternalLink className="w-4 h-4 text-accent" /> Pay with ESPEES
               </h3>
               <p className="text-sm text-muted-foreground">
-                You will be redirected to the ESPEES platform to complete payment.
+                1. Click the button below to open ESPEES and complete your payment.<br/>
+                2. After paying, upload your proof of payment below.
               </p>
               <div className="flex items-center justify-between bg-muted/50 rounded-md p-3">
                 <div>
@@ -257,14 +263,37 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
               <p className="text-xs text-muted-foreground">
                 Amount: <span className="font-bold text-foreground">${totalPrice.toFixed(2)}</span>
               </p>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => window.open("https://web.espees.org", "_blank")}
+              >
+                <ExternalLink className="w-4 h-4" /> Open ESPEES Platform
+              </Button>
+            </div>
+
+            {/* POP upload for ESPEES */}
+            <div>
+              <Label>Upload Proof of Payment *</Label>
+              <Input
+                type="file"
+                accept="image/*,.pdf"
+                onChange={e => setPopFile(e.target.files?.[0] || null)}
+                className="mt-1"
+              />
+              {popFile && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-green-500" /> {popFile.name}
+                </p>
+              )}
             </div>
 
             <Button
               onClick={handleEspeesSubmit}
-              disabled={submitting}
+              disabled={submitting || !popFile}
               className="w-full gold-gradient-bg text-accent-foreground"
             >
-              {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</> : <><ExternalLink className="w-4 h-4 mr-2" /> Proceed to ESPEES</>}
+              {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
             </Button>
           </div>
         )}
