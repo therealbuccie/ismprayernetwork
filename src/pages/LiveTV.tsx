@@ -5,13 +5,17 @@ import { Tv, Heart, MessageSquareHeart, Share2, Radio } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { HeroButton } from "@/components/HeroButton";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Hls from "hls.js";
 
-const HLS_URL = "https://netshiftstudiokit.online:5443/LiveApp/streams/mopc_main.m3u8";
+const DEFAULT_HLS = "https://netshiftstudiokit.online:5443/LiveApp/streams/mopc_main.m3u8";
 
 const LiveTV = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLive, setIsLive] = useState(false);
+  const { data: hlsSetting } = useSiteSettings("hls_url");
+
+  const hlsUrl = (hlsSetting as string) || DEFAULT_HLS;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -19,7 +23,7 @@ const LiveTV = () => {
 
     if (Hls.isSupported()) {
       const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-      hls.loadSource(HLS_URL);
+      hls.loadSource(hlsUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setIsLive(true);
@@ -30,13 +34,13 @@ const LiveTV = () => {
       });
       return () => hls.destroy();
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = HLS_URL;
+      video.src = hlsUrl;
       video.addEventListener("loadedmetadata", () => {
         setIsLive(true);
         video.play().catch(() => {});
       });
     }
-  }, []);
+  }, [hlsUrl]);
 
   const handleShare = async () => {
     const shareData = { title: "ISM Ministers Prayer Network - LiveTV", url: window.location.href };

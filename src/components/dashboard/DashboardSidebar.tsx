@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings } from "lucide-react";
+import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
@@ -23,6 +23,7 @@ const tabs = [
   { id: "newsletter" as const, label: "Newsletter", icon: Newspaper },
   { id: "prayer-requests" as const, label: "Prayer Requests", icon: HandHeart },
   { id: "prayer-groups" as const, label: "Prayer Groups", icon: UsersRound },
+  { id: "campaigns" as const, label: "Campaigns", icon: Megaphone },
   { id: "users" as const, label: "Users & Roles", icon: Users, superAdminOnly: true },
   { id: "settings" as const, label: "Settings", icon: Settings },
 ];

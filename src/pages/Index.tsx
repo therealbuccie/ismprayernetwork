@@ -6,7 +6,8 @@ import FeaturesSection from "@/components/FeaturesSection";
 import TestimoniesSection from "@/components/TestimoniesSection";
 import CTASection from "@/components/CTASection";
 import FeaturedBooksSection from "@/components/FeaturedBooksSection";
-import PrayerRendezvousPromo from "@/components/PrayerRendezvousPromo";
+import CampaignCard from "@/components/CampaignCard";
+import CampaignPopup from "@/components/CampaignPopup";
 import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
@@ -14,7 +15,6 @@ import Preloader from "@/components/Preloader";
 const Index = () => {
   const [loading, setLoading] = useState(() => !sessionStorage.getItem("preloaderShown"));
 
-  // Pre-cache the hero video on first visit
   useEffect(() => {
     if ("caches" in window) {
       caches.open("hero-video-v1").then((cache) => {
@@ -39,7 +39,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <FeaturedBooksSection />
-        <PrayerRendezvousPromo variant="card" />
+        <CampaignCard />
         <StatsSection />
         <FeaturesSection />
         <TestimoniesSection />
@@ -47,6 +47,7 @@ const Index = () => {
         <CTASection />
       </main>
       <Footer />
+      <CampaignPopup />
     </div>
   );
 };
