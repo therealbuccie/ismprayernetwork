@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const promoImages = [
-  "/images/promo-prayer-1.jpeg",
   "/images/promo-prayer-2.jpeg",
   "/images/promo-prayer-3.jpeg",
   "/images/promo-prayer-4.jpeg",
