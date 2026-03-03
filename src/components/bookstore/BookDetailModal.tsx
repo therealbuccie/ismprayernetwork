@@ -2,7 +2,7 @@ import { Book } from "@/hooks/useBooks";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Download, ShoppingCart, Star, X } from "lucide-react";
+import { BookOpen, Download, ShoppingCart, Star, X, Package } from "lucide-react";
 
 interface BookDetailModalProps {
   book: Book | null;
@@ -11,8 +11,14 @@ interface BookDetailModalProps {
   onAddToCart: (book: Book, format: "physical" | "digital") => void;
 }
 
+const isCombo = (book: Book) => {
+  const text = `${book.title} ${book.subtitle || ""}`.toLowerCase();
+  return text.includes("combo") || text.includes("pack") || text.includes("bundle") || text.includes("collection");
+};
+
 export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetailModalProps) {
   if (!book) return null;
+  const combo = isCombo(book);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -32,6 +38,13 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
               alt={book.title}
               className="w-full h-auto max-h-[40vh] md:max-h-none md:h-full object-contain md:object-cover"
             />
+            {combo && (
+              <div className="absolute bottom-3 left-3">
+                <Badge className="bg-primary text-primary-foreground gap-1">
+                  <Package className="w-3 h-3" /> Combo Pack
+                </Badge>
+              </div>
+            )}
           </div>
 
           {/* Details */}
@@ -43,6 +56,11 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
                 </Badge>
               )}
               <Badge variant="outline">{book.categories?.name || "Uncategorized"}</Badge>
+              {combo && (
+                <Badge variant="outline" className="border-accent text-accent gap-1">
+                  <Package className="w-3 h-3" /> Multiple Titles Included
+                </Badge>
+              )}
             </div>
 
             <div>
@@ -55,10 +73,24 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
 
             <p className="text-3xl font-bold gold-gradient">${book.price.toFixed(2)}</p>
 
-            {/* Long description */}
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-              {book.description || book.short_description || "No description available."}
-            </p>
+            {/* Combo highlight */}
+            {combo && (
+              <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
+                <p className="text-sm font-semibold text-accent mb-1 flex items-center gap-1.5">
+                  <Package className="w-4 h-4" /> What's Included in This Pack
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {book.description || book.short_description || "Multiple titles bundled together at a special price."}
+                </p>
+              </div>
+            )}
+
+            {/* Long description (non-combo) */}
+            {!combo && (
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {book.description || book.short_description || "No description available."}
+              </p>
+            )}
 
             {/* Meta */}
             <div className="grid grid-cols-2 gap-3 text-sm">
@@ -84,16 +116,19 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
               )}
             </div>
 
-            {/* Add to Cart - format choice happens here */}
+            {/* Add to Cart */}
             <div className="flex flex-col gap-2 mt-auto pt-4">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Choose format</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                {combo ? "Add combo pack to cart" : "Choose format"}
+              </p>
               {book.is_physical && book.stock > 0 && (
                 <Button
                   size="lg"
                   className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90 font-semibold"
                   onClick={() => onAddToCart(book, "physical")}
                 >
-                  <ShoppingCart className="w-4 h-4 mr-2" /> Add Physical Copy — ${book.price.toFixed(2)}
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {combo ? "Add Combo Pack (Physical)" : "Add Physical Copy"} — ${book.price.toFixed(2)}
                 </Button>
               )}
               {book.is_physical && book.stock === 0 && (
@@ -108,7 +143,8 @@ export function BookDetailModal({ book, open, onClose, onAddToCart }: BookDetail
                   className="w-full border-accent text-accent hover:bg-accent/10 font-semibold"
                   onClick={() => onAddToCart(book, "digital")}
                 >
-                  <Download className="w-4 h-4 mr-2" /> Add Digital Copy — ${book.price.toFixed(2)}
+                  <Download className="w-4 h-4 mr-2" />
+                  {combo ? "Add Combo Pack (Digital)" : "Add Digital Copy"} — ${book.price.toFixed(2)}
                 </Button>
               )}
               {!book.is_physical && !book.is_digital && (

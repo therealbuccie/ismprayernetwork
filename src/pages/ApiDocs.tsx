@@ -133,19 +133,22 @@ const endpoints: EndpointProps[] = [
       { name: "limit", type: "number", required: false, description: "Max results (default 50, max 100)" },
       { name: "offset", type: "number", required: false, description: "Pagination offset (default 0)" },
     ],
-    exampleRequest: `curl -X GET "${BASE_URL}/books?limit=10&featured=true" \\
+    exampleRequest: `curl -X GET "${BASE_URL}/books?limit=3&featured=true" \\
   -H "x-api-key: YOUR_API_KEY"`,
     exampleResponse: `{
   "books": [
     {
-      "id": "abc-123",
-      "title": "The Power of Prayer",
-      "author": "Pastor Chris",
-      "price": 15.99,
+      "id": "d5cc8d4a-88fd-4ea8-a735-1b4756484c7e",
+      "title": "Prophecy",
+      "subtitle": "Understanding The Power That Controls Your Future",
+      "author": "Pastor Chris Oyakhilome",
+      "price": 10,
       "is_digital": true,
-      "is_physical": true,
-      "cover_image_url": "https://...",
-      "featured": true
+      "is_physical": false,
+      "cover_image_url": "https://ryitxoymayasdlabojsx.supabase.co/storage/v1/object/public/book-covers/1772200289603.jpg",
+      "featured": true,
+      "stock": 100,
+      "category_id": "37f46bd0-d4bf-47b5-bbd1-6fadf4444776"
     }
   ],
   "count": 1
@@ -156,21 +159,23 @@ const endpoints: EndpointProps[] = [
     path: "/books/:id",
     description: "Get full details of a single book",
     params: [],
-    exampleRequest: `curl -X GET "${BASE_URL}/books/abc-123" \\
+    exampleRequest: `curl -X GET "${BASE_URL}/books/d5cc8d4a-88fd-4ea8-a735-1b4756484c7e" \\
   -H "x-api-key: YOUR_API_KEY"`,
     exampleResponse: `{
-  "id": "abc-123",
-  "title": "The Power of Prayer",
-  "subtitle": "A Minister's Guide",
-  "author": "Pastor Chris",
-  "description": "Full description...",
-  "price": 15.99,
-  "pages": 240,
-  "isbn": "978-0-123456-78-9",
+  "id": "d5cc8d4a-88fd-4ea8-a735-1b4756484c7e",
+  "title": "Prophecy",
+  "subtitle": "Understanding The Power That Controls Your Future",
+  "author": "Pastor Chris Oyakhilome",
+  "description": "God's people are a people of prophecy...",
+  "short_description": "\\"And it shall come to pass in the last days...\\\" Acts 2:17 (NKJV).",
+  "price": 10,
+  "pages": null,
+  "isbn": null,
   "is_digital": true,
-  "is_physical": true,
-  "stock": 50,
-  "cover_image_url": "https://..."
+  "is_physical": false,
+  "stock": 100,
+  "cover_image_url": "https://ryitxoymayasdlabojsx.supabase.co/storage/v1/object/public/book-covers/1772200289603.jpg",
+  "category_id": "37f46bd0-d4bf-47b5-bbd1-6fadf4444776"
 }`,
   },
   {
@@ -181,8 +186,9 @@ const endpoints: EndpointProps[] = [
   -H "x-api-key: YOUR_API_KEY"`,
     exampleResponse: `{
   "categories": [
-    { "id": "cat-1", "name": "Ministry" },
-    { "id": "cat-2", "name": "Leadership" }
+    { "id": "37f46bd0-d4bf-47b5-bbd1-6fadf4444776", "name": "Prayer & Devotion" },
+    { "id": "4db82a35-4e72-4fdc-87c0-5a854aa60eab", "name": "Ministry" },
+    { "id": "1d216302-72ac-40d3-b541-07b437994d21", "name": "Leadership" }
   ]
 }`,
   },
@@ -202,12 +208,12 @@ const endpoints: EndpointProps[] = [
     "description": "A daily morning prayer group"
   }'`,
     exampleResponse: `{
-  "id": "group-456",
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "name": "Morning Glory Fellowship",
   "description": "A daily morning prayer group",
   "is_public": true,
   "member_count": 1,
-  "created_at": "2026-02-27T10:00:00Z"
+  "created_at": "2026-03-03T10:00:00Z"
 }`,
   },
   {
@@ -228,23 +234,23 @@ const endpoints: EndpointProps[] = [
   -d '{
     "external_user_id": "user-789",
     "external_user_name": "John Doe",
-    "total_amount": 31.98,
+    "total_amount": 20,
     "items": [
       {
-        "book_id": "abc-123",
-        "title": "The Power of Prayer",
+        "book_id": "d5cc8d4a-88fd-4ea8-a735-1b4756484c7e",
+        "title": "Prophecy",
         "quantity": 2,
         "format": "digital",
-        "price": 15.99
+        "price": 10
       }
     ]
   }'`,
     exampleResponse: `{
-  "id": "order-001",
+  "id": "f1a2b3c4-d5e6-7890-abcd-ef1234567890",
   "status": "pending",
-  "total_amount": 31.98,
+  "total_amount": 20,
   "items": [...],
-  "created_at": "2026-02-27T10:00:00Z"
+  "created_at": "2026-03-03T10:00:00Z"
 }`,
   },
 ];
@@ -271,6 +277,10 @@ const ApiDocs = () => (
           <p className="text-primary-foreground/70 max-w-xl mx-auto">
             Access our bookstore, create prayer groups, and place orders — all through a simple REST API.
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-full px-4 py-1.5 text-xs font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Live API — Production Ready
+          </div>
         </motion.div>
       </div>
     </section>

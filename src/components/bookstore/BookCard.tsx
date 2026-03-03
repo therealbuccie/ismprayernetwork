@@ -1,6 +1,6 @@
 import { Book } from "@/hooks/useBooks";
 import { Badge } from "@/components/ui/badge";
-import { Star } from "lucide-react";
+import { Star, Package } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface BookCardProps {
@@ -9,7 +9,14 @@ interface BookCardProps {
   onAddToCart: (book: Book, format: "physical" | "digital") => void;
 }
 
+const isCombo = (book: Book) => {
+  const text = `${book.title} ${book.subtitle || ""}`.toLowerCase();
+  return text.includes("combo") || text.includes("pack") || text.includes("bundle") || text.includes("collection");
+};
+
 export function BookCard({ book, onSelect }: BookCardProps) {
+  const combo = isCombo(book);
+
   return (
     <motion.div
       layout
@@ -18,7 +25,7 @@ export function BookCard({ book, onSelect }: BookCardProps) {
       exit={{ opacity: 0, y: 20 }}
       whileHover={{ y: -6 }}
       transition={{ duration: 0.3 }}
-      className="group relative glass-card rounded-xl overflow-hidden cursor-pointer"
+      className={`group relative glass-card rounded-xl overflow-hidden cursor-pointer ${combo ? "ring-2 ring-accent/40" : ""}`}
       onClick={() => onSelect(book)}
     >
       {/* Cover */}
@@ -31,14 +38,19 @@ export function BookCard({ book, onSelect }: BookCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Featured badge only */}
-        {book.featured && (
-          <div className="absolute top-3 left-3">
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          {book.featured && (
             <Badge className="bg-accent text-accent-foreground text-[10px] gap-1">
               <Star className="w-3 h-3" /> Featured
             </Badge>
-          </div>
-        )}
+          )}
+          {combo && (
+            <Badge className="bg-primary text-primary-foreground text-[10px] gap-1">
+              <Package className="w-3 h-3" /> Combo Pack
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Info */}
@@ -56,12 +68,20 @@ export function BookCard({ book, onSelect }: BookCardProps) {
         {book.short_description && (
           <p className="text-xs text-muted-foreground/70 line-clamp-2 pt-1">{book.short_description}</p>
         )}
+        {combo && book.description && (
+          <p className="text-xs text-accent/80 font-medium line-clamp-2 pt-1">
+            📦 {book.description.split('\n')[0]}
+          </p>
+        )}
         <div className="flex items-center justify-between pt-1">
           <span className="text-lg font-bold gold-gradient">${book.price.toFixed(2)}</span>
-          {book.is_physical && book.stock <= 10 && book.stock > 0 && (
+          {combo && (
+            <span className="text-[10px] text-accent font-semibold">Bundle Deal</span>
+          )}
+          {!combo && book.is_physical && book.stock <= 10 && book.stock > 0 && (
             <span className="text-[10px] text-destructive font-medium">Only {book.stock} left</span>
           )}
-          {book.is_physical && book.stock === 0 && (
+          {!combo && book.is_physical && book.stock === 0 && (
             <span className="text-[10px] text-muted-foreground font-medium">Out of stock</span>
           )}
         </div>
