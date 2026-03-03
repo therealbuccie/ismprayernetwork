@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
         // Single book detail
         const { data, error } = await supabase
           .from("books")
-          .select("id, title, subtitle, author, short_description, description, cover_image_url, price, is_digital, is_physical, pages, isbn, stock, featured, category_id")
+          .select("id, title, subtitle, author, short_description, description, cover_image_url, price, espees_price, ngn_price, is_digital, is_physical, pages, isbn, stock, featured, category_id")
           .eq("id", resource)
           .single();
         if (error) return jsonResponse({ error: "Book not found" }, 404);
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
       let query = supabase
         .from("books")
-        .select("id, title, subtitle, author, short_description, cover_image_url, price, is_digital, is_physical, stock, featured, category_id");
+        .select("id, title, subtitle, author, short_description, cover_image_url, price, espees_price, ngn_price, is_digital, is_physical, stock, featured, category_id");
 
       if (category) query = query.eq("category_id", category);
       if (format === "digital") query = query.eq("is_digital", true);
