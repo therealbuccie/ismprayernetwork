@@ -6,6 +6,7 @@ import FeaturesSection from "@/components/FeaturesSection";
 import TestimoniesSection from "@/components/TestimoniesSection";
 import CTASection from "@/components/CTASection";
 import FeaturedBooksSection from "@/components/FeaturedBooksSection";
+import PrayerRendezvousPromo from "@/components/PrayerRendezvousPromo";
 import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
@@ -38,6 +39,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <FeaturedBooksSection />
+        <PrayerRendezvousPromo variant="card" />
         <StatsSection />
         <FeaturesSection />
         <TestimoniesSection />
