@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VALID_PIN = "2323";
+// PIN is read from environment variable at runtime
 
 const ALLOWED_TABLES = [
   "books", "categories", "profiles", "testimonies", "programs", "events",
@@ -22,7 +22,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { pin, action, table, data, filters, select, order, match } = body;
 
-    if (pin !== VALID_PIN) {
+    const VALID_PIN = Deno.env.get("ADMIN_PIN");
+    if (!VALID_PIN || pin !== VALID_PIN) {
       return new Response(JSON.stringify({ error: "Invalid PIN" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
