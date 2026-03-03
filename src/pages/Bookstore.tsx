@@ -129,11 +129,11 @@ const Bookstore = () => {
         </div>
       </section>
 
-      {/* Floating cart button */}
+      {/* Mobile-only floating cart button */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full gold-gradient-bg text-accent-foreground shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full gold-gradient-bg text-accent-foreground shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center md:hidden"
         onClick={() => cart.setIsOpen(true)}
       >
         <ShoppingCart className="w-5 h-5" />

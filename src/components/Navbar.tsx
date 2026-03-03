@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Radio } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Radio, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LanguageSelector from "./LanguageSelector";
@@ -36,6 +37,9 @@ const Navbar = () => {
   
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const cart = useCart();
+  const isBookstore = location.pathname.startsWith("/bookstore");
 
   const handleSignOut = async () => {
     console.log("Sign out clicked");
@@ -146,6 +150,20 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
+          {isBookstore && (
+            <button
+              onClick={() => cart.setIsOpen(true)}
+              className="relative p-2 rounded-lg text-foreground/80 hover:text-accent hover:bg-muted/50 transition-colors"
+              title="Cart"
+            >
+              <ShoppingCart size={18} />
+              {cart.totalItems > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                  {cart.totalItems}
+                </span>
+              )}
+            </button>
+          )}
           <LanguageSelector />
 
           {isAdmin && (
