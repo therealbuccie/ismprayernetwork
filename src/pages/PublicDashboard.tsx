@@ -19,6 +19,7 @@ const PrayerGroupsManager = lazy(() => import("@/components/dashboard/PrayerGrou
 const OrdersManager = lazy(() => import("@/components/dashboard/OrdersManager").then(m => ({ default: m.OrdersManager })));
 const PurchasesManager = lazy(() => import("@/components/dashboard/PurchasesManager").then(m => ({ default: m.PurchasesManager })));
 const SiteSettingsManager = lazy(() => import("@/components/dashboard/SiteSettingsManager").then(m => ({ default: m.SiteSettingsManager })));
+const CampaignsManager = lazy(() => import("@/components/dashboard/CampaignsManager").then(m => ({ default: m.CampaignsManager })));
 
 function TabSkeleton() {
   return (
@@ -68,6 +69,7 @@ const PublicDashboard = () => {
             {activeTab === "prayer-groups" && <PrayerGroupsManager />}
             {activeTab === "orders" && <OrdersManager />}
             {activeTab === "purchases" && <PurchasesManager />}
+            {activeTab === "campaigns" && <CampaignsManager />}
             {activeTab === "settings" && <SiteSettingsManager />}
           </Suspense>
         </div>

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import PrayerRendezvousPromo from "@/components/PrayerRendezvousPromo";
+import CampaignBanner from "@/components/CampaignBanner";
 
 const Bookstore = () => {
   const { data: books, isLoading } = useBooks();
@@ -196,9 +196,9 @@ const Bookstore = () => {
         </div>
       </section>
 
-      {/* Prayer Rendezvous Campaign */}
+      {/* Campaign Banner */}
       <section className="container mx-auto px-4 pb-10">
-        <PrayerRendezvousPromo variant="banner" />
+        <CampaignBanner />
       </section>
 
       {/* Featured */}

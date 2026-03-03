@@ -123,6 +123,42 @@ export type Database = {
           },
         ]
       }
+      campaigns: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_type: string
+          id: string
+          images: Json
+          is_active: boolean
+          link_url: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_type?: string
+          id?: string
+          images?: Json
+          is_active?: boolean
+          link_url?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_type?: string
+          id?: string
+          images?: Json
+          is_active?: boolean
+          link_url?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
