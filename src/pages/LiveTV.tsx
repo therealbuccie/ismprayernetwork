@@ -8,14 +8,12 @@ import { HeroButton } from "@/components/HeroButton";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Hls from "hls.js";
 
-const DEFAULT_HLS = "https://netshiftstudiokit.online:5443/LiveApp/streams/mopc_main.m3u8";
-
 const LiveTV = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLive, setIsLive] = useState(false);
-  const { data: hlsSetting } = useSiteSettings("hls_url");
+  const { data: hlsSetting, isLoading: hlsLoading } = useSiteSettings("hls_url");
 
-  const hlsUrl = (hlsSetting as string) || DEFAULT_HLS;
+  const hlsUrl = (hlsSetting as string) || "";
 
   useEffect(() => {
     const video = videoRef.current;
@@ -116,7 +114,9 @@ const LiveTV = () => {
                   <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20">
                     <div className="text-center">
                       <Tv size={56} className="mx-auto mb-3 text-accent/40" />
-                      <p className="text-foreground/80 font-medium">Connecting to live stream…</p>
+                      <p className="text-foreground/80 font-medium">
+                        {hlsLoading ? "Loading stream…" : hlsUrl ? "Connecting to live stream…" : "No stream configured"}
+                      </p>
                     </div>
                   </div>
                 )}
