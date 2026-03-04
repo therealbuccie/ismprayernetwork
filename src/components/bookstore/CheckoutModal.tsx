@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { CartItem } from "@/hooks/useCart";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Banknote, Upload, ExternalLink, Copy, CheckCircle, Loader2, ChevronDown, ChevronRight, MapPin } from "lucide-react";
+import { Banknote, Upload, ExternalLink, Copy, CheckCircle, Loader2, ChevronDown, ChevronRight, MapPin, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -97,7 +97,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
   const queryClient = useQueryClient();
   const { data: bankAccounts } = useSiteSettings("bank_accounts") as { data: BankDetails[] | undefined };
 
-  const [method, setMethod] = useState<"bank_transfer" | "espees" | null>(null);
+  const [method, setMethod] = useState<"bank_transfer" | "espees" | "kingspay" | null>(null);
   const [popFile, setPopFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -108,7 +108,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const handleSubmitOrder = async (paymentMethod: "bank_transfer" | "espees") => {
+  const handleSubmitOrder = async (paymentMethod: "bank_transfer" | "espees" | "kingspay") => {
     if (!user) { toast.error("Please log in first"); navigate("/auth"); return; }
     if (!popFile) { toast.error("Please upload your proof of payment"); return; }
 
@@ -133,7 +133,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
         items: orderItems,
         total_amount: totalPrice,
         payment_method: paymentMethod,
-        espees_code: paymentMethod === "espees" ? "ISMNT" : null,
+        espees_code: paymentMethod === "espees" ? "CEISM2" : paymentMethod === "kingspay" ? "ISMNT/ISMOP" : null,
         pop_image_url: publicUrl,
       });
       if (error) throw error;
@@ -186,7 +186,14 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
               <ExternalLink className="w-5 h-5 text-accent" />
               <div className="text-left">
                 <p className="font-semibold">Pay with ESPEES</p>
-                <p className="text-xs text-muted-foreground">Use ESPEES code: ISMNT</p>
+                <p className="text-xs text-muted-foreground">Merchant Code: CEISM2</p>
+              </div>
+            </Button>
+            <Button variant="outline" className="w-full justify-start gap-3 h-auto py-4" onClick={() => setMethod("kingspay")}>
+              <CreditCard className="w-5 h-5 text-accent" />
+              <div className="text-left">
+                <p className="font-semibold">Pay with Kingspay</p>
+                <p className="text-xs text-muted-foreground">ISMNT (Foreign) / ISMOP (Naira)</p>
               </div>
             </Button>
           </div>
@@ -236,7 +243,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
             </Button>
           </div>
-        ) : (
+        ) : method === "espees" ? (
           <div className="space-y-4 pt-2">
             <Button variant="ghost" size="sm" onClick={resetMethod} className="text-xs text-muted-foreground">
               ← Change payment method
@@ -252,10 +259,10 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
               </p>
               <div className="flex items-center justify-between bg-muted/50 rounded-md p-3">
                 <div>
-                  <p className="text-xs text-muted-foreground">ESPEES Code</p>
-                  <p className="text-lg font-bold text-foreground">ISMNT</p>
+                  <p className="text-xs text-muted-foreground">Merchant Code</p>
+                  <p className="text-lg font-bold text-foreground">CEISM2</p>
                 </div>
-                <button onClick={() => copyText("ISMNT", "espees")} className="p-1.5 rounded-md hover:bg-muted transition-colors">
+                <button onClick={() => copyText("CEISM2", "espees")} className="p-1.5 rounded-md hover:bg-muted transition-colors">
                   {copied === "espees" ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
                 </button>
               </div>
@@ -278,6 +285,59 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
             </div>
 
             <Button onClick={() => handleSubmitOrder("espees")} disabled={submitting || !popFile} className="w-full gold-gradient-bg text-accent-foreground">
+              {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4 pt-2">
+            <Button variant="ghost" size="sm" onClick={resetMethod} className="text-xs text-muted-foreground">
+              ← Change payment method
+            </Button>
+
+            <div className="glass-card rounded-lg p-4 space-y-3">
+              <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-accent" /> Pay with Kingspay
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                1. Open Kingspay and send payment using the appropriate code below.<br/>
+                2. After paying, upload your proof of payment.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between bg-muted/50 rounded-md p-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Foreign Currency</p>
+                    <p className="text-lg font-bold text-foreground">ISMNT</p>
+                  </div>
+                  <button onClick={() => copyText("ISMNT", "kingspay-foreign")} className="p-1.5 rounded-md hover:bg-muted transition-colors">
+                    {copied === "kingspay-foreign" ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between bg-muted/50 rounded-md p-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Naira (₦)</p>
+                    <p className="text-lg font-bold text-foreground">ISMOP</p>
+                  </div>
+                  <button onClick={() => copyText("ISMOP", "kingspay-naira")} className="p-1.5 rounded-md hover:bg-muted transition-colors">
+                    {copied === "kingspay-naira" ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Amount: <span className="font-bold text-foreground">${totalPrice.toFixed(2)}</span>
+              </p>
+            </div>
+
+            <div>
+              <Label>Upload Proof of Payment *</Label>
+              <Input type="file" accept="image/*,.pdf" onChange={e => setPopFile(e.target.files?.[0] || null)} className="mt-1" />
+              {popFile && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-green-500" /> {popFile.name}
+                </p>
+              )}
+            </div>
+
+            <Button onClick={() => handleSubmitOrder("kingspay")} disabled={submitting || !popFile} className="w-full gold-gradient-bg text-accent-foreground">
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
             </Button>
           </div>
