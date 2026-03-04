@@ -32,6 +32,7 @@ const Partner = () => (
         title="Partner - Give to ISM Ministers Prayer Network"
         className="w-full h-full border-0"
         allow="payment"
+        sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
       />
     </motion.div>
   </div>
