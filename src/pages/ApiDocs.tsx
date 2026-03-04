@@ -409,7 +409,23 @@ const generateConfidentialGuide = () => {
   URL.revokeObjectURL(url);
 };
 
-const ApiDocs = () => (
+const ApiDocs = () => {
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState(false);
+  const [showPinInput, setShowPinInput] = useState(false);
+
+  const handleDownload = () => {
+    if (pin === "2323") {
+      setPinError(false);
+      setShowPinInput(false);
+      setPin("");
+      generateConfidentialGuide();
+    } else {
+      setPinError(true);
+    }
+  };
+
+  return (
   <div className="min-h-screen bg-background">
     <Navbar />
 
@@ -649,13 +665,42 @@ foreach ($books['books'] as $book) {
               This document contains <strong className="text-foreground">sensitive credentials</strong>. Only share it with authorized developers via secure channels (email, not chat).
             </p>
           </div>
-          <button
-            onClick={generateConfidentialGuide}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Download Integration Guide (.txt)
-          </button>
+          {!showPinInput ? (
+            <button
+              onClick={() => { setShowPinInput(true); setPinError(false); setPin(""); }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition-colors"
+            >
+              <Lock className="w-4 h-4" />
+              Unlock &amp; Download Guide
+            </button>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-sm text-muted-foreground">Enter PIN to download:</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={pin}
+                  onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); setPinError(false); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleDownload()}
+                  placeholder="••••"
+                  className={`w-24 text-center px-3 py-2 rounded-lg border ${pinError ? "border-destructive" : "border-border"} bg-background text-foreground text-lg tracking-[0.3em] font-mono focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                  autoFocus
+                />
+                <button
+                  onClick={handleDownload}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              </div>
+              {pinError && (
+                <p className="text-xs text-destructive">Incorrect PIN. Please try again.</p>
+              )}
+            </div>
+          )}
         </div>
       </motion.section>
 
@@ -676,5 +721,8 @@ foreach ($books['books'] as $book) {
     <Footer />
   </div>
 );
+
+  );
+};
 
 export default ApiDocs;
