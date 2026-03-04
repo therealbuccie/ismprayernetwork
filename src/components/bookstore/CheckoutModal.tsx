@@ -85,48 +85,36 @@ const BankAccountCard = ({ account, copied, onCopy }: { account: BankDetails; co
   if (account.ifsc) fields.push({ label: "IFSC", value: account.ifsc });
   if (account.branch_code) fields.push({ label: "Branch Code", value: account.branch_code });
   if (account.reference) fields.push({ label: "Reference", value: account.reference });
-
-  const preview = fields.slice(0, 3);
-  const extra = fields.slice(3);
+  if (account.bank_address) fields.push({ label: "Bank Address", value: account.bank_address });
+  if (account.address) fields.push({ label: "Address", value: account.address });
 
   return (
-    <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
-      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center gap-2 text-left">
+    <div className="rounded-lg border border-border/60 bg-muted/20 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2 text-left p-3 hover:bg-muted/40 transition-colors"
+      >
         <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
-        <span className="text-xs font-semibold text-foreground flex-1">{account.region || account.bank_name}</span>
-        {extra.length > 0 && (expanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />)}
+        <span className="text-xs font-semibold text-foreground flex-1">
+          {account.region || account.bank_name}
+        </span>
+        <span className="text-[10px] text-muted-foreground mr-1">{account.bank_name}</span>
+        {expanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
       </button>
 
-      <div className="space-y-1">
-        {preview.map(({ label, value }) => (
-          <div key={label} className="flex items-center justify-between text-xs">
-            <div>
-              <span className="text-muted-foreground">{label}: </span>
-              <span className="font-medium text-foreground">{value}</span>
-            </div>
-            <button onClick={() => onCopy(value, `${account.region}-${label}`)} className="p-1 rounded hover:bg-muted transition-colors">
-              {copied === `${account.region}-${label}` ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {expanded && extra.length > 0 && (
-        <div className="space-y-1 pt-1 border-t border-border/40">
-          {extra.map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between text-xs">
-              <div>
+      {expanded && (
+        <div className="px-3 pb-3 space-y-1 border-t border-border/40">
+          {fields.map(({ label, value }) => (
+            <div key={label} className="flex items-center justify-between text-xs py-0.5">
+              <div className="min-w-0 flex-1">
                 <span className="text-muted-foreground">{label}: </span>
-                <span className="font-medium text-foreground">{value}</span>
+                <span className="font-medium text-foreground break-all">{value}</span>
               </div>
-              <button onClick={() => onCopy(value, `${account.region}-${label}`)} className="p-1 rounded hover:bg-muted transition-colors">
+              <button onClick={() => onCopy(value, `${account.region}-${label}`)} className="p-1 rounded hover:bg-muted transition-colors shrink-0 ml-1">
                 {copied === `${account.region}-${label}` ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
               </button>
             </div>
           ))}
-          {account.bank_address && (
-            <p className="text-[10px] text-muted-foreground pt-1">📍 {account.bank_address}</p>
-          )}
         </div>
       )}
     </div>
