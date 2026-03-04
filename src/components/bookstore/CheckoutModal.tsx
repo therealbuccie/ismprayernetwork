@@ -381,6 +381,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
                 className="w-full border-0"
                 style={{ height: "420px" }}
                 allow="payment"
+                sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
               />
             </div>
 
