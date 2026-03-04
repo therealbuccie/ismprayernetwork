@@ -253,6 +253,13 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
                 <p className="text-xs text-muted-foreground">ISMNT (Foreign) / ISMOP (Naira)</p>
               </div>
             </Button>
+            <Button variant="outline" className="w-full justify-start gap-3 h-auto py-4" onClick={() => selectMethod("online_pay")}>
+              <Globe className="w-5 h-5 text-accent" />
+              <div className="text-left">
+                <p className="font-semibold">Pay Online</p>
+                <p className="text-xs text-muted-foreground">Pay securely via our online payment portal</p>
+              </div>
+            </Button>
           </div>
         ) : method === "bank_transfer" ? (
           <div className="space-y-4 pt-2">
