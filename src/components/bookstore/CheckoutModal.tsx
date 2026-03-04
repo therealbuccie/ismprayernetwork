@@ -128,7 +128,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
   const { data: bankAccounts } = useSiteSettings("bank_accounts") as { data: BankDetails[] | undefined };
 
   const [currency, setCurrency] = useState<Currency>("usd");
-  const [method, setMethod] = useState<"bank_transfer" | "espees" | "kingspay" | null>(null);
+  const [method, setMethod] = useState<"bank_transfer" | "espees" | "kingspay" | "online_pay" | null>(null);
   const [popFile, setPopFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -141,15 +141,15 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const selectMethod = (m: "bank_transfer" | "espees" | "kingspay") => {
+  const selectMethod = (m: "bank_transfer" | "espees" | "kingspay" | "online_pay") => {
     setMethod(m);
-    // Auto-switch currency for convenience
     if (m === "espees") setCurrency("espees");
-    else if (m === "kingspay") setCurrency("usd"); // user can toggle to NGN
+    else if (m === "kingspay") setCurrency("usd");
     else if (m === "bank_transfer") setCurrency("usd");
+    else if (m === "online_pay") setCurrency("usd");
   };
 
-  const handleSubmitOrder = async (paymentMethod: "bank_transfer" | "espees" | "kingspay") => {
+  const handleSubmitOrder = async (paymentMethod: "bank_transfer" | "espees" | "kingspay" | "online_pay") => {
     if (!user) { toast.error("Please log in first"); navigate("/auth"); return; }
     if (!popFile) { toast.error("Please upload your proof of payment"); return; }
 
@@ -253,6 +253,13 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
                 <p className="text-xs text-muted-foreground">ISMNT (Foreign) / ISMOP (Naira)</p>
               </div>
             </Button>
+            <Button variant="outline" className="w-full justify-start gap-3 h-auto py-4" onClick={() => selectMethod("online_pay")}>
+              <Globe className="w-5 h-5 text-accent" />
+              <div className="text-left">
+                <p className="font-semibold">Pay Online</p>
+                <p className="text-xs text-muted-foreground">Pay securely via our online payment portal</p>
+              </div>
+            </Button>
           </div>
         ) : method === "bank_transfer" ? (
           <div className="space-y-4 pt-2">
@@ -342,7 +349,17 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
             </Button>
           </div>
-        ) : (
+        ) : method === "kingspay" ? (
+          <div className="space-y-4 pt-2">
+            <Button variant="ghost" size="sm" onClick={resetMethod} className="text-xs text-muted-foreground">
+              ← Change payment method
+            </Button>
+...
+            <Button onClick={() => handleSubmitOrder("kingspay")} disabled={submitting || !popFile} className="w-full gold-gradient-bg text-accent-foreground">
+              {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
+            </Button>
+          </div>
+        ) : method === "online_pay" ? (
           <div className="space-y-4 pt-2">
             <Button variant="ghost" size="sm" onClick={resetMethod} className="text-xs text-muted-foreground">
               ← Change payment method
@@ -350,35 +367,21 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
 
             <div className="glass-card rounded-lg p-4 space-y-3">
               <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-accent" /> Pay with Kingspay
+                <Globe className="w-4 h-4 text-accent" /> Online Payment
               </h3>
               <p className="text-sm text-muted-foreground">
-                1. Open Kingspay and send payment using the appropriate code below.<br/>
-                2. After paying, upload your proof of payment.
+                Complete your payment of <span className="font-bold text-foreground">{formatPrice(displayTotal, currency)}</span> using the portal below. After payment, upload your proof of payment.
               </p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between bg-muted/50 rounded-md p-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Foreign Currency</p>
-                    <p className="text-lg font-bold text-foreground">ISMNT</p>
-                  </div>
-                  <button onClick={() => copyText("ISMNT", "kingspay-foreign")} className="p-1.5 rounded-md hover:bg-muted transition-colors">
-                    {copied === "kingspay-foreign" ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between bg-muted/50 rounded-md p-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Naira (₦)</p>
-                    <p className="text-lg font-bold text-foreground">ISMOP</p>
-                  </div>
-                  <button onClick={() => copyText("ISMOP", "kingspay-naira")} className="p-1.5 rounded-md hover:bg-muted transition-colors">
-                    {copied === "kingspay-naira" ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
-                  </button>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Amount: <span className="font-bold text-foreground">{formatPrice(displayTotal, currency)}</span>
-              </p>
+            </div>
+
+            <div className="rounded-lg border border-border overflow-hidden bg-background">
+              <iframe
+                src="https://christembassy-ism.org/onlinepay"
+                title="Online Payment Portal"
+                className="w-full border-0"
+                style={{ height: "420px" }}
+                allow="payment"
+              />
             </div>
 
             <div>
@@ -391,11 +394,11 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
               )}
             </div>
 
-            <Button onClick={() => handleSubmitOrder("kingspay")} disabled={submitting || !popFile} className="w-full gold-gradient-bg text-accent-foreground">
+            <Button onClick={() => handleSubmitOrder("online_pay")} disabled={submitting || !popFile} className="w-full gold-gradient-bg text-accent-foreground">
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
             </Button>
           </div>
-        )}
+        ) : null}
       </DialogContent>
     </Dialog>
   );
