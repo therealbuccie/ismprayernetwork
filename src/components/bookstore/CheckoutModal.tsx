@@ -141,12 +141,12 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const selectMethod = (m: "bank_transfer" | "espees" | "kingspay") => {
+  const selectMethod = (m: "bank_transfer" | "espees" | "kingspay" | "online_pay") => {
     setMethod(m);
-    // Auto-switch currency for convenience
     if (m === "espees") setCurrency("espees");
-    else if (m === "kingspay") setCurrency("usd"); // user can toggle to NGN
+    else if (m === "kingspay") setCurrency("usd");
     else if (m === "bank_transfer") setCurrency("usd");
+    else if (m === "online_pay") setCurrency("usd");
   };
 
   const handleSubmitOrder = async (paymentMethod: "bank_transfer" | "espees" | "kingspay") => {
