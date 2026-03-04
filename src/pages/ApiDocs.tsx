@@ -720,8 +720,6 @@ foreach ($books['books'] as $book) {
 
     <Footer />
   </div>
-);
-
   );
 };
 
