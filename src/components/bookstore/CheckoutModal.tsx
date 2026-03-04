@@ -128,7 +128,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
   const { data: bankAccounts } = useSiteSettings("bank_accounts") as { data: BankDetails[] | undefined };
 
   const [currency, setCurrency] = useState<Currency>("usd");
-  const [method, setMethod] = useState<"bank_transfer" | "espees" | "kingspay" | null>(null);
+  const [method, setMethod] = useState<"bank_transfer" | "espees" | "kingspay" | "online_pay" | null>(null);
   const [popFile, setPopFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
