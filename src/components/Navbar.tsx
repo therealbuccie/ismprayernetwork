@@ -4,7 +4,7 @@ import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizonta
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/hooks/useCart";
+import { useCartContext } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LanguageSelector from "./LanguageSelector";
@@ -38,7 +38,7 @@ const Navbar = () => {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const cart = useCart();
+  const cart = useCartContext();
   const isBookstore = location.pathname.startsWith("/bookstore");
 
   const handleSignOut = async () => {
