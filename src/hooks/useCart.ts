@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Book } from "./useBooks";
 
 export interface CartItem {
@@ -7,9 +7,29 @@ export interface CartItem {
   format: "physical" | "digital";
 }
 
+const CART_STORAGE_KEY = "ism-bookstore-cart";
+
+function loadCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (raw) return JSON.parse(raw) as CartItem[];
+  } catch {}
+  return [];
+}
+
+function saveCart(items: CartItem[]) {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {}
+}
+
 export function useCart() {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(loadCart);
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    saveCart(items);
+  }, [items]);
 
   const addToCart = useCallback((book: Book, format: "physical" | "digital") => {
     setItems((prev) => {
