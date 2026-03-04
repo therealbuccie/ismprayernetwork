@@ -2,9 +2,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface BankDetails {
+  region?: string;
   bank_name: string;
   account_number: string;
   account_name: string;
+  bank_address?: string;
+  address?: string;
+  sort_code?: string;
+  iban?: string;
+  bic?: string;
+  swift_code?: string;
+  routing_number?: string;
+  ifsc?: string;
+  branch_code?: string;
+  currency?: string;
+  reference?: string;
 }
 
 export function useSiteSettings(key: string) {
