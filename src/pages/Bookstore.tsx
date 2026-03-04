@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useBooks, useCategories, Book } from "@/hooks/useBooks";
-import { useCart } from "@/hooks/useCart";
+import { useCartContext } from "@/contexts/CartContext";
 import { BookCard } from "@/components/bookstore/BookCard";
 import { BookDetailModal } from "@/components/bookstore/BookDetailModal";
 import { CartSidebar } from "@/components/bookstore/CartSidebar";
@@ -24,7 +24,7 @@ import CampaignBanner from "@/components/CampaignBanner";
 const Bookstore = () => {
   const { data: books, isLoading } = useBooks();
   const { data: categories } = useCategories();
-  const cart = useCart();
+  const cart = useCartContext();
 
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
