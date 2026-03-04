@@ -268,17 +268,15 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
                 Choose the bank account closest to your location. Click on any account to see full details.
               </p>
 
-              <ScrollArea className="max-h-[280px] pr-2">
-                <div className="space-y-2">
-                  {bankAccounts && bankAccounts.length > 0 ? (
-                    bankAccounts.map((acc, idx) => (
-                      <BankAccountCard key={idx} account={acc} copied={copied} onCopy={copyText} />
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Loading bank details...</p>
-                  )}
-                </div>
-              </ScrollArea>
+              <div className="space-y-2">
+                {bankAccounts && bankAccounts.length > 0 ? (
+                  bankAccounts.map((acc, idx) => (
+                    <BankAccountCard key={idx} account={acc} copied={copied} onCopy={copyText} />
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Loading bank details...</p>
+                )}
+              </div>
 
               <p className="text-xs text-muted-foreground">
                 Transfer <span className="font-bold text-foreground">{formatPrice(displayTotal, currency)}</span> and upload your proof of payment below.
