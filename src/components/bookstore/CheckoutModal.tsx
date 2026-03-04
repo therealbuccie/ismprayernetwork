@@ -398,7 +398,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
             </Button>
           </div>
-        )}
+        ) : null}
       </DialogContent>
     </Dialog>
   );
