@@ -376,7 +376,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
 
             <div className="rounded-lg border border-border overflow-hidden bg-background">
               <iframe
-                src="https://christembassy-ism.org/onlinepay"
+                src="https://christembassy-ism.org/onlinepay/seeds.php"
                 title="Online Payment Portal"
                 className="w-full border-0"
                 style={{ height: "420px" }}
