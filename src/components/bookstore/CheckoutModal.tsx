@@ -149,7 +149,7 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
     else if (m === "online_pay") setCurrency("usd");
   };
 
-  const handleSubmitOrder = async (paymentMethod: "bank_transfer" | "espees" | "kingspay") => {
+  const handleSubmitOrder = async (paymentMethod: "bank_transfer" | "espees" | "kingspay" | "online_pay") => {
     if (!user) { toast.error("Please log in first"); navigate("/auth"); return; }
     if (!popFile) { toast.error("Please upload your proof of payment"); return; }
 
