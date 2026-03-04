@@ -402,6 +402,45 @@ export function CheckoutModal({ open, onClose, items, totalPrice, onSuccess }: C
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
             </Button>
           </div>
+        ) : method === "online_pay" ? (
+          <div className="space-y-4 pt-2">
+            <Button variant="ghost" size="sm" onClick={resetMethod} className="text-xs text-muted-foreground">
+              ← Change payment method
+            </Button>
+
+            <div className="glass-card rounded-lg p-4 space-y-3">
+              <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                <Globe className="w-4 h-4 text-accent" /> Online Payment
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Complete your payment of <span className="font-bold text-foreground">{formatPrice(displayTotal, currency)}</span> using the portal below. After payment, upload your proof of payment.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border overflow-hidden bg-background">
+              <iframe
+                src="https://christembassy-ism.org/onlinepay"
+                title="Online Payment Portal"
+                className="w-full border-0"
+                style={{ height: "420px" }}
+                allow="payment"
+              />
+            </div>
+
+            <div>
+              <Label>Upload Proof of Payment *</Label>
+              <Input type="file" accept="image/*,.pdf" onChange={e => setPopFile(e.target.files?.[0] || null)} className="mt-1" />
+              {popFile && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-green-500" /> {popFile.name}
+                </p>
+              )}
+            </div>
+
+            <Button onClick={() => handleSubmitOrder("online_pay")} disabled={submitting || !popFile} className="w-full gold-gradient-bg text-accent-foreground">
+              {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : <><Upload className="w-4 h-4 mr-2" /> Submit Order</>}
+            </Button>
+          </div>
         )}
       </DialogContent>
     </Dialog>
