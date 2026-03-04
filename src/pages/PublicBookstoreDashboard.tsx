@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Tags } from "lucide-react";
+import { BookOpen, Tags, BarChart3 } from "lucide-react";
 import { BookstorePinGate } from "@/components/dashboard/BookstorePinGate";
 
 const BooksManager = lazy(() =>
@@ -9,8 +9,11 @@ const BooksManager = lazy(() =>
 const CategoriesManager = lazy(() =>
   import("@/components/dashboard/CategoriesManager").then((m) => ({ default: m.CategoriesManager }))
 );
+const BookstoreAnalytics = lazy(() =>
+  import("@/components/dashboard/BookstoreAnalytics").then((m) => ({ default: m.BookstoreAnalytics }))
+);
 
-type Tab = "books" | "categories";
+type Tab = "analytics" | "books" | "categories";
 
 function TabSkeleton() {
   return (
@@ -22,12 +25,13 @@ function TabSkeleton() {
 }
 
 const PublicBookstoreDashboard = () => {
-  const [tab, setTab] = useState<Tab>("books");
+  const [tab, setTab] = useState<Tab>("analytics");
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("bookstore_unlocked") === "1");
 
   if (!unlocked) return <BookstorePinGate onUnlock={() => setUnlocked(true)} />;
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "analytics", label: "Analytics", icon: <BarChart3 size={16} /> },
     { id: "books", label: "Books", icon: <BookOpen size={16} /> },
     { id: "categories", label: "Categories", icon: <Tags size={16} /> },
   ];
@@ -57,6 +61,7 @@ const PublicBookstoreDashboard = () => {
       </header>
       <main className="max-w-6xl mx-auto p-4 md:p-8">
         <Suspense fallback={<TabSkeleton />}>
+          {tab === "analytics" && <BookstoreAnalytics />}
           {tab === "books" && <BooksManager />}
           {tab === "categories" && <CategoriesManager />}
         </Suspense>
