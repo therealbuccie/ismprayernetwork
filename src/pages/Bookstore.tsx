@@ -64,6 +64,41 @@ const Bookstore = () => {
     setSelectedBook(null);
   };
 
+  const handleAddComboToCart = (combo: ComboPack) => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+    // Add each book in the combo as digital
+    combo.books?.forEach((item) => {
+      const bookData: Book = {
+        id: item.books.id,
+        title: item.books.title,
+        author: item.books.author,
+        price: combo.price / (combo.books?.length || 1), // split combo price across items
+        cover_image_url: item.books.cover_image_url,
+        is_digital: item.books.is_digital,
+        is_physical: item.books.is_physical,
+        subtitle: null,
+        description: null,
+        short_description: null,
+        digital_file_url: null,
+        cloudpdf_document_id: null,
+        category_id: null,
+        stock: 100,
+        pages: null,
+        isbn: null,
+        espees_price: null,
+        ngn_price: null,
+        featured: false,
+        created_at: "",
+        updated_at: "",
+      };
+      cart.addToCart(bookData, "digital");
+    });
+    toast({ title: "Combo added to cart", description: `${combo.title} — all ${combo.books?.length} books added.` });
+  };
+
   const filteredBooks = useMemo(() => {
     if (!books) return [];
     return books.filter((b) => {
