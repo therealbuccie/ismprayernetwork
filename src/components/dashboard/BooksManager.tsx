@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useBooks, useCategories, Book } from "@/hooks/useBooks";
 import { supabase } from "@/integrations/supabase/client";
 import { isPublicBookstoreDashboard, bookstoreAdminCall } from "@/hooks/useBookstoreAdmin";
+import { CoverUpload } from "@/components/dashboard/CoverUpload";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,9 +49,9 @@ export function BooksManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<BookForm>(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
+  // coverFile state removed — uploads handled by CoverUpload component
 
-  const openNew = () => { setForm(emptyForm); setEditingId(null); setCoverFile(null); setOpen(true); };
+  const openNew = () => { setForm(emptyForm); setEditingId(null); setOpen(true); };
 
   const openEdit = (book: Book) => {
     setForm({
@@ -69,7 +70,7 @@ export function BooksManager() {
       is_physical: book.is_physical, featured: book.featured,
     });
     setEditingId(book.id);
-    setCoverFile(null);
+    setOpen(true);
     setOpen(true);
   };
 
@@ -78,14 +79,6 @@ export function BooksManager() {
     setSaving(true);
     try {
       let coverUrl = form.cover_image_url;
-      if (coverFile) {
-        const ext = coverFile.name.split(".").pop();
-        const path = `${Date.now()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("book-covers").upload(path, coverFile);
-        if (uploadErr) throw uploadErr;
-        const { data: { publicUrl } } = supabase.storage.from("book-covers").getPublicUrl(path);
-        coverUrl = publicUrl;
-      }
 
       const record = {
         title: form.title,
@@ -263,10 +256,12 @@ export function BooksManager() {
             </div>
             <div>
               <Label>Cover Image</Label>
-              <Input type="file" accept="image/*" onChange={e => setCoverFile(e.target.files?.[0] || null)} className="mt-1" />
-              {form.cover_image_url && !coverFile && (
-                <img src={form.cover_image_url} alt="" className="mt-2 h-20 rounded" />
-              )}
+              <div className="mt-1">
+                <CoverUpload
+                  currentUrl={form.cover_image_url}
+                  onUploaded={(url) => set("cover_image_url", url)}
+                />
+              </div>
             </div>
             <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-2 text-sm"><Switch checked={form.is_physical} onCheckedChange={v => set("is_physical", v)} /> Physical</label>

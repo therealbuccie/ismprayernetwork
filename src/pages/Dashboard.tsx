@@ -24,7 +24,9 @@ const LiveTVManager = lazy(() => import("@/components/dashboard/LiveTVManager").
 const PaymentSettingsManager = lazy(() => import("@/components/dashboard/PaymentSettingsManager").then(m => ({ default: m.PaymentSettingsManager })));
 const BookstoreAnalytics = lazy(() => import("@/components/dashboard/BookstoreAnalytics").then(m => ({ default: m.BookstoreAnalytics })));
 
-export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "bookstore-analytics" | "settings" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "campaigns" | "live-tv" | "payment-settings";
+const ComboPacksManager = lazy(() => import("@/components/dashboard/ComboPacksManager").then(m => ({ default: m.ComboPacksManager })));
+
+export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "campaigns" | "live-tv" | "payment-settings";
 
 function TabSkeleton() {
   return (
@@ -83,6 +85,7 @@ const Dashboard = () => {
             {activeTab === "prayer-groups" && <PrayerGroupsManager />}
             {activeTab === "purchases" && <PurchasesManager />}
             {activeTab === "orders" && <OrdersManager />}
+            {activeTab === "combo-packs" && <ComboPacksManager />}
             {activeTab === "bookstore-analytics" && <BookstoreAnalytics />}
             {activeTab === "campaigns" && <CampaignsManager />}
             {activeTab === "live-tv" && <LiveTVManager />}
