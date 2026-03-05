@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CoverUpload } from "@/components/dashboard/CoverUpload";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isPublicDashboard, adminQuery, adminInsert, adminUpdate, adminDelete } from "@/hooks/useBookstoreAdmin";
@@ -271,8 +272,13 @@ export function ComboPacksManager() {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Cover Image URL</label>
-              <Input value={form.cover_image_url} onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })} placeholder="https://..." />
+              <label className="text-sm font-medium">Cover Image</label>
+              <div className="mt-1">
+                <CoverUpload
+                  currentUrl={form.cover_image_url}
+                  onUploaded={(url) => setForm({ ...form, cover_image_url: url })}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
