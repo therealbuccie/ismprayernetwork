@@ -34,7 +34,14 @@ import MyLibrary from "./pages/MyLibrary";
 import NotFound from "./pages/NotFound";
 import ApiDocs from "./pages/ApiDocs";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
