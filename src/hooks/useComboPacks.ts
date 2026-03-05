@@ -62,5 +62,5 @@ export function useComboPacks() {
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
-  });
+    networkMode: "always",
 }

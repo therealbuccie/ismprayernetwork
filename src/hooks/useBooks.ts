@@ -46,6 +46,7 @@ export function useBooks() {
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10,   // 10 minutes
     refetchOnWindowFocus: false,
+    networkMode: "always",
   });
 }
 
@@ -63,5 +64,6 @@ export function useCategories() {
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 15,
     refetchOnWindowFocus: false,
+    networkMode: "always",
   });
 }
