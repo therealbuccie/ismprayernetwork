@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Code2, BookOpen, FolderOpen, Users, ShoppingCart, Copy, Check, ChevronDown, ChevronRight, Lock, Download, Shield, FileText } from "lucide-react";
+import { Code2, BookOpen, FolderOpen, Users, ShoppingCart, Copy, Check, ChevronDown, ChevronRight, Lock, Shield, FileText } from "lucide-react";
 
 const CodeBlock = ({ code, language = "bash" }: { code: string; language?: string }) => {
   const [copied, setCopied] = useState(false);
@@ -95,8 +95,8 @@ const EndpointCard = ({ method, path, description, params, body }: EndpointInfo)
           )}
 
           <div className="p-3 rounded-lg bg-accent/5 border border-accent/20">
-            <p className="text-xs text-muted-foreground">
-              📄 Full request/response examples with working code are included in the <strong>Confidential Integration Guide</strong> available for download below.
+           <p className="text-xs text-muted-foreground">
+              📄 Request your API key from the ISM admin team to get started with full integration.
             </p>
           </div>
         </motion.div>
@@ -153,278 +153,8 @@ const endpoints: EndpointInfo[] = [
   },
 ];
 
-// Generate the confidential integration guide as a downloadable text file
-const generateConfidentialGuide = () => {
-  const content = `
-================================================================================
-  ISM PRAYER NETWORK — CONFIDENTIAL PARTNER API INTEGRATION GUIDE
-================================================================================
-  Generated: ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-  Classification: CONFIDENTIAL — Do not share publicly
-
-================================================================================
-  1. CREDENTIALS
-================================================================================
-
-  Base URL:     https://ryitxoymayasdlabojsx.supabase.co/functions/v1/partner-api
-  API Key:      ism-partner-2024-a7f3e9b1c4d8
-
-  ⚠️  IMPORTANT SECURITY RULES:
-  - NEVER expose your API key in client-side / front-end code (HTML, JavaScript in browser)
-  - ALWAYS call the API from your server (PHP backend) only
-  - Store the API key in a config file outside your web root
-
-================================================================================
-  2. AUTHENTICATION
-================================================================================
-
-  Every request MUST include the API key in the header:
-
-    x-api-key: ism-partner-2024-a7f3e9b1c4d8
-
-  If the key is missing or wrong, you will receive:
-    HTTP 401  { "error": "Unauthorized. Invalid or missing API key." }
-
-================================================================================
-  3. AVAILABLE ENDPOINTS
-================================================================================
-
-  GET  /books              — List all books (with optional filters)
-  GET  /books/{id}         — Get single book details
-  GET  /categories         — List all book categories
-  POST /prayer-groups      — Create a public prayer group
-  POST /orders             — Place a purchase order
-
-================================================================================
-  4. PHP CODE EXAMPLES (Copy & Paste Ready)
-================================================================================
-
-  ---- config.php (store outside web root e.g. /home/user/config.php) ----
-
-  <?php
-  define('ISM_API_KEY', 'ism-partner-2024-a7f3e9b1c4d8');
-  define('ISM_API_URL', 'https://ryitxoymayasdlabojsx.supabase.co/functions/v1/partner-api');
-
-
-  ---- helper function: ism_api_request() ----
-
-  <?php
-  require_once '/path/to/config.php';
-
-  /**
-   * Make a request to the ISM Prayer Network API.
-   *
-   * @param string $endpoint  e.g. "/books" or "/orders"
-   * @param string $method    "GET" or "POST"
-   * @param array  $data      POST body data (optional)
-   * @return array            Decoded JSON response
-   */
-  function ism_api_request($endpoint, $method = 'GET', $data = null) {
-      $ch = curl_init();
-
-      $url = ISM_API_URL . $endpoint;
-
-      $headers = [
-          'x-api-key: ' . ISM_API_KEY,
-          'Content-Type: application/json',
-      ];
-
-      curl_setopt_array($ch, [
-          CURLOPT_URL            => $url,
-          CURLOPT_RETURNTRANSFER => true,
-          CURLOPT_HTTPHEADER     => $headers,
-          CURLOPT_TIMEOUT        => 30,
-      ]);
-
-      if ($method === 'POST' && $data !== null) {
-          curl_setopt($ch, CURLOPT_POST, true);
-          curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-      }
-
-      $response = curl_exec($ch);
-      $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-      $error    = curl_error($ch);
-      curl_close($ch);
-
-      if ($error) {
-          return ['success' => false, 'error' => 'Connection failed: ' . $error];
-      }
-
-      $decoded = json_decode($response, true);
-
-      if ($httpCode >= 200 && $httpCode < 300) {
-          return ['success' => true, 'data' => $decoded, 'status' => $httpCode];
-      } else {
-          return ['success' => false, 'error' => $decoded['error'] ?? 'Unknown error', 'status' => $httpCode];
-      }
-  }
-
-
-  ---- Example 1: Display all books on your website ----
-
-  <?php
-  require_once 'ism_api.php';
-
-  $result = ism_api_request('/books?featured=true&limit=10');
-
-  if ($result['success']) {
-      echo '<h2>Featured Books</h2>';
-      echo '<div class="book-grid">';
-      foreach ($result['data']['books'] as $book) {
-          echo '<div class="book-card">';
-          echo '  <img src="' . htmlspecialchars($book['cover_image_url']) . '" alt="' . htmlspecialchars($book['title']) . '">';
-          echo '  <h3>' . htmlspecialchars($book['title']) . '</h3>';
-          echo '  <p>by ' . htmlspecialchars($book['author']) . '</p>';
-          echo '  <p class="price">$' . number_format($book['price'], 2) . '</p>';
-          if ($book['espees_price']) {
-              echo '  <p class="espees">or ' . $book['espees_price'] . ' Espees</p>';
-          }
-          echo '</div>';
-      }
-      echo '</div>';
-  } else {
-      echo '<p>Could not load books: ' . htmlspecialchars($result['error']) . '</p>';
-  }
-
-
-  ---- Example 2: Get book categories for a dropdown ----
-
-  <?php
-  $result = ism_api_request('/categories');
-
-  if ($result['success']) {
-      echo '<select name="category">';
-      echo '  <option value="">All Categories</option>';
-      foreach ($result['data']['categories'] as $cat) {
-          echo '  <option value="' . $cat['id'] . '">' . htmlspecialchars($cat['name']) . '</option>';
-      }
-      echo '</select>';
-  }
-
-
-  ---- Example 3: Place an order from your checkout form ----
-
-  <?php
-  // Called when user submits your checkout form
-  $orderData = [
-      'external_user_id'   => 'your-user-' . $_SESSION['user_id'],  // Your platform's user ID
-      'external_user_name' => $_SESSION['user_name'],
-      'total_amount'       => $cartTotal,
-      'payment_method'     => 'bank_transfer',
-      'items'              => [],
-  ];
-
-  foreach ($cartItems as $item) {
-      $orderData['items'][] = [
-          'book_id'  => $item['book_id'],
-          'title'    => $item['title'],
-          'quantity' => (int)$item['quantity'],
-          'format'   => $item['format'],  // "digital" or "physical"
-          'price'    => (float)$item['price'],
-      ];
-  }
-
-  $result = ism_api_request('/orders', 'POST', $orderData);
-
-  if ($result['success']) {
-      echo '<div class="alert success">';
-      echo '  <p>Order placed successfully! Order ID: ' . $result['data']['id'] . '</p>';
-      echo '  <p>Status: Pending admin approval</p>';
-      echo '</div>';
-  } else {
-      echo '<div class="alert error">';
-      echo '  <p>Order failed: ' . htmlspecialchars($result['error']) . '</p>';
-      echo '</div>';
-  }
-
-
-  ---- Example 4: Create a prayer group ----
-
-  <?php
-  $groupData = [
-      'name'        => 'Morning Glory Fellowship',
-      'description' => 'A daily morning prayer group for our church members',
-  ];
-
-  $result = ism_api_request('/prayer-groups', 'POST', $groupData);
-
-  if ($result['success']) {
-      echo 'Prayer group created! ID: ' . $result['data']['id'];
-  }
-
-
-================================================================================
-  5. RESPONSE FORMAT
-================================================================================
-
-  All responses are JSON.
-
-  Success responses:
-    GET  /books       => { "books": [...], "count": 5 }
-    GET  /books/{id}  => { "id": "...", "title": "...", ... }
-    GET  /categories  => { "categories": [...] }
-    POST /orders      => { "id": "...", "status": "pending", ... }
-
-  Error responses always include:
-    { "error": "Description of what went wrong" }
-
-  HTTP Status Codes:
-    200  Success (GET requests)
-    201  Created (POST requests)
-    400  Bad request (missing required fields)
-    401  Unauthorized (bad or missing API key)
-    404  Not found
-    500  Server error
-
-================================================================================
-  6. IMPORTANT NOTES
-================================================================================
-
-  • Orders are created with "pending" status — an admin must approve them.
-  • Prayer groups created via the API are always public.
-  • Book listings return max 100 results per request. Use "offset" for pagination.
-  • Your users do NOT need accounts on ISM Prayer Network — your API key handles auth.
-  • Prices are available in USD (price), Espees (espees_price), and NGN (ngn_price).
-
-================================================================================
-  7. SUPPORT
-================================================================================
-
-  For API support, contact the ISM Prayer Network admin team.
-  Do not share this document or the API credentials publicly.
-
-================================================================================
-  END OF CONFIDENTIAL GUIDE
-================================================================================
-`;
-
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "ISM-Partner-API-Integration-Guide-CONFIDENTIAL.txt";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
 
 const ApiDocs = () => {
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState(false);
-  const [showPinInput, setShowPinInput] = useState(false);
-
-  const handleDownload = () => {
-    if (pin === "2323") {
-      setPinError(false);
-      setShowPinInput(false);
-      setPin("");
-      generateConfidentialGuide();
-    } else {
-      setPinError(true);
-    }
-  };
-
   return (
   <div className="min-h-screen bg-background">
     <Navbar />
@@ -507,7 +237,7 @@ x-api-key: YOUR_API_KEY`} />
             </p>
           </div>
           <p className="text-xs text-muted-foreground">
-            To receive your credentials, contact the ISM Prayer Network admin team or download the integration guide below if you've been authorized.
+            To receive your API key and endpoint URL, contact the ISM Prayer Network admin team directly.
           </p>
         </div>
       </motion.section>
@@ -603,7 +333,7 @@ x-api-key: YOUR_API_KEY`} />
           <h2 className="text-xl font-bold text-foreground">Quick PHP Example</h2>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          Here's a general idea of how to call the API from PHP. The full working code with your credentials is in the downloadable guide.
+          Here's a general idea of how to call the API from PHP. Request your API key from the admin team to get started.
         </p>
         <div className="border border-border/50 rounded-xl overflow-hidden bg-card/50">
           <div className="px-5 py-3 border-b border-border/50 flex items-center gap-2">
@@ -649,58 +379,22 @@ foreach ($books['books'] as $book) {
         </div>
       </motion.section>
 
-      {/* Download Section */}
+      {/* Get API Key Section */}
       <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
         <div className="border-2 border-accent/30 rounded-xl p-6 md:p-8 bg-gradient-to-br from-accent/5 to-transparent text-center space-y-4">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 mb-2">
-            <Download className="w-6 h-6 text-accent" />
+            <Lock className="w-6 h-6 text-accent" />
           </div>
-          <h2 className="text-xl font-bold text-foreground">Download Confidential Integration Guide</h2>
+          <h2 className="text-xl font-bold text-foreground">Request Your API Key</h2>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-            Get the complete integration guide with your <strong>API key</strong>, <strong>endpoint URL</strong>, and <strong>ready-to-use PHP code examples</strong> for displaying books, placing orders, and creating prayer groups.
+            To integrate with the ISM Prayer Network API, contact the admin team to request your <strong>API key</strong> and <strong>endpoint URL</strong>. Credentials are issued to authorized partners only.
           </p>
           <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20 text-left max-w-md mx-auto">
             <Shield className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
-              This document contains <strong className="text-foreground">sensitive credentials</strong>. Only share it with authorized developers via secure channels (email, not chat).
+              API credentials are <strong className="text-foreground">confidential</strong>. Never expose them in client-side code. Always call the API from your server backend.
             </p>
           </div>
-          {!showPinInput ? (
-            <button
-              onClick={() => { setShowPinInput(true); setPinError(false); setPin(""); }}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition-colors"
-            >
-              <Lock className="w-4 h-4" />
-              Unlock &amp; Download Guide
-            </button>
-          ) : (
-            <div className="flex flex-col items-center gap-3">
-              <p className="text-sm text-muted-foreground">Enter PIN to download:</p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={pin}
-                  onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); setPinError(false); }}
-                  onKeyDown={(e) => e.key === "Enter" && handleDownload()}
-                  placeholder="••••"
-                  className={`w-24 text-center px-3 py-2 rounded-lg border ${pinError ? "border-destructive" : "border-border"} bg-background text-foreground text-lg tracking-[0.3em] font-mono focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                  autoFocus
-                />
-                <button
-                  onClick={handleDownload}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
-              </div>
-              {pinError && (
-                <p className="text-xs text-destructive">Incorrect PIN. Please try again.</p>
-              )}
-            </div>
-          )}
         </div>
       </motion.section>
 
