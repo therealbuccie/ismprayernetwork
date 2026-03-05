@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useBooks, useCategories, Book } from "@/hooks/useBooks";
+import { useComboPacks, ComboPack } from "@/hooks/useComboPacks";
 import { useCartContext } from "@/contexts/CartContext";
 import { BookCard } from "@/components/bookstore/BookCard";
+import { ComboPackCard } from "@/components/bookstore/ComboPackCard";
 import { BookDetailModal } from "@/components/bookstore/BookDetailModal";
 import { CartSidebar } from "@/components/bookstore/CartSidebar";
 import { BookstoreAuthModal } from "@/components/bookstore/BookstoreAuthModal";
@@ -15,6 +17,7 @@ import {
   ShoppingCart,
   SlidersHorizontal,
   Sparkles,
+  Package,
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +27,7 @@ import CampaignBanner from "@/components/CampaignBanner";
 const Bookstore = () => {
   const { data: books, isLoading } = useBooks();
   const { data: categories } = useCategories();
+  const { data: comboPacks } = useComboPacks();
   const cart = useCartContext();
 
   const [search, setSearch] = useState("");
