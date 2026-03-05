@@ -19,7 +19,28 @@ const FeaturedBooksSection = () => {
   // Show featured books, or fall back to showing all books if none are featured
   const featured = (featuredBooks.length > 0 ? featuredBooks : books ?? []).slice(0, 4);
 
-  if (isLoading || featured.length === 0) return null;
+  if (isLoading) {
+    return (
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4 text-center">
+          <div className="inline-flex items-center gap-2 glass-card rounded-full px-4 py-2 mb-4 text-sm">
+            <Sparkles className="w-4 h-4 text-accent" />
+            Minister's Bookstore
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+            Featured <span className="gold-gradient">Books</span>
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-8">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="aspect-[3/4] rounded-xl bg-muted animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (featured.length === 0) return null;
 
   const handleAddToCart = (book: Book, format: "physical" | "digital") => {
     cart.addToCart(book, format);

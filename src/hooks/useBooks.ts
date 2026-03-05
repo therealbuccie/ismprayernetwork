@@ -43,10 +43,11 @@ export function useBooks() {
       if (error) throw error;
       return data as Book[];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10,   // 10 minutes
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
     networkMode: "always",
+    retry: 3,
   });
 }
 
