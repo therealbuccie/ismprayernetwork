@@ -15,7 +15,9 @@ const FeaturedBooksSection = () => {
   const { data: books, isLoading } = useBooks();
   const cart = useCart();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const featured = books?.filter((b) => b.featured)?.slice(0, 4) ?? [];
+  const featuredBooks = books?.filter((b) => b.featured) ?? [];
+  // Show featured books, or fall back to showing all books if none are featured
+  const featured = (featuredBooks.length > 0 ? featuredBooks : books ?? []).slice(0, 4);
 
   if (isLoading || featured.length === 0) return null;
 
