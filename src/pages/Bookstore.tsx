@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useBooks, useCategories, Book } from "@/hooks/useBooks";
+import { useComboPacks, ComboPack } from "@/hooks/useComboPacks";
 import { useCartContext } from "@/contexts/CartContext";
 import { BookCard } from "@/components/bookstore/BookCard";
+import { ComboPackCard } from "@/components/bookstore/ComboPackCard";
 import { BookDetailModal } from "@/components/bookstore/BookDetailModal";
 import { CartSidebar } from "@/components/bookstore/CartSidebar";
 import { BookstoreAuthModal } from "@/components/bookstore/BookstoreAuthModal";
@@ -15,6 +17,7 @@ import {
   ShoppingCart,
   SlidersHorizontal,
   Sparkles,
+  Package,
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +27,7 @@ import CampaignBanner from "@/components/CampaignBanner";
 const Bookstore = () => {
   const { data: books, isLoading } = useBooks();
   const { data: categories } = useCategories();
+  const { data: comboPacks } = useComboPacks();
   const cart = useCartContext();
 
   const [search, setSearch] = useState("");
@@ -58,6 +62,41 @@ const Bookstore = () => {
     cart.addToCart(book, format);
     toast({ title: "Added to cart", description: `${book.title} (${format}) added to your cart.` });
     setSelectedBook(null);
+  };
+
+  const handleAddComboToCart = (combo: ComboPack) => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+    // Add each book in the combo as digital
+    combo.books?.forEach((item) => {
+      const bookData: Book = {
+        id: item.books.id,
+        title: item.books.title,
+        author: item.books.author,
+        price: combo.price / (combo.books?.length || 1), // split combo price across items
+        cover_image_url: item.books.cover_image_url,
+        is_digital: item.books.is_digital,
+        is_physical: item.books.is_physical,
+        subtitle: null,
+        description: null,
+        short_description: null,
+        digital_file_url: null,
+        cloudpdf_document_id: null,
+        category_id: null,
+        stock: 100,
+        pages: null,
+        isbn: null,
+        espees_price: null,
+        ngn_price: null,
+        featured: false,
+        created_at: "",
+        updated_at: "",
+      };
+      cart.addToCart(bookData, "digital");
+    });
+    toast({ title: "Combo added to cart", description: `${combo.title} — all ${combo.books?.length} books added.` });
   };
 
   const filteredBooks = useMemo(() => {
@@ -200,6 +239,20 @@ const Bookstore = () => {
       <section className="container mx-auto px-4 pb-10">
         <CampaignBanner />
       </section>
+
+      {/* Combo Packs */}
+      {comboPacks && comboPacks.length > 0 && !search && !selectedCategory && formatFilter === "all" && (
+        <section className="container mx-auto px-4 pb-8">
+          <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+            <Package className="w-5 h-5 text-accent" /> Combo Packs
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {comboPacks.map((combo) => (
+              <ComboPackCard key={combo.id} combo={combo} onAddToCart={handleAddComboToCart} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured */}
       {featuredBooks.length > 0 && !search && !selectedCategory && formatFilter === "all" && (
