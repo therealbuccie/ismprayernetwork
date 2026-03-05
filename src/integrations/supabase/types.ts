@@ -183,6 +183,84 @@ export type Database = {
         }
         Relationships: []
       }
+      combo_pack_items: {
+        Row: {
+          book_id: string
+          combo_pack_id: string
+          id: string
+        }
+        Insert: {
+          book_id: string
+          combo_pack_id: string
+          id?: string
+        }
+        Update: {
+          book_id?: string
+          combo_pack_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combo_pack_items_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_pack_items_combo_pack_id_fkey"
+            columns: ["combo_pack_id"]
+            isOneToOne: false
+            referencedRelation: "combo_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      combo_packs: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          espees_price: number | null
+          featured: boolean
+          id: string
+          is_active: boolean
+          ngn_price: number | null
+          price: number
+          short_description: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          espees_price?: number | null
+          featured?: boolean
+          id?: string
+          is_active?: boolean
+          ngn_price?: number | null
+          price?: number
+          short_description?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          espees_price?: number | null
+          featured?: boolean
+          id?: string
+          is_active?: boolean
+          ngn_price?: number | null
+          price?: number
+          short_description?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
