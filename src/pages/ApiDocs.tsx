@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Code2, BookOpen, FolderOpen, Users, ShoppingCart, Copy, Check, ChevronDown, ChevronRight, Lock, Download, Shield, FileText } from "lucide-react";
+import { Code2, BookOpen, FolderOpen, Users, ShoppingCart, Copy, Check, ChevronDown, ChevronRight, Lock, Shield, FileText } from "lucide-react";
 
 const CodeBlock = ({ code, language = "bash" }: { code: string; language?: string }) => {
   const [copied, setCopied] = useState(false);
