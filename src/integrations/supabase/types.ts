@@ -745,6 +745,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_email_exists: { Args: { lookup_email: string }; Returns: boolean }
       get_user_role: { Args: { user_uuid: string }; Returns: string }
       is_admin: { Args: { user_uuid: string }; Returns: boolean }
     }
