@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import AuthGateModal from "@/components/AuthGateModal";
 
 const todaysPrayerPoint = {
   date: new Date().toLocaleDateString("en-US", {
@@ -46,8 +47,14 @@ const PrayerRoom = () => {
   const [submittingPrayer, setSubmittingPrayer] = useState(false);
   const [mySessionSlug, setMySessionSlug] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
+  const [showAuthModal, setShowAuthModal] = useState(!user);
+
+  // Update auth modal when user state changes
+  useEffect(() => {
+    if (user) setShowAuthModal(false);
+  }, [user]);
 
   const { data: requests } = useQuery({
     queryKey: ["prayer-room-requests"],
@@ -510,6 +517,12 @@ const PrayerRoom = () => {
           />
         </DialogContent>
       </Dialog>
+      <AuthGateModal
+        open={showAuthModal}
+        onOpenChange={setShowAuthModal}
+        title="Sign In to Prayer Room"
+        description="Enter your email to join the prayer room"
+      />
     </div>
   );
 };
