@@ -29,28 +29,38 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [prayerOpen, setPrayerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  
   const [mobilePrayerOpen, setMobilePrayerOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
-  
-  const { user, isAdmin, signOut } = useAuth();
+
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const cart = useCartContext();
   const isBookstore = location.pathname.startsWith("/bookstore");
 
   const handleSignOut = async () => {
+    if (isSigningOut) return;
+
+    setIsSigningOut(true);
+
     try {
-      await supabase.auth.signOut();
-      // Clear any lingering Supabase storage
-      const storageKeys = Object.keys(localStorage).filter(k => k.startsWith('sb-'));
-      storageKeys.forEach(k => localStorage.removeItem(k));
+      await supabase.auth.signOut({ scope: "local" });
+      toast.success("Signed out successfully");
     } catch (err) {
       console.error("Sign out exception:", err);
+      toast.error("Signed out locally. Redirecting...");
+    } finally {
+      const storageKeys = Object.keys(localStorage).filter((key) => key.startsWith("sb-"));
+      storageKeys.forEach((key) => localStorage.removeItem(key));
+      setMobileOpen(false);
+      setMobilePrayerOpen(false);
+      setMobileMoreOpen(false);
+      navigate("/", { replace: true });
+      setIsSigningOut(false);
     }
-    window.location.href = "/";
   };
 
   useEffect(() => {
@@ -177,8 +187,14 @@ const Navbar = () => {
             </HeroButton>
           </Link>
           {user ? (
-              <HeroButton variant="outline" size="sm" onClick={handleSignOut} className="text-foreground border-border hover:bg-muted gap-1.5 cursor-pointer">
-                <LogOut size={14} /> Sign Out
+              <HeroButton
+                variant="outline"
+                size="sm"
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="text-foreground border-border hover:bg-muted gap-1.5 cursor-pointer"
+              >
+                <LogOut size={14} /> {isSigningOut ? "Signing Out..." : "Sign Out"}
               </HeroButton>
           ) : (
             <Link to="/auth">
@@ -280,8 +296,14 @@ const Navbar = () => {
                 </Link>
                 {user ? (
                   <div className="flex-1">
-                    <HeroButton variant="outline" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }} className="w-full text-foreground border-border cursor-pointer">
-                      Sign Out
+                    <HeroButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { void handleSignOut(); }}
+                      disabled={isSigningOut}
+                      className="w-full text-foreground border-border cursor-pointer"
+                    >
+                      {isSigningOut ? "Signing Out..." : "Sign Out"}
                     </HeroButton>
                   </div>
                 ) : (
