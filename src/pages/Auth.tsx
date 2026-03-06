@@ -50,7 +50,7 @@ const Auth = () => {
     if (!email) return;
     setSubmitting(true);
     try {
-      // Try sign in first
+      // Try sign in with dummy password first
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: DUMMY_PASS,
@@ -62,7 +62,19 @@ const Auth = () => {
         return;
       }
 
-      // Sign-in failed — if not in signup mode yet, show signup fields
+      // Dummy password failed — check if email exists in database
+      const { data: emailExists } = await supabase.rpc("check_email_exists", { lookup_email: email });
+
+      if (emailExists) {
+        // Email exists but has a custom password — switch to admin login with pre-filled email
+        setAdminEmail(email);
+        setMode("admin");
+        toast.info("This account uses a password. Please enter it below.");
+        setSubmitting(false);
+        return;
+      }
+
+      // Email not in database — show signup fields or create account
       if (!isSignup) {
         setIsSignup(true);
         setSubmitting(false);
@@ -75,7 +87,7 @@ const Auth = () => {
         return;
       }
 
-      // Try to sign up
+      // Create new account
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password: DUMMY_PASS,
@@ -89,15 +101,7 @@ const Auth = () => {
         },
       });
 
-      if (signUpError) {
-        // User already exists but wrong password — update password via re-signup
-        if (signUpError.message?.includes("already") || signUpError.status === 422) {
-          toast.error("This email is already registered. Please use admin login if you're an admin.");
-        } else {
-          throw signUpError;
-        }
-        return;
-      }
+      if (signUpError) throw signUpError;
 
       toast.success("Welcome! You're now signed in.");
       navigate("/", { replace: true });

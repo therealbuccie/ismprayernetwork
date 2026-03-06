@@ -62,21 +62,25 @@ export function BookstoreAuthModal({ open, onClose, onSuccess }: BookstoreAuthMo
         return;
       }
 
-      // Dummy password failed — try signup to check if email exists
+      // Dummy password failed — check if email exists in database
+      const { data: emailExists } = await supabase.rpc("check_email_exists", { lookup_email: email });
+
+      if (emailExists) {
+        // Email exists with custom password — show password field
+        setStep("password");
+        setLoading(false);
+        return;
+      }
+
+      // Email not in database — create new account with dummy pass, then collect details
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password: DUMMY_PASS,
         options: { data: { full_name: "" } },
       });
 
-      // If signup says user already exists, they have a custom password (admin)
-      if (signUpError && (signUpError.message?.includes("already") || signUpError.status === 422)) {
-        setStep("password");
-        setLoading(false);
-        return;
-      }
+      if (signUpError) throw signUpError;
 
-      // If signup succeeded without error, user is brand new — but we signed them up with empty name
       // Sign them out and show signup form to collect proper details
       await supabase.auth.signOut();
       setStep("signup");
