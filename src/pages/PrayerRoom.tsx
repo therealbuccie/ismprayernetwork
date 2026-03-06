@@ -27,7 +27,7 @@ const todaysPrayerPoint = {
   body: "Thank God for the global broadcast of the Healing Streams Live Healing Services with Pastor Chris through television and radio networks around the world. Pray that every viewer and listener receives miracles, salvation, and restoration through every transmission. Pray that the signals are clear and unhindered, reaching every language, territory, and nation.",
 };
 
-const BASE_URL = "https://ismprayernetwork.org";
+const FALLBACK_BASE_URL = "https://ismprayernetwork.org";
 
 const ministersPraying = [
   { id: 1, name: "Pastor Grace", location: "Lagos" },
@@ -46,15 +46,15 @@ const PrayerRoom = () => {
   const [prayerText, setPrayerText] = useState("");
   const [submittingPrayer, setSubmittingPrayer] = useState(false);
   const [mySessionSlug, setMySessionSlug] = useState<string | null>(null);
+  const [isPreparingSessionLink, setIsPreparingSessionLink] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
-  const [showAuthModal, setShowAuthModal] = useState(!user);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Update auth modal when user state changes
   useEffect(() => {
-    if (user) setShowAuthModal(false);
-  }, [user]);
+    setShowAuthModal(!loading && !user);
+  }, [loading, user]);
 
   const { data: requests } = useQuery({
     queryKey: ["prayer-room-requests"],
