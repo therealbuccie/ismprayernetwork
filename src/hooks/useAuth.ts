@@ -21,34 +21,7 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
-    const init = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!mounted) return;
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Don't block loading on profile fetch
-          supabase
-            .from("profiles")
-            .select("*")
-            .eq("user_id", session.user.id)
-            .single()
-            .then(({ data }) => {
-              if (mounted) setProfile(data as Profile | null);
-            });
-        }
-      } finally {
-        if (mounted) {
-          setInitialCheckDone(true);
-          setLoading(false);
-        }
-      }
-    };
-
-    init();
-
+    // Set up auth listener FIRST (before getSession) to catch all events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
       setSession(session);
@@ -65,7 +38,31 @@ export function useAuth() {
         setProfile(null);
       }
       
-      if (mounted) setLoading(false);
+      if (mounted) {
+        setInitialCheckDone(true);
+        setLoading(false);
+      }
+    });
+
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .single()
+          .then(({ data }) => {
+            if (mounted) setProfile(data as Profile | null);
+          });
+      }
+      
+      setInitialCheckDone(true);
+      setLoading(false);
     });
 
     return () => {
