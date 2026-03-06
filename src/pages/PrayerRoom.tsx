@@ -167,9 +167,10 @@ const PrayerRoom = () => {
     };
   }, [loading, user?.id, user?.email, profile?.full_name]);
 
+  const currentOrigin = typeof window !== "undefined" ? window.location.origin : FALLBACK_BASE_URL;
   const shareUrl = mySessionSlug
-    ? `${BASE_URL}/prayer-room/${mySessionSlug}`
-    : `${BASE_URL}/prayer-room`;
+    ? `${currentOrigin}/prayer-room/${mySessionSlug}`
+    : `${currentOrigin}/prayer-room`;
 
   // Query participants for current session
   const { data: mySession } = useQuery({
