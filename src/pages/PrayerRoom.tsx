@@ -517,6 +517,12 @@ const PrayerRoom = () => {
           />
         </DialogContent>
       </Dialog>
+      <AuthGateModal
+        open={showAuthModal}
+        onOpenChange={setShowAuthModal}
+        title="Sign In to Prayer Room"
+        description="Enter your email to join the prayer room"
+      />
     </div>
   );
 };

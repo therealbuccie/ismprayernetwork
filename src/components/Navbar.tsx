@@ -42,16 +42,14 @@ const Navbar = () => {
   const isBookstore = location.pathname.startsWith("/bookstore");
 
   const handleSignOut = async () => {
-    console.log("Sign out clicked");
     try {
-      // Clear all Supabase storage first to ensure session is gone
+      await supabase.auth.signOut();
+      // Clear any lingering Supabase storage
       const storageKeys = Object.keys(localStorage).filter(k => k.startsWith('sb-'));
       storageKeys.forEach(k => localStorage.removeItem(k));
-      await supabase.auth.signOut();
     } catch (err) {
       console.error("Sign out exception:", err);
     }
-    // Force full reload after clearing
     window.location.href = "/";
   };
 
