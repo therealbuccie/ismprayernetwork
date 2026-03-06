@@ -356,7 +356,7 @@ const PrayerRoom = () => {
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Sign in to get your unique prayer link to share with loved ones.
+                  {isPreparingSessionLink ? "Generating your unique prayer link..." : "Sign in to get your unique prayer link to share with loved ones."}
                 </p>
               )}
             </div>
