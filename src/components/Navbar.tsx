@@ -187,8 +187,14 @@ const Navbar = () => {
             </HeroButton>
           </Link>
           {user ? (
-              <HeroButton variant="outline" size="sm" onClick={handleSignOut} className="text-foreground border-border hover:bg-muted gap-1.5 cursor-pointer">
-                <LogOut size={14} /> Sign Out
+              <HeroButton
+                variant="outline"
+                size="sm"
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="text-foreground border-border hover:bg-muted gap-1.5 cursor-pointer"
+              >
+                <LogOut size={14} /> {isSigningOut ? "Signing Out..." : "Sign Out"}
               </HeroButton>
           ) : (
             <Link to="/auth">
@@ -290,8 +296,14 @@ const Navbar = () => {
                 </Link>
                 {user ? (
                   <div className="flex-1">
-                    <HeroButton variant="outline" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }} className="w-full text-foreground border-border cursor-pointer">
-                      Sign Out
+                    <HeroButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { void handleSignOut(); }}
+                      disabled={isSigningOut}
+                      className="w-full text-foreground border-border cursor-pointer"
+                    >
+                      {isSigningOut ? "Signing Out..." : "Sign Out"}
                     </HeroButton>
                   </div>
                 ) : (
