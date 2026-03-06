@@ -38,14 +38,12 @@ const Auth = () => {
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const searchParams = new URLSearchParams(window.location.search);
-  const returnTo = searchParams.get("returnTo") || "/";
 
   useEffect(() => {
     if (user) {
-      navigate(returnTo, { replace: true });
+      navigate("/", { replace: true });
     }
-  }, [user, navigate, returnTo]);
+  }, [user, navigate]);
 
   const handleUserAccess = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +58,7 @@ const Auth = () => {
 
       if (!signInError) {
         toast.success("Welcome back!");
-        navigate(returnTo, { replace: true });
+        navigate("/", { replace: true });
         return;
       }
 
@@ -106,7 +104,7 @@ const Auth = () => {
       if (signUpError) throw signUpError;
 
       toast.success("Welcome! You're now signed in.");
-      navigate(returnTo, { replace: true });
+      navigate("/", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "An error occurred");
     } finally {
@@ -124,7 +122,7 @@ const Auth = () => {
       });
       if (error) throw error;
       toast.success("Admin signed in!");
-      navigate(returnTo, { replace: true });
+      navigate("/", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Invalid credentials");
     } finally {

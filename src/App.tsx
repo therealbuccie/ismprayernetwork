@@ -33,7 +33,6 @@ import JoinPrayerRoom from "./pages/JoinPrayerRoom";
 import MyLibrary from "./pages/MyLibrary";
 import NotFound from "./pages/NotFound";
 import ApiDocs from "./pages/ApiDocs";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,19 +55,19 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/prayer-requests" element={<ProtectedRoute><PrayerRequests /></ProtectedRoute>} />
-            <Route path="/groups" element={<ProtectedRoute><PrayerGroups /></ProtectedRoute>} />
-            <Route path="/prayer-room" element={<ProtectedRoute><PrayerRoom /></ProtectedRoute>} />
+            <Route path="/prayer-requests" element={<PrayerRequests />} />
+            <Route path="/groups" element={<PrayerGroups />} />
+            <Route path="/prayer-room" element={<PrayerRoom />} />
             <Route path="/testimonies" element={<Testimonies />} />
             <Route path="/live-tv" element={<LiveTV />} />
             <Route path="/partner" element={<Partner />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/bookstore" element={<Bookstore />} />
-            <Route path="/global-prayer-map" element={<ProtectedRoute><GlobalPrayerMap /></ProtectedRoute>} />
-            <Route path="/prayer-points" element={<ProtectedRoute><PrayerPoints /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><AdminHub /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/prayer-dashboard" element={<ProtectedRoute><PrayerDashboard /></ProtectedRoute>} />
+            <Route path="/global-prayer-map" element={<GlobalPrayerMap />} />
+            <Route path="/prayer-points" element={<PrayerPoints />} />
+            <Route path="/admin" element={<AdminHub />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/prayer-dashboard" element={<PrayerDashboard />} />
             <Route path="/api/dashboard" element={<PublicDashboard />} />
             <Route path="/api/prayer-dashboard" element={<PublicPrayerDashboard />} />
             <Route path="/api/bookstore" element={<PublicBookstoreDashboard />} />
@@ -77,7 +76,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/our-impact" element={<OurImpact />} />
             <Route path="/radio" element={<OnlineRadio />} />
-            <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
+            <Route path="/my-library" element={<MyLibrary />} />
             <Route path="/prayer-room/:slug" element={<JoinPrayerRoom />} />
             <Route path="/api-docs" element={<ApiDocs />} />
             <Route path="*" element={<NotFound />} />
