@@ -85,51 +85,87 @@ const PrayerRoom = () => {
 
   // Auto-create the user's prayer session based on their name
   useEffect(() => {
-    if (!user) {
-      console.log("Prayer session: no user");
-      return;
-    }
-    console.log("Prayer session: user found", user.id, "profile:", profile?.full_name);
+    let isMounted = true;
+
     const fetchOrCreateSession = async () => {
-      // Check for existing session
-      const { data, error: fetchError } = await supabase
-        .from("prayer_room_sessions")
-        .select("slug")
-        .eq("owner_id", user.id)
-        .eq("is_active", true)
-        .limit(1)
-        .single();
-      console.log("Prayer session fetch:", data, fetchError);
-      if (data) {
-        setMySessionSlug(data.slug);
+      if (loading) return;
+
+      if (!user) {
+        if (isMounted) {
+          setMySessionSlug(null);
+          setIsPreparingSessionLink(false);
+        }
         return;
       }
-      // Auto-create one using their name (or email fallback)
-      const displayName = profile?.full_name || user.email?.split("@")[0] || "minister";
-      const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      console.log("Creating prayer session with slug:", slug);
-      const { error } = await supabase.from("prayer_room_sessions").insert({
-        slug,
-        owner_id: user.id,
-        owner_name: profile?.full_name || displayName,
-      });
-      console.log("Insert result:", error);
-      if (error) {
-        // If slug conflict, append a short suffix
-        const uniqueSlug = `${slug}-${Date.now().toString(36).slice(-4)}`;
-        const { error: error2 } = await supabase.from("prayer_room_sessions").insert({
-          slug: uniqueSlug,
-          owner_id: user.id,
-          owner_name: profile?.full_name || displayName,
-        });
-        console.log("Fallback insert:", uniqueSlug, error2);
-        if (!error2) setMySessionSlug(uniqueSlug);
-      } else {
-        setMySessionSlug(slug);
+
+      setIsPreparingSessionLink(true);
+
+      try {
+        const { data: existingSession, error: fetchError } = await supabase
+          .from("prayer_room_sessions")
+          .select("slug")
+          .eq("owner_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (fetchError) throw fetchError;
+
+        if (existingSession?.slug) {
+          if (isMounted) setMySessionSlug(existingSession.slug);
+          return;
+        }
+
+        const displayName = profile?.full_name || user.email?.split("@")[0] || "minister";
+        const normalizedSlug = displayName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+
+        const { data: createdSession, error: createError } = await supabase
+          .from("prayer_room_sessions")
+          .insert({
+            slug: normalizedSlug,
+            owner_id: user.id,
+            owner_name: profile?.full_name || displayName,
+          })
+          .select("slug")
+          .single();
+
+        if (createError) {
+          const uniqueSlug = `${normalizedSlug}-${Date.now().toString(36).slice(-4)}`;
+          const { data: fallbackSession, error: fallbackError } = await supabase
+            .from("prayer_room_sessions")
+            .insert({
+              slug: uniqueSlug,
+              owner_id: user.id,
+              owner_name: profile?.full_name || displayName,
+            })
+            .select("slug")
+            .single();
+
+          if (fallbackError) throw fallbackError;
+          if (isMounted) setMySessionSlug(fallbackSession.slug);
+          return;
+        }
+
+        if (isMounted) setMySessionSlug(createdSession.slug);
+      } catch (error) {
+        console.error("Prayer session link generation failed:", error);
+        if (isMounted) {
+          setMySessionSlug(null);
+          toast.error("Couldn't generate your prayer link. Please refresh and try again.");
+        }
+      } finally {
+        if (isMounted) setIsPreparingSessionLink(false);
       }
     };
+
     fetchOrCreateSession();
-  }, [user, profile?.full_name]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [loading, user?.id, user?.email, profile?.full_name]);
 
   const shareUrl = mySessionSlug
     ? `${BASE_URL}/prayer-room/${mySessionSlug}`
