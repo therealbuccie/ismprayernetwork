@@ -78,7 +78,7 @@ const App = () => (
             <Route path="/our-impact" element={<OurImpact />} />
             <Route path="/radio" element={<OnlineRadio />} />
             <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
-            <Route path="/prayer-room/:slug" element={<ProtectedRoute><JoinPrayerRoom /></ProtectedRoute>} />
+            <Route path="/prayer-room/:slug" element={<JoinPrayerRoom />} />
             <Route path="/api-docs" element={<ApiDocs />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
