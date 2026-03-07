@@ -97,7 +97,15 @@ const PrayerRoom = () => {
         .select("user_id, full_name, ministry_name")
         .in("user_id", userIds);
 
+      // Fetch prayer room sessions for slugs
+      const { data: sessions } = await supabase
+        .from("prayer_room_sessions")
+        .select("owner_id, slug")
+        .in("owner_id", userIds)
+        .eq("is_active", true);
+
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const sessionMap = new Map(sessions?.map(s => [s.owner_id, s.slug]) || []);
 
       // Deduplicate by user_id, keep first slot
       const seen = new Set<string>();
@@ -112,6 +120,8 @@ const PrayerRoom = () => {
           name: prof?.full_name || s.user_name,
           ministry: prof?.ministry_name || null,
           user_id: s.user_id,
+          slug: sessionMap.get(s.user_id) || null,
+          isSample: false,
         };
       });
     },
@@ -120,10 +130,10 @@ const PrayerRoom = () => {
 
   // Sample ministers always shown, plus real ones
   const sampleMinisters = [
-    { id: "sample-1", name: "Min. Grace Okafor", ministry: "Grace Tabernacle", user_id: "sample-1" },
-    { id: "sample-2", name: "Pst. David Mensah", ministry: "House of Glory", user_id: "sample-2" },
-    { id: "sample-3", name: "Evg. Ruth Kimani", ministry: "Fire & Light Ministry", user_id: "sample-3" },
-    { id: "sample-4", name: "Dcns. Blessing Eze", ministry: "Kingdom Embassy", user_id: "sample-4" },
+    { id: "sample-1", name: "Min. Grace Okafor", ministry: "Grace Tabernacle", user_id: "sample-1", slug: null, isSample: true },
+    { id: "sample-2", name: "Pst. David Mensah", ministry: "House of Glory", user_id: "sample-2", slug: null, isSample: true },
+    { id: "sample-3", name: "Evg. Ruth Kimani", ministry: "Fire & Light Ministry", user_id: "sample-3", slug: null, isSample: true },
+    { id: "sample-4", name: "Dcns. Blessing Eze", ministry: "Kingdom Embassy", user_id: "sample-4", slug: null, isSample: true },
   ];
 
   const allPrayingNow = [
@@ -568,10 +578,22 @@ const PrayerRoom = () => {
                         </div>
                         <Button
                           size="sm"
-                          className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4"
-                          onClick={() => setIsPraying(true)}
+                          className={`text-xs rounded-full px-4 ${
+                            minister.isSample
+                              ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
+                              : "bg-primary text-primary-foreground hover:bg-primary/90"
+                          }`}
+                          onClick={() => {
+                            if (minister.isSample) {
+                              toast.info("This room is full. Join another minister's prayer session!");
+                            } else if (minister.slug) {
+                              navigate(`/prayer-room/${minister.slug}`);
+                            } else {
+                              setIsPraying(true);
+                            }
+                          }}
                         >
-                          Pray Now
+                          {minister.isSample ? "Room Full" : "Join Prayer"}
                         </Button>
                       </div>
                     ))}
