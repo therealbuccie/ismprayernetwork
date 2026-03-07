@@ -150,10 +150,17 @@ const PrayerSchedule = ({ onStartPraying }: PrayerScheduleProps) => {
         <h2 className="font-serif font-bold text-2xl md:text-3xl text-foreground mb-2">
           Pick a Time to Pray 🙏
         </h2>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed mb-4">
           Choose a 15-minute slot that works best for you. We'll send you a gentle reminder 
           30 minutes before so you're ready. It's that simple!
         </p>
+        <Button
+          onClick={onStartPraying}
+          className="gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2 px-6 py-3 text-base font-semibold shadow-lg shadow-accent/20"
+        >
+          <Flame size={18} /> Pray Now
+        </Button>
+        <p className="text-xs text-muted-foreground mt-2">Or schedule a time below 👇</p>
       </motion.div>
 
       {/* Active Slot Banner */}
