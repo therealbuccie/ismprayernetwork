@@ -7,19 +7,22 @@ import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Globe, Lock, ArrowLeft } from "lucide-react";
+import { Users, Globe, Lock, ArrowLeft, Video } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useState } from "react";
 import AuthGateModal from "@/components/AuthGateModal";
+import VideoCall from "@/components/VideoCall";
 
 const JoinGroup = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [joining, setJoining] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [callInfo, setCallInfo] = useState<{ url: string; token: string } | null>(null);
+  const [joiningCall, setJoiningCall] = useState(false);
 
   const { data: group, isLoading } = useQuery({
     queryKey: ["group-by-slug", slug],
@@ -74,6 +77,35 @@ const JoinGroup = () => {
     }
   };
 
+  const handleStartCall = async () => {
+    if (!user || !group) return;
+    setJoiningCall(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("daily-room", {
+        body: { group_slug: group.slug, group_name: group.name },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setCallInfo({ url: data.url, token: data.token });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to join call");
+    } finally {
+      setJoiningCall(false);
+    }
+  };
+
+  // Full-screen video call
+  if (callInfo) {
+    return (
+      <VideoCall
+        roomUrl={callInfo.url}
+        token={callInfo.token}
+        userName={profile?.full_name || user?.user_metadata?.full_name || "Guest"}
+        onLeave={() => setCallInfo(null)}
+      />
+    );
+  }
+
   if (isLoading || authLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -125,7 +157,16 @@ const JoinGroup = () => {
               {isMember ? (
                 <div className="space-y-3">
                   <Badge className="bg-primary/10 text-primary border-primary/20">✓ You're a member</Badge>
-                  <div>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      size="lg"
+                      onClick={handleStartCall}
+                      disabled={joiningCall}
+                    >
+                      <Video size={18} />
+                      {joiningCall ? "Connecting..." : "Join Prayer Call"}
+                    </Button>
                     <Button variant="outline" onClick={() => navigate("/groups")} className="gap-2">
                       <ArrowLeft size={16} /> Back to Groups
                     </Button>
@@ -152,7 +193,6 @@ const JoinGroup = () => {
         onOpenChange={(open) => {
           setShowAuth(open);
           if (!open) {
-            // Re-check after auth modal closes — user may now be logged in
             queryClient.invalidateQueries({ queryKey: ["group-membership"] });
           }
         }}
