@@ -69,16 +69,23 @@ const PrayerGroups = () => {
         is_public: isPublic,
         created_by: user.id,
         slug,
-      }).select().single();
+      }).select("id, slug").single();
+
       if (error) throw error;
-      await supabase.from("group_members").insert({ group_id: group.id, user_id: user.id });
+
       toast.success("Group created! 🙏");
       setName("");
       setDescription("");
       setModalOpen(false);
       setShareSlug(group.slug);
-      queryClient.invalidateQueries({ queryKey: ["prayer-groups"] });
-      queryClient.invalidateQueries({ queryKey: ["my-group-memberships"] });
+
+      void supabase.from("group_members").insert({ group_id: group.id, user_id: user.id }).then(({ error: joinError }) => {
+        if (joinError && joinError.code !== "23505") {
+          toast.error("Group created, but auto-join is still syncing. You can tap Join now.");
+        }
+        queryClient.invalidateQueries({ queryKey: ["prayer-groups"] });
+        queryClient.invalidateQueries({ queryKey: ["my-group-memberships", user.id] });
+      });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
