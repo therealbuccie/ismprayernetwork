@@ -13,7 +13,7 @@ interface PrayerTimerProps {
 
 const PrayerTimer = ({ onComplete, onBack }: PrayerTimerProps) => {
   const [secondsLeft, setSecondsLeft] = useState(PRAYER_DURATION);
-  const [minimized, setMinimized] = useState(false);
+  const [minimized, setMinimized] = useState(true);
 
   useEffect(() => {
     if (secondsLeft <= 0) {

@@ -308,10 +308,18 @@ const PrayerRoom = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="grid grid-cols-1 lg:grid-cols-3 gap-6"
             >
-              {/* Left: Prayer Room with compact timer overlay */}
-              <div className="lg:col-span-2 flex flex-col gap-6">
-                {/* Video Embed with timer overlay */}
-                <div className="relative glass-card rounded-xl overflow-hidden min-h-[500px] lg:min-h-[600px]">
+              {/* Left: Prayer Room + timer above */}
+              <div className="lg:col-span-2 flex flex-col gap-4">
+                {/* Compact timer bar above the room */}
+                <div className="flex items-center justify-center">
+                  <PrayerTimer
+                    onComplete={() => setIsPraying(false)}
+                    onBack={() => setIsPraying(false)}
+                  />
+                </div>
+
+                {/* Video Embed — full space */}
+                <div className="glass-card rounded-xl overflow-hidden min-h-[500px] lg:min-h-[600px]">
                   <iframe
                     src="https://jcontrol.pro/join?session=ism-prayer-network"
                     width="100%"
@@ -322,13 +330,6 @@ const PrayerRoom = () => {
                     allowFullScreen
                     className="w-full h-full"
                   />
-                  {/* Compact floating timer */}
-                  <div className="absolute top-3 right-3 z-10">
-                    <PrayerTimer
-                      onComplete={() => setIsPraying(false)}
-                      onBack={() => setIsPraying(false)}
-                    />
-                  </div>
                 </div>
 
                 {/* Actions */}
