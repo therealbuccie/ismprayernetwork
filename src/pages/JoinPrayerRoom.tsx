@@ -6,12 +6,15 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Users, MapPin, ArrowRight, Radio, Heart, Share2 } from "lucide-react";
+import { Flame, Users, MapPin, Radio, Heart, Share2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import Hls from "hls.js";
+import PrayerTimer from "@/components/prayer-schedule/PrayerTimer";
+
+const PRAYER_DURATION = 15 * 60; // must match PrayerTimer
 
 const JoinPrayerRoom = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -20,6 +23,8 @@ const JoinPrayerRoom = () => {
   const [location, setLocation] = useState("");
   const [joining, setJoining] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
+  const [isPraying, setIsPraying] = useState(false);
+  const [syncedSecondsLeft, setSyncedSecondsLeft] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLive, setIsLive] = useState(false);
   const queryClient = useQueryClient();
@@ -39,9 +44,37 @@ const JoinPrayerRoom = () => {
       return data;
     },
     enabled: !!slug,
+    refetchInterval: 5000, // poll for timer updates
   });
 
-  // Fetch participants for this session
+  // Calculate synced timer from host's timer_started_at
+  useEffect(() => {
+    const timerStartedAt = (session as any)?.timer_started_at;
+    if (!timerStartedAt) {
+      setSyncedSecondsLeft(null);
+      if (isPraying) {
+        setIsPraying(false);
+        toast.info("The host's prayer session has ended.");
+      }
+      return;
+    }
+
+    const startTime = new Date(timerStartedAt).getTime();
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const remaining = PRAYER_DURATION - elapsed;
+
+    if (remaining <= 0) {
+      setSyncedSecondsLeft(0);
+      if (isPraying) {
+        setIsPraying(false);
+        toast.success("Prayer session complete! God bless you! 🙏🔥");
+      }
+    } else {
+      setSyncedSecondsLeft(remaining);
+    }
+  }, [session, isPraying]);
+
+  // Fetch participants
   const { data: participants } = useQuery({
     queryKey: ["session-participants", session?.id],
     queryFn: async () => {
@@ -63,7 +96,7 @@ const JoinPrayerRoom = () => {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "prayer_room_participants",
           filter: `session_id=eq.${session.id}`,
@@ -72,9 +105,21 @@ const JoinPrayerRoom = () => {
           queryClient.invalidateQueries({ queryKey: ["session-participants", session.id] });
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "prayer_room_sessions",
+          filter: `id=eq.${session.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["prayer-session", slug] });
+        }
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [session?.id, queryClient]);
+  }, [session?.id, queryClient, slug]);
 
   // HLS player setup
   useEffect(() => {
@@ -136,6 +181,8 @@ const JoinPrayerRoom = () => {
     }
   };
 
+  const hostTimerActive = !!(session as any)?.timer_started_at && (syncedSecondsLeft ?? 0) > 0;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -167,7 +214,7 @@ const JoinPrayerRoom = () => {
     );
   }
 
-  // After joining — show Live TV + participants
+  // After joining — show Live TV + participants + Start Praying
   if (hasJoined) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -194,7 +241,7 @@ const JoinPrayerRoom = () => {
               >
                 <Radio size={14} className={`text-accent ${isLive ? "animate-pulse" : ""}`} />
                 <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-                  {isLive ? "Live Now" : "Prayer Room"}
+                  {isPraying ? "Praying Together" : isLive ? "Live Now" : "Prayer Room"}
                 </span>
               </motion.div>
 
@@ -203,9 +250,22 @@ const JoinPrayerRoom = () => {
                 <span className="gold-gradient">{session.owner_name}</span>
               </h1>
               <p className="text-muted-foreground text-xs md:text-sm">
-                You're connected — watch the live stream and pray together.
+                {isPraying
+                  ? "Follow along with the host's prayer session."
+                  : "You're connected — watch the live stream and pray together."}
               </p>
             </motion.div>
+
+            {/* Synced Timer (shown when participant clicks Start Praying) */}
+            {isPraying && syncedSecondsLeft !== null && (
+              <div className="flex items-center justify-center mb-4">
+                <PrayerTimer
+                  onComplete={() => setIsPraying(false)}
+                  onBack={() => setIsPraying(false)}
+                  initialSeconds={syncedSecondsLeft}
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Video Player */}
@@ -239,6 +299,25 @@ const JoinPrayerRoom = () => {
 
                 {/* Action buttons */}
                 <div className="mt-4 flex items-center justify-center gap-3">
+                  {!isPraying && hostTimerActive && (
+                    <Button
+                      className="gold-gradient-bg text-accent-foreground gap-1.5"
+                      size="sm"
+                      onClick={() => setIsPraying(true)}
+                    >
+                      <Play size={14} /> Start Praying
+                    </Button>
+                  )}
+                  {!isPraying && !hostTimerActive && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      disabled
+                    >
+                      <Flame size={14} /> Waiting for host to start…
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
