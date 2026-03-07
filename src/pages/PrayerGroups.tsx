@@ -72,7 +72,7 @@ const PrayerGroups = () => {
       }).select().single();
       if (error) throw error;
       await supabase.from("group_members").insert({ group_id: group.id, user_id: user.id });
-      toast.success("Community created! 🙏");
+      toast.success("Group created! 🙏");
       setName("");
       setDescription("");
       setModalOpen(false);
@@ -87,7 +87,7 @@ const PrayerGroups = () => {
   };
 
   const handleJoin = async (groupId: string) => {
-    if (!user) { toast.error("Please sign in to join this community"); return; }
+    if (!user) { toast.error("Please sign in to join this group"); return; }
     try {
       const { error } = await supabase.from("group_members").insert({
         group_id: groupId,
@@ -97,7 +97,7 @@ const PrayerGroups = () => {
         if (error.code === "23505") { toast.info("You're already a member"); return; }
         throw error;
       }
-      toast.success("Welcome to the community! 🙏");
+      toast.success("Welcome to the group! 🙏");
       queryClient.invalidateQueries({ queryKey: ["prayer-groups"] });
       queryClient.invalidateQueries({ queryKey: ["my-group-memberships"] });
     } catch (err: any) {
@@ -120,10 +120,10 @@ const PrayerGroups = () => {
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-serif font-bold mb-3">
-              Prayer <span className="gold-gradient">Communities</span>
+              Prayer <span className="gold-gradient">Groups</span>
             </h1>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Build your prayer community. Create a group, share the link with loved ones, and pray together.
+              Build your prayer group. Create a group, share the link with loved ones, and pray together.
             </p>
           </motion.div>
 
@@ -131,18 +131,18 @@ const PrayerGroups = () => {
             <Button
               className="gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2"
               onClick={() => {
-                if (!user) { toast.error("Please sign in to create a community"); return; }
+                if (!user) { toast.error("Please sign in to create a group"); return; }
                 setModalOpen(true);
               }}
             >
-              <Plus size={16} /> Create Community
+              <Plus size={16} /> Create Group
             </Button>
           </div>
 
           {isLoading ? (
-            <div className="text-center text-muted-foreground py-12">Loading communities...</div>
+            <div className="text-center text-muted-foreground py-12">Loading groups...</div>
           ) : !groups?.length ? (
-            <div className="text-center text-muted-foreground py-12">No communities yet. Create the first one!</div>
+            <div className="text-center text-muted-foreground py-12">No groups yet. Create the first one!</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {groups.map((group: any, i: number) => {
@@ -160,7 +160,7 @@ const PrayerGroups = () => {
                         </span>
                       </div>
                       <h3 className="font-serif font-semibold text-lg mb-2">{group.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-4 flex-1">{group.description || "A prayer community"}</p>
+                      <p className="text-sm text-muted-foreground mb-4 flex-1">{group.description || "A prayer group"}</p>
                       <div className="flex gap-2">
                         {isMember ? (
                           <>
@@ -171,7 +171,7 @@ const PrayerGroups = () => {
                           </>
                         ) : (
                           <Button size="sm" className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90" onClick={() => handleJoin(group.id)}>
-                            Join Community
+                            Join Group
                           </Button>
                         )}
                       </div>
@@ -185,20 +185,20 @@ const PrayerGroups = () => {
       </div>
       <Footer />
 
-      {/* Create Community Modal */}
+      {/* Create Group Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Prayer Community</DialogTitle>
+            <DialogTitle>Create Prayer Group</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
-              <Label>Community Name *</Label>
+              <Label>Group Name *</Label>
               <Input placeholder="e.g. Intercessors for Nations" value={name} onChange={e => setName(e.target.value)} />
             </div>
             <div>
               <Label>Description</Label>
-              <Textarea placeholder="What is this community about?" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
+              <Textarea placeholder="What is this group about?" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
             </div>
             <label className="flex items-center gap-2 text-sm">
               <Switch checked={isPublic} onCheckedChange={setIsPublic} />
@@ -207,7 +207,7 @@ const PrayerGroups = () => {
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button onClick={handleCreate} disabled={submitting}>
-                {submitting ? "Creating..." : "Create Community"}
+                {submitting ? "Creating..." : "Create Group"}
               </Button>
             </div>
           </div>
@@ -218,9 +218,9 @@ const PrayerGroups = () => {
       <Dialog open={!!shareSlug} onOpenChange={() => setShareSlug(null)}>
         <DialogContent className="max-w-md text-center">
           <DialogHeader>
-            <DialogTitle>Your Community is Ready! 🎉</DialogTitle>
+            <DialogTitle>Your Group is Ready! 🎉</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-4">Share this link with family and loved ones so they can join your prayer community.</p>
+          <p className="text-sm text-muted-foreground mb-4">Share this link with family and loved ones so they can join your prayer group.</p>
           <div className="flex items-center gap-2 bg-muted rounded-lg p-3">
             <input
               readOnly

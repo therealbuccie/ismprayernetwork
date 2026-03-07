@@ -64,7 +64,7 @@ const JoinGroup = () => {
         if (error.code === "23505") { toast.info("You're already a member!"); return; }
         throw error;
       }
-      toast.success("Welcome to the community! 🙏");
+      toast.success("Welcome to the group! 🙏");
       queryClient.invalidateQueries({ queryKey: ["group-membership"] });
       queryClient.invalidateQueries({ queryKey: ["group-by-slug"] });
     } catch (err: any) {
@@ -89,10 +89,10 @@ const JoinGroup = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-24 pb-16 text-center">
-          <h1 className="text-2xl font-serif font-bold mb-4">Community Not Found</h1>
-          <p className="text-muted-foreground mb-6">This prayer community link may be invalid or expired.</p>
+          <h1 className="text-2xl font-serif font-bold mb-4">Group Not Found</h1>
+          <p className="text-muted-foreground mb-6">This prayer group link may be invalid or expired.</p>
           <Button variant="outline" onClick={() => navigate("/groups")} className="gap-2">
-            <ArrowLeft size={16} /> Browse Communities
+            <ArrowLeft size={16} /> Browse Groups
           </Button>
         </div>
         <Footer />
@@ -114,10 +114,10 @@ const JoinGroup = () => {
               </div>
               <Badge variant="secondary" className="mb-3 text-xs gap-1">
                 {group.is_public ? <Globe size={10} /> : <Lock size={10} />}
-                {group.is_public ? "Public Community" : "Private Community"}
+                {group.is_public ? "Public Group" : "Private Group"}
               </Badge>
               <h1 className="text-2xl font-serif font-bold mb-2">{group.name}</h1>
-              <p className="text-muted-foreground text-sm mb-2">{group.description || "A prayer community"}</p>
+              <p className="text-muted-foreground text-sm mb-2">{group.description || "A prayer group"}</p>
               <p className="text-xs text-muted-foreground mb-6 flex items-center justify-center gap-1">
                 <Users size={12} /> {group.member_count} {group.member_count === 1 ? "member" : "members"}
               </p>
@@ -127,7 +127,7 @@ const JoinGroup = () => {
                   <Badge className="bg-primary/10 text-primary border-primary/20">✓ You're a member</Badge>
                   <div>
                     <Button variant="outline" onClick={() => navigate("/groups")} className="gap-2">
-                      <ArrowLeft size={16} /> Back to Communities
+                      <ArrowLeft size={16} /> Back to Groups
                     </Button>
                   </div>
                 </div>
@@ -138,7 +138,7 @@ const JoinGroup = () => {
                   onClick={handleJoin}
                   disabled={joining}
                 >
-                  {joining ? "Joining..." : "Join Community"}
+                  {joining ? "Joining..." : "Join Group"}
                 </Button>
               )}
             </GlassCard>
