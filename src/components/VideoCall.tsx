@@ -62,6 +62,15 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
     callObj.on("left-meeting", () => {
       onLeave();
     });
+    callObj.on("error", (ev: any) => {
+      const msg = ev?.errorMsg || "Unknown error";
+      if (msg.includes("account-missing-payment-method")) {
+        toast.error("Video service requires billing setup. Please contact the administrator.");
+      } else {
+        toast.error(`Call error: ${msg}`);
+      }
+      onLeave();
+    });
     callObj.on("app-message", (ev: any) => {
       if (ev?.data?.type === "chat") {
         setChatMessages(prev => [...prev, { sender: ev.data.sender, text: ev.data.text }]);
