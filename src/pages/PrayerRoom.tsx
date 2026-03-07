@@ -286,6 +286,27 @@ const PrayerRoom = () => {
     return () => { supabase.removeChannel(channel); };
   }, [mySession?.id, queryClient]);
 
+  // When host starts praying, set timer_started_at on their session
+  const startHostTimer = async () => {
+    setIsPraying(true);
+    if (mySessionSlug) {
+      await supabase
+        .from("prayer_room_sessions")
+        .update({ timer_started_at: new Date().toISOString() } as any)
+        .eq("slug", mySessionSlug);
+    }
+  };
+
+  const stopHostTimer = async () => {
+    setIsPraying(false);
+    if (mySessionSlug) {
+      await supabase
+        .from("prayer_room_sessions")
+        .update({ timer_started_at: null } as any)
+        .eq("slug", mySessionSlug);
+    }
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
