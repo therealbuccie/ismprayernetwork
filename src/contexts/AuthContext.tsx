@@ -31,44 +31,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-    return data as Profile | null;
-  };
-
+  // Set up auth listener - NO async calls inside the callback
   useEffect(() => {
     let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // First set up the listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-        if (mounted) setProfile(profileData);
-      } else {
+      if (!session?.user) {
         setProfile(null);
       }
-
-      if (mounted) setLoading(false);
+      setLoading(false);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Then get the initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-        if (mounted) setProfile(profileData);
+      if (!session?.user) {
+        setLoading(false);
       }
-
-      if (mounted) setLoading(false);
     });
 
     return () => {
@@ -76,6 +61,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Fetch profile reactively when user changes - separate from auth callback
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+
+    let mounted = true;
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (mounted) {
+          setProfile(data as Profile | null);
+          setLoading(false);
+        }
+      });
+
+    return () => { mounted = false; };
+  }, [user?.id]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
