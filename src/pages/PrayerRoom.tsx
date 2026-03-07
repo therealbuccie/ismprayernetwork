@@ -391,8 +391,8 @@ const PrayerRoom = () => {
                 {/* Compact timer bar above the room */}
                 <div className="flex items-center justify-center">
                   <PrayerTimer
-                    onComplete={() => setIsPraying(false)}
-                    onBack={() => setIsPraying(false)}
+                    onComplete={() => stopHostTimer()}
+                    onBack={() => stopHostTimer()}
                   />
                 </div>
 
