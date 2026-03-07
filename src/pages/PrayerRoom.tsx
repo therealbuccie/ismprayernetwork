@@ -118,6 +118,19 @@ const PrayerRoom = () => {
     refetchInterval: 30000, // refresh every 30s
   });
 
+  // Sample ministers always shown, plus real ones
+  const sampleMinisters = [
+    { id: "sample-1", name: "Min. Grace Okafor", ministry: "Grace Tabernacle", user_id: "sample-1" },
+    { id: "sample-2", name: "Pst. David Mensah", ministry: "House of Glory", user_id: "sample-2" },
+    { id: "sample-3", name: "Evg. Ruth Kimani", ministry: "Fire & Light Ministry", user_id: "sample-3" },
+    { id: "sample-4", name: "Dcns. Blessing Eze", ministry: "Kingdom Embassy", user_id: "sample-4" },
+  ];
+
+  const allPrayingNow = [
+    ...(prayingNow || []),
+    ...sampleMinisters.filter(s => !(prayingNow || []).some(r => r.name === s.name)),
+  ];
+
   // Auto-create the user's prayer session based on their name
   useEffect(() => {
     let isMounted = true;
@@ -531,16 +544,15 @@ const PrayerRoom = () => {
               </div>
 
               {/* Ministers Praying Now */}
-              {prayingNow && prayingNow.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 }}
-                  className="mt-10"
-                >
-                  <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
-                  <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                    {prayingNow.map((minister) => (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="mt-10"
+              >
+                <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
+                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                  {allPrayingNow.map((minister) => (
                       <div
                         key={minister.id}
                         className="flex-shrink-0 w-44 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
@@ -563,9 +575,8 @@ const PrayerRoom = () => {
                         </Button>
                       </div>
                     ))}
-                  </div>
-                </motion.div>
-              )}
+                </div>
+              </motion.div>
 
               {/* Prayer Requests & Testimonies */}
               <motion.div
