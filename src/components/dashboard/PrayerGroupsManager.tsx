@@ -22,20 +22,20 @@ export function PrayerGroupsManager() {
   });
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this prayer group?")) return;
+    if (!confirm("Delete this community?")) return;
     try {
       if (isPublic) await adminDelete("prayer_groups", id);
       else { const { error } = await supabase.from("prayer_groups").delete().eq("id", id); if (error) throw error; }
-      toast.success("Prayer group deleted");
+      toast.success("Community deleted");
       queryClient.invalidateQueries({ queryKey: ["admin-prayer-groups"] });
     } catch (err: any) { toast.error(err.message); }
   };
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6"><UsersRound className="w-6 h-6 text-accent" /><h1 className="text-3xl font-bold">Prayer Groups</h1></div>
+      <div className="flex items-center gap-3 mb-6"><UsersRound className="w-6 h-6 text-accent" /><h1 className="text-3xl font-bold">Communities</h1></div>
       {isLoading ? <p className="text-muted-foreground">Loading...</p> : !groups?.length ? (
-        <p className="text-muted-foreground">No prayer groups yet.</p>
+        <p className="text-muted-foreground">No communities yet.</p>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <Table>
