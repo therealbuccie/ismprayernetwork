@@ -509,6 +509,7 @@ export type Database = {
           owner_id: string
           owner_name: string
           slug: string
+          timer_started_at: string | null
         }
         Insert: {
           created_at?: string
@@ -517,6 +518,7 @@ export type Database = {
           owner_id: string
           owner_name?: string
           slug: string
+          timer_started_at?: string | null
         }
         Update: {
           created_at?: string
@@ -525,6 +527,7 @@ export type Database = {
           owner_id?: string
           owner_name?: string
           slug?: string
+          timer_started_at?: string | null
         }
         Relationships: []
       }
