@@ -380,6 +380,7 @@ export type Database = {
           is_public: boolean
           member_count: number
           name: string
+          slug: string
         }
         Insert: {
           created_at?: string
@@ -389,6 +390,7 @@ export type Database = {
           is_public?: boolean
           member_count?: number
           name: string
+          slug: string
         }
         Update: {
           created_at?: string
@@ -398,6 +400,7 @@ export type Database = {
           is_public?: boolean
           member_count?: number
           name?: string
+          slug?: string
         }
         Relationships: []
       }

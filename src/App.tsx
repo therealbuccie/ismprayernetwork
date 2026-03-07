@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PrayerRequests from "./pages/PrayerRequests";
 import PrayerGroups from "./pages/PrayerGroups";
+import JoinGroup from "./pages/JoinGroup";
 import PrayerRoom from "./pages/PrayerRoom";
 import Testimonies from "./pages/Testimonies";
 import Contact from "./pages/Contact";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/prayer-requests" element={<PrayerRequests />} />
             <Route path="/groups" element={<PrayerGroups />} />
+            <Route path="/groups/:slug" element={<JoinGroup />} />
             <Route path="/prayer-room" element={<PrayerRoom />} />
             <Route path="/testimonies" element={<Testimonies />} />
             <Route path="/live-tv" element={<LiveTV />} />
