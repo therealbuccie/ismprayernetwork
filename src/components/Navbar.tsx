@@ -43,24 +43,21 @@ const Navbar = () => {
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
-
     setIsSigningOut(true);
 
     try {
-      await supabase.auth.signOut({ scope: "local" });
-      toast.success("Signed out successfully");
+      await supabase.auth.signOut();
     } catch (err) {
       console.error("Sign out exception:", err);
-      toast.error("Signed out locally. Redirecting...");
-    } finally {
-      const storageKeys = Object.keys(localStorage).filter((key) => key.startsWith("sb-"));
-      storageKeys.forEach((key) => localStorage.removeItem(key));
-      setMobileOpen(false);
-      setMobilePrayerOpen(false);
-      setMobileMoreOpen(false);
-      navigate("/", { replace: true });
-      setIsSigningOut(false);
     }
+
+    // Clear all Supabase storage keys
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("sb-"))
+      .forEach((key) => localStorage.removeItem(key));
+
+    // Full page reload to cleanly reset all auth state
+    window.location.href = "/";
   };
 
   useEffect(() => {
