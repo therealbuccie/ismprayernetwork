@@ -105,7 +105,7 @@ export function DashboardHome() {
     { label: "Subscribers", value: stats.counts.subscribers, icon: Newspaper, color: "text-pink-500", bg: "bg-pink-500/10" },
     { label: "Prayer Requests", value: stats.prayerRequests.total, icon: HandHeart, color: "text-orange-500", bg: "bg-orange-500/10" },
     { label: "Testimonies", value: stats.testimonies.total, icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-500/10" },
-    { label: "Prayer Groups", value: stats.counts.prayerGroups, icon: UsersRound, color: "text-teal-500", bg: "bg-teal-500/10" },
+    { label: "Communities", value: stats.counts.prayerGroups, icon: UsersRound, color: "text-teal-500", bg: "bg-teal-500/10" },
   ];
 
   const pendingItems = [
