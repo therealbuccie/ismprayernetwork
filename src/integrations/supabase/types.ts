@@ -528,6 +528,42 @@ export type Database = {
         }
         Relationships: []
       }
+      prayer_slots: {
+        Row: {
+          created_at: string
+          id: string
+          reminder_sent: boolean
+          slot_date: string
+          slot_time: string
+          status: string
+          user_email: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reminder_sent?: boolean
+          slot_date: string
+          slot_time: string
+          status?: string
+          user_email: string
+          user_id: string
+          user_name?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reminder_sent?: boolean
+          slot_date?: string
+          slot_time?: string
+          status?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

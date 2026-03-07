@@ -13,6 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import AuthGateModal from "@/components/AuthGateModal";
+import PrayerSchedule from "@/components/prayer-schedule/PrayerSchedule";
+import PrayerTimer from "@/components/prayer-schedule/PrayerTimer";
 
 const todaysPrayerPoint = {
   date: new Date().toLocaleDateString("en-US", {
@@ -47,6 +49,7 @@ const PrayerRoom = () => {
   const [submittingPrayer, setSubmittingPrayer] = useState(false);
   const [mySessionSlug, setMySessionSlug] = useState<string | null>(null);
   const [isPreparingSessionLink, setIsPreparingSessionLink] = useState(false);
+  const [isPraying, setIsPraying] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
@@ -89,7 +92,6 @@ const PrayerRoom = () => {
 
     const fetchOrCreateSession = async () => {
       if (loading) return;
-
       if (!user) {
         if (isMounted) {
           setMySessionSlug(null);
@@ -227,7 +229,6 @@ const PrayerRoom = () => {
     return () => { supabase.removeChannel(channel); };
   }, [mySession?.id, queryClient]);
 
-
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
@@ -297,247 +298,317 @@ const PrayerRoom = () => {
 
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Video/Prayer Embed */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-2 flex flex-col"
-          >
-            <div className="glass-card rounded-xl overflow-hidden flex-1 min-h-[500px] lg:min-h-[600px]">
-              <iframe
-                src="https://jcontrol.pro/join?session=ism-prayer-network"
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                style={{ border: "none", borderRadius: "8px", minHeight: "500px" }}
-                allow="camera; microphone; autoplay; encrypted-media"
-                allowFullScreen
-                className="w-full h-full"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <HeroButton
-                  variant="outline"
-                  size="sm"
-                  className="text-foreground border-border hover:bg-muted gap-1.5"
-                  onClick={() => setGiveModalOpen(true)}
-                >
-                  <Heart size={14} /> Give Now
-                </HeroButton>
-                <HeroButton variant="gold" size="sm" className="gap-1.5" onClick={scrollToBottom}>
-                  <BookOpen size={14} /> Prayer Requests
-                </HeroButton>
-              </div>
-            </div>
-
-            {/* Unique Prayer Link */}
-            <div className="mt-4">
-              {mySessionSlug ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 glass-card rounded-lg px-3 py-2 text-xs text-muted-foreground truncate border border-border/50">
-                    {shareUrl}
-                  </div>
-                  <button
-                    onClick={handleCopy}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium hover:opacity-90 transition-opacity"
-                  >
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
-                    {copied ? "Copied!" : "Share Link"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({ title: "ISM Prayer Room", url: shareUrl });
-                      }
-                    }}
-                    className="p-2 rounded-lg border border-border hover:bg-muted transition-colors"
-                  >
-                    <Share2 size={14} className="text-muted-foreground" />
-                  </button>
+        <AnimatePresence mode="wait">
+          {isPraying ? (
+            /* ===== ACTIVE PRAYER SESSION ===== */
+            <motion.div
+              key="praying"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            >
+              {/* Left: Prayer Room + Timer */}
+              <div className="lg:col-span-2 flex flex-col gap-6">
+                {/* Timer */}
+                <div className="glass-card rounded-xl p-8 border border-accent/20">
+                  <PrayerTimer
+                    onComplete={() => setIsPraying(false)}
+                    onBack={() => setIsPraying(false)}
+                  />
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  {isPreparingSessionLink ? "Generating your unique prayer link..." : "Sign in to get your unique prayer link to share with loved ones."}
-                </p>
-              )}
-            </div>
 
-            {/* Participants who joined via your link */}
-            {participants && participants.length > 0 && (
+                {/* Video Embed */}
+                <div className="glass-card rounded-xl overflow-hidden min-h-[400px]">
+                  <iframe
+                    src="https://jcontrol.pro/join?session=ism-prayer-network"
+                    width="100%"
+                    height="100%"
+                    frameBorder="0"
+                    style={{ border: "none", borderRadius: "8px", minHeight: "400px" }}
+                    allow="camera; microphone; autoplay; encrypted-media"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <HeroButton
+                    variant="outline"
+                    size="sm"
+                    className="text-foreground border-border hover:bg-muted gap-1.5"
+                    onClick={() => setGiveModalOpen(true)}
+                  >
+                    <Heart size={14} /> Give Now
+                  </HeroButton>
+                  <HeroButton variant="gold" size="sm" className="gap-1.5" onClick={scrollToBottom}>
+                    <BookOpen size={14} /> Prayer Requests
+                  </HeroButton>
+                </div>
+
+                {/* Share Link */}
+                {mySessionSlug && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 glass-card rounded-lg px-3 py-2 text-xs text-muted-foreground truncate border border-border/50">
+                      {shareUrl}
+                    </div>
+                    <button
+                      onClick={handleCopy}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium hover:opacity-90 transition-opacity"
+                    >
+                      {copied ? <Check size={14} /> : <Copy size={14} />}
+                      {copied ? "Copied!" : "Share Link"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({ title: "ISM Prayer Room", url: shareUrl });
+                        }
+                      }}
+                      className="p-2 rounded-lg border border-border hover:bg-muted transition-colors"
+                    >
+                      <Share2 size={14} className="text-muted-foreground" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Sidebar */}
+              <div className="flex flex-col gap-4">
+                {/* Today's Prayer Point */}
+                <div className="glass-card rounded-xl p-5 border border-border/50">
+                  <div className="bg-accent/10 rounded-lg p-3 mb-4 text-center">
+                    <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
+                    📅 {todaysPrayerPoint.date}
+                  </p>
+                  <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
+                    {todaysPrayerPoint.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
+                    {todaysPrayerPoint.scripture}
+                  </p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                </div>
+
+                {/* Participants */}
+                {participants && participants.length > 0 && (
+                  <div className="glass-card rounded-xl p-4 border border-accent/30">
+                    <h3 className="font-serif font-semibold text-sm mb-3 flex items-center gap-2">
+                      <Users size={16} className="text-accent" />
+                      Joined Your Prayer ({participants.length})
+                    </h3>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {participants.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-foreground">{p.full_name}</span>
+                          <span className="text-xs text-muted-foreground">{p.location || ""}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            /* ===== SCHEDULE VIEW ===== */
+            <motion.div
+              key="schedule"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left: Schedule */}
+                <div className="lg:col-span-2">
+                  <PrayerSchedule onStartPraying={() => setIsPraying(true)} />
+                </div>
+
+                {/* Right Sidebar */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="flex flex-col gap-4"
+                >
+                  {/* Today's Prayer Point */}
+                  <div className="glass-card rounded-xl p-5 border border-border/50">
+                    <div className="bg-accent/10 rounded-lg p-3 mb-4 text-center">
+                      <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
+                      📅 {todaysPrayerPoint.date}
+                    </p>
+                    <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
+                      {todaysPrayerPoint.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
+                      {todaysPrayerPoint.scripture}
+                    </p>
+                    <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                  </div>
+
+                  {/* Prayer Room Info */}
+                  <div className="glass-card rounded-xl p-5 border border-border/50">
+                    <h3 className="font-serif font-semibold text-sm mb-3">How It Works</h3>
+                    <div className="space-y-3 text-xs text-muted-foreground">
+                      <div className="flex items-start gap-2">
+                        <span className="text-accent font-bold text-sm">1</span>
+                        <p>Pick a date and choose your preferred 15-minute prayer slot</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-accent font-bold text-sm">2</span>
+                        <p>You'll receive an email reminder 30 minutes before your slot</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-accent font-bold text-sm">3</span>
+                        <p>When it's time, click "Start Praying" to enter the prayer room</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-accent font-bold text-sm">4</span>
+                        <p>Pray for 15 minutes with the live prayer room & timer</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Share Link */}
+                  <div className="glass-card rounded-xl p-5 border border-border/50">
+                    <h3 className="font-serif font-semibold text-sm mb-3">Invite Others</h3>
+                    {mySessionSlug ? (
+                      <div className="space-y-2">
+                        <div className="glass-card rounded-lg px-3 py-2 text-xs text-muted-foreground truncate border border-border/50">
+                          {shareUrl}
+                        </div>
+                        <button
+                          onClick={handleCopy}
+                          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium hover:opacity-90 transition-opacity"
+                        >
+                          {copied ? <Check size={14} /> : <Copy size={14} />}
+                          {copied ? "Copied!" : "Copy Prayer Link"}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {isPreparingSessionLink ? "Generating your prayer link..." : "Sign in to get your unique prayer link."}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Ministers Praying Now */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 glass-card rounded-xl p-4 border border-accent/30"
+                transition={{ delay: 0.25 }}
+                className="mt-10"
               >
-                <h3 className="font-serif font-semibold text-sm mb-3 flex items-center gap-2">
-                  <Users size={16} className="text-accent" />
-                  Joined Your Prayer ({participants.length})
-                </h3>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  <AnimatePresence>
-                    {participants.map((p) => (
-                      <motion.div
-                        key={p.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center justify-between text-sm"
+                <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
+                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                  {ministersPraying.map((minister) => (
+                    <div
+                      key={minister.id}
+                      className="flex-shrink-0 w-40 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
+                    >
+                      <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                        <Users size={28} className="text-accent" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{minister.name}</p>
+                        <p className="text-xs text-muted-foreground">{minister.location}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4"
                       >
-                        <span className="font-medium text-foreground">{p.full_name}</span>
-                        <span className="text-xs text-muted-foreground">{p.location || ""}</span>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                        Pray Now
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
-            )}
-          </motion.div>
 
-          {/* Right Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15 }}
-            className="flex flex-col gap-4"
-          >
-            <div className="glass-card rounded-xl p-5 border border-border/50">
-              <div className="bg-accent/10 rounded-lg p-3 mb-4 text-center">
-                <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
-              </div>
-              <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-                📅 {todaysPrayerPoint.date}
-              </p>
-              <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
-                {todaysPrayerPoint.title}
-              </h3>
-              <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
-                {todaysPrayerPoint.scripture}
-              </p>
-              <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
-            </div>
-            <div className="glass-card rounded-xl p-5 border border-border/50">
-              <h3 className="font-serif font-semibold text-sm mb-3">Prayer Room Info</h3>
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <p>🔥 24/7 Non-stop prayer sessions</p>
-                <p>🌍 Ministers from around the world</p>
-                <p>🎥 Live video & audio prayer</p>
-                <p>📖 Daily prayer points updated</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Ministers Praying Now */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="mt-10"
-        >
-          <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-            {ministersPraying.map((minister) => (
-              <div
-                key={minister.id}
-                className="flex-shrink-0 w-40 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
+              {/* Prayer Requests & Testimonies */}
+              <motion.div
+                ref={bottomRef}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="mt-10 mb-8"
               >
-                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
-                  <Users size={28} className="text-accent" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{minister.name}</p>
-                  <p className="text-xs text-muted-foreground">{minister.location}</p>
-                </div>
-                <Button
-                  size="sm"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4"
-                >
-                  Pray Now
-                </Button>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+                <h2 className="text-center font-serif font-bold text-xl mb-6 uppercase tracking-wide">
+                  Prayer Requests & Testimonies
+                </h2>
 
-        {/* Prayer Requests & Testimonies */}
-        <motion.div
-          ref={bottomRef}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="mt-10 mb-8"
-        >
-          <h2 className="text-center font-serif font-bold text-xl mb-6 uppercase tracking-wide">
-            Prayer Requests & Testimonies
-          </h2>
+                <Tabs defaultValue="requests" className="w-full max-w-3xl mx-auto">
+                  <TabsList className="mb-6">
+                    <TabsTrigger value="requests">Prayer Requests</TabsTrigger>
+                    <TabsTrigger value="testimonies">Testimonies</TabsTrigger>
+                  </TabsList>
 
-          <Tabs defaultValue="requests" className="w-full max-w-3xl mx-auto">
-            <TabsList className="mb-6">
-              <TabsTrigger value="requests">Prayer Requests</TabsTrigger>
-              <TabsTrigger value="testimonies">Testimonies</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="requests">
-              <div className="space-y-0 divide-y divide-border">
-                {requests?.length ? (
-                  requests.map((req) => (
-                    <div key={req.id} className="py-4">
-                      <h4 className="font-serif font-semibold text-base">{req.author_name}</h4>
-                      <p className="text-xs text-muted-foreground italic mb-1">Posted {timeAgo(req.created_at)}</p>
-                      <p className="text-sm text-foreground/80">{req.title}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground py-4">No prayer requests yet.</p>
-                )}
-              </div>
-
-              <div className="mt-6">
-                <textarea
-                  placeholder="Post Your Prayer Requests"
-                  className="w-full border border-border rounded-lg p-3 text-sm bg-background text-foreground resize-y min-h-[80px] focus:outline-none focus:ring-2 focus:ring-accent"
-                  value={prayerText}
-                  onChange={(e) => setPrayerText(e.target.value)}
-                />
-                <Button
-                  className="mt-3 gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2"
-                  disabled={submittingPrayer}
-                  onClick={handleSubmitPrayer}
-                >
-                  <Send size={14} /> {submittingPrayer ? "Submitting..." : "Submit Prayer Request"}
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="testimonies">
-              <div className="space-y-0 divide-y divide-border">
-                {testimonies?.length ? (
-                  testimonies.map((testimony) => (
-                    <div key={testimony.id} className="py-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-serif font-semibold text-base">{testimony.author_name}</h4>
-                        {testimony.video_url && (
-                          <span className="text-xs text-accent flex items-center gap-1">
-                            <Video size={12} /> Video
-                          </span>
-                        )}
-                      </div>
-                      {testimony.location && (
-                        <p className="text-xs text-muted-foreground italic mb-1">{testimony.location}</p>
+                  <TabsContent value="requests">
+                    <div className="space-y-0 divide-y divide-border">
+                      {requests?.length ? (
+                        requests.map((req) => (
+                          <div key={req.id} className="py-4">
+                            <h4 className="font-serif font-semibold text-base">{req.author_name}</h4>
+                            <p className="text-xs text-muted-foreground italic mb-1">Posted {timeAgo(req.created_at)}</p>
+                            <p className="text-sm text-foreground/80">{req.title}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground py-4">No prayer requests yet.</p>
                       )}
-                      <p className="text-sm text-foreground/80">"{testimony.content}"</p>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground py-4">No testimonies yet.</p>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </motion.div>
+
+                    <div className="mt-6">
+                      <textarea
+                        placeholder="Post Your Prayer Requests"
+                        className="w-full border border-border rounded-lg p-3 text-sm bg-background text-foreground resize-y min-h-[80px] focus:outline-none focus:ring-2 focus:ring-accent"
+                        value={prayerText}
+                        onChange={(e) => setPrayerText(e.target.value)}
+                      />
+                      <Button
+                        className="mt-3 gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2"
+                        disabled={submittingPrayer}
+                        onClick={handleSubmitPrayer}
+                      >
+                        <Send size={14} /> {submittingPrayer ? "Submitting..." : "Submit Prayer Request"}
+                      </Button>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="testimonies">
+                    <div className="space-y-0 divide-y divide-border">
+                      {testimonies?.length ? (
+                        testimonies.map((testimony) => (
+                          <div key={testimony.id} className="py-4">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-serif font-semibold text-base">{testimony.author_name}</h4>
+                              {testimony.video_url && (
+                                <span className="text-xs text-accent flex items-center gap-1">
+                                  <Video size={12} /> Video
+                                </span>
+                              )}
+                            </div>
+                            {testimony.location && (
+                              <p className="text-xs text-muted-foreground italic mb-1">{testimony.location}</p>
+                            )}
+                            <p className="text-sm text-foreground/80">"{testimony.content}"</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground py-4">No testimonies yet.</p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <Footer />
