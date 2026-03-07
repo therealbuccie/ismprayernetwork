@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
-import { Users, Lock, Globe, Plus, Share2, Copy, Check } from "lucide-react";
+import { Users, Lock, Globe, Plus, Share2, Copy, Check, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,13 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import VideoCall from "@/components/VideoCall";
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
 }
 
 const PrayerGroups = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [shareSlug, setShareSlug] = useState<string | null>(null);
@@ -30,6 +31,10 @@ const PrayerGroups = () => {
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Video call state
+  const [callInfo, setCallInfo] = useState<{ url: string; token: string } | null>(null);
+  const [joiningCall, setJoiningCall] = useState<string | null>(null);
 
   const { data: groups, isLoading } = useQuery({
     queryKey: ["prayer-groups"],
@@ -120,6 +125,35 @@ const PrayerGroups = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleStartCall = async (group: any) => {
+    if (!user) { toast.error("Please sign in first"); return; }
+    setJoiningCall(group.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("daily-room", {
+        body: { group_slug: group.slug, group_name: group.name },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setCallInfo({ url: data.url, token: data.token });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start call");
+    } finally {
+      setJoiningCall(null);
+    }
+  };
+
+  // If in a call, render full-screen video
+  if (callInfo) {
+    return (
+      <VideoCall
+        roomUrl={callInfo.url}
+        token={callInfo.token}
+        userName={profile?.full_name || user?.user_metadata?.full_name || "Guest"}
+        onLeave={() => setCallInfo(null)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -130,7 +164,7 @@ const PrayerGroups = () => {
               Prayer <span className="gold-gradient">Groups</span>
             </h1>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Build your prayer group. Create a group, share the link with loved ones, and pray together.
+              Build your prayer group. Create a group, share the link, and start a live prayer call together.
             </p>
           </motion.div>
 
@@ -168,11 +202,19 @@ const PrayerGroups = () => {
                       </div>
                       <h3 className="font-serif font-semibold text-lg mb-2">{group.name}</h3>
                       <p className="text-sm text-muted-foreground mb-4 flex-1">{group.description || "A prayer group"}</p>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         {isMember ? (
                           <>
-                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">✓ Member</Badge>
-                            <Button size="sm" variant="outline" className="ml-auto gap-1" onClick={() => handleCopyLink(group.slug)}>
+                            <Button
+                              size="sm"
+                              className="gap-1.5 bg-green-600 hover:bg-green-700 text-white flex-1"
+                              onClick={() => handleStartCall(group)}
+                              disabled={joiningCall === group.id}
+                            >
+                              <Video size={14} />
+                              {joiningCall === group.id ? "Connecting..." : "Join Call"}
+                            </Button>
+                            <Button size="sm" variant="outline" className="gap-1" onClick={() => handleCopyLink(group.slug)}>
                               <Share2 size={13} /> Share
                             </Button>
                           </>
@@ -221,7 +263,7 @@ const PrayerGroups = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Share Link Modal — shown after creating */}
+      {/* Share Link Modal */}
       <Dialog open={!!shareSlug} onOpenChange={() => setShareSlug(null)}>
         <DialogContent className="max-w-md text-center">
           <DialogHeader>
