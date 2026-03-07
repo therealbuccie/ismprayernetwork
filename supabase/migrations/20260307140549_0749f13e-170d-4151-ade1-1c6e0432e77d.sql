@@ -1,0 +1,1 @@
+ALTER TABLE public.prayer_room_sessions ADD COLUMN timer_started_at timestamp with time zone DEFAULT NULL;
