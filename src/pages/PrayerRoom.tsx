@@ -31,16 +31,6 @@ const todaysPrayerPoint = {
 
 const FALLBACK_BASE_URL = "https://ismprayernetwork.org";
 
-const ministersPraying = [
-  { id: 1, name: "Pastor Grace", location: "Lagos" },
-  { id: 2, name: "Minister Daniel", location: "Nairobi" },
-  { id: 3, name: "Dcn. Sarah", location: "London" },
-  { id: 4, name: "Pastor James", location: "Accra" },
-  { id: 5, name: "Sister Faith", location: "Houston" },
-  { id: 6, name: "Brother Paul", location: "Toronto" },
-  { id: 7, name: "Pastor Mary", location: "Johannesburg" },
-  { id: 8, name: "Minister Tunde", location: "Abuja" },
-];
 
 const PrayerRoom = () => {
   const [copied, setCopied] = useState(false);
