@@ -501,7 +501,7 @@ const PrayerRoom = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left: Schedule */}
                 <div className="lg:col-span-2">
-                  <PrayerSchedule onStartPraying={() => setIsPraying(true)} />
+                  <PrayerSchedule onStartPraying={() => startHostTimer()} />
                 </div>
 
                 {/* Right Sidebar */}
