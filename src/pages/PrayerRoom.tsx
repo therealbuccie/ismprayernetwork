@@ -34,6 +34,7 @@ const FALLBACK_BASE_URL = "https://ismprayernetwork.org";
 
 
 const PrayerRoom = () => {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [giveModalOpen, setGiveModalOpen] = useState(false);
   const [prayerText, setPrayerText] = useState("");
