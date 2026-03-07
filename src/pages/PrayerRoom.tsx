@@ -101,21 +101,26 @@ const PrayerRoom = () => {
       setIsPreparingSessionLink(true);
 
       try {
-        const { data: existingSession, error: fetchError } = await supabase
+        const { data: existingSessions, error: fetchError } = await supabase
           .from("prayer_room_sessions")
           .select("slug")
           .eq("owner_id", user.id)
           .eq("is_active", true)
-          .maybeSingle();
+          .order("created_at", { ascending: false })
+          .limit(1);
 
         if (fetchError) throw fetchError;
 
-        if (existingSession?.slug) {
-          if (isMounted) setMySessionSlug(existingSession.slug);
+        const existingSlug = existingSessions?.[0]?.slug;
+        if (existingSlug) {
+          if (isMounted) setMySessionSlug(existingSlug);
           return;
         }
 
-        const displayName = profile?.full_name || user.email?.split("@")[0] || "minister";
+        const displayName =
+          (typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim()) ||
+          user.email?.split("@")[0] ||
+          "minister";
         const normalizedSlug = displayName
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
@@ -126,7 +131,7 @@ const PrayerRoom = () => {
           .insert({
             slug: normalizedSlug,
             owner_id: user.id,
-            owner_name: profile?.full_name || displayName,
+            owner_name: displayName,
           })
           .select("slug")
           .single();
@@ -138,7 +143,7 @@ const PrayerRoom = () => {
             .insert({
               slug: uniqueSlug,
               owner_id: user.id,
-              owner_name: profile?.full_name || displayName,
+              owner_name: displayName,
             })
             .select("slug")
             .single();
@@ -165,7 +170,7 @@ const PrayerRoom = () => {
     return () => {
       isMounted = false;
     };
-  }, [loading, user?.id, user?.email, profile?.full_name]);
+  }, [loading, user?.id]);
 
   const currentOrigin = typeof window !== "undefined" ? window.location.origin : FALLBACK_BASE_URL;
   const shareUrl = mySessionSlug
