@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/prayer-requests" element={<PrayerRequests />} />
             <Route path="/groups" element={<PrayerGroups />} />
+            <Route path="/groups/:slug" element={<JoinGroup />} />
             <Route path="/prayer-room" element={<PrayerRoom />} />
             <Route path="/testimonies" element={<Testimonies />} />
             <Route path="/live-tv" element={<LiveTV />} />
