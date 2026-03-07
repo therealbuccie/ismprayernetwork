@@ -76,6 +76,48 @@ const PrayerRoom = () => {
     },
   });
 
+  // Fetch people currently praying (today's prayer slots)
+  const todayStr = new Date().toISOString().split("T")[0];
+  const { data: prayingNow } = useQuery({
+    queryKey: ["praying-now", todayStr],
+    queryFn: async () => {
+      const { data: slots, error } = await supabase
+        .from("prayer_slots")
+        .select("id, user_id, user_name, slot_time")
+        .eq("slot_date", todayStr)
+        .eq("status", "booked")
+        .order("slot_time", { ascending: true });
+      if (error) throw error;
+      if (!slots || slots.length === 0) return [];
+
+      // Fetch profiles for ministry_name
+      const userIds = [...new Set(slots.map(s => s.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, ministry_name")
+        .in("user_id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
+      // Deduplicate by user_id, keep first slot
+      const seen = new Set<string>();
+      return slots.filter(s => {
+        if (seen.has(s.user_id)) return false;
+        seen.add(s.user_id);
+        return true;
+      }).map(s => {
+        const prof = profileMap.get(s.user_id);
+        return {
+          id: s.id,
+          name: prof?.full_name || s.user_name,
+          ministry: prof?.ministry_name || null,
+          user_id: s.user_id,
+        };
+      });
+    },
+    refetchInterval: 30000, // refresh every 30s
+  });
+
   // Auto-create the user's prayer session based on their name
   useEffect(() => {
     let isMounted = true;
