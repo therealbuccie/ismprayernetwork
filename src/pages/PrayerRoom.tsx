@@ -117,7 +117,10 @@ const PrayerRoom = () => {
           return;
         }
 
-        const displayName = profile?.full_name || user.email?.split("@")[0] || "minister";
+        const displayName =
+          (typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim()) ||
+          user.email?.split("@")[0] ||
+          "minister";
         const normalizedSlug = displayName
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
@@ -128,7 +131,7 @@ const PrayerRoom = () => {
           .insert({
             slug: normalizedSlug,
             owner_id: user.id,
-            owner_name: profile?.full_name || displayName,
+            owner_name: displayName,
           })
           .select("slug")
           .single();
@@ -140,7 +143,7 @@ const PrayerRoom = () => {
             .insert({
               slug: uniqueSlug,
               owner_id: user.id,
-              owner_name: profile?.full_name || displayName,
+              owner_name: displayName,
             })
             .select("slug")
             .single();
