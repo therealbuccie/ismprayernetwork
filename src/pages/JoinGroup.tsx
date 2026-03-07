@@ -147,17 +147,16 @@ const JoinGroup = () => {
       </div>
       <Footer />
 
-      {showAuth && (
-        <AuthGateModal
-          open={showAuth}
-          onClose={() => setShowAuth(false)}
-          onSuccess={() => {
-            setShowAuth(false);
-            handleJoin();
-          }}
-          redirectTo={`/groups/${slug}`}
-        />
-      )}
+      <AuthGateModal
+        open={showAuth}
+        onOpenChange={(open) => {
+          setShowAuth(open);
+          if (!open) {
+            // Re-check after auth modal closes — user may now be logged in
+            queryClient.invalidateQueries({ queryKey: ["group-membership"] });
+          }
+        }}
+      />
     </div>
   );
 };

@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PrayerRequests from "./pages/PrayerRequests";
 import PrayerGroups from "./pages/PrayerGroups";
+import JoinGroup from "./pages/JoinGroup";
 import PrayerRoom from "./pages/PrayerRoom";
 import Testimonies from "./pages/Testimonies";
 import Contact from "./pages/Contact";
