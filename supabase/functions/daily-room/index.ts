@@ -76,7 +76,6 @@ serve(async (req) => {
           enable_knocking: false,
           start_video_off: true,
           start_audio_off: false,
-          max_participants: 200,
           exp: Math.floor(Date.now() / 1000) + 3600 * 24, // 24 hours
         },
       }),
