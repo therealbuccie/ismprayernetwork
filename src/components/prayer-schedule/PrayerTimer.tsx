@@ -14,6 +14,7 @@ interface PrayerTimerProps {
 
 const PrayerTimer = ({ onComplete, onBack, initialSeconds }: PrayerTimerProps) => {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds ?? PRAYER_DURATION);
+  const [minimized, setMinimized] = useState(true);
 
   useEffect(() => {
     if (secondsLeft <= 0) {
