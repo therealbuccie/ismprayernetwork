@@ -31,16 +31,6 @@ const todaysPrayerPoint = {
 
 const FALLBACK_BASE_URL = "https://ismprayernetwork.org";
 
-const ministersPraying = [
-  { id: 1, name: "Pastor Grace", location: "Lagos" },
-  { id: 2, name: "Minister Daniel", location: "Nairobi" },
-  { id: 3, name: "Dcn. Sarah", location: "London" },
-  { id: 4, name: "Pastor James", location: "Accra" },
-  { id: 5, name: "Sister Faith", location: "Houston" },
-  { id: 6, name: "Brother Paul", location: "Toronto" },
-  { id: 7, name: "Pastor Mary", location: "Johannesburg" },
-  { id: 8, name: "Minister Tunde", location: "Abuja" },
-];
 
 const PrayerRoom = () => {
   const [copied, setCopied] = useState(false);
@@ -84,6 +74,48 @@ const PrayerRoom = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch people currently praying (today's prayer slots)
+  const todayStr = new Date().toISOString().split("T")[0];
+  const { data: prayingNow } = useQuery({
+    queryKey: ["praying-now", todayStr],
+    queryFn: async () => {
+      const { data: slots, error } = await supabase
+        .from("prayer_slots")
+        .select("id, user_id, user_name, slot_time")
+        .eq("slot_date", todayStr)
+        .eq("status", "booked")
+        .order("slot_time", { ascending: true });
+      if (error) throw error;
+      if (!slots || slots.length === 0) return [];
+
+      // Fetch profiles for ministry_name
+      const userIds = [...new Set(slots.map(s => s.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, ministry_name")
+        .in("user_id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
+      // Deduplicate by user_id, keep first slot
+      const seen = new Set<string>();
+      return slots.filter(s => {
+        if (seen.has(s.user_id)) return false;
+        seen.add(s.user_id);
+        return true;
+      }).map(s => {
+        const prof = profileMap.get(s.user_id);
+        return {
+          id: s.id,
+          name: prof?.full_name || s.user_name,
+          ministry: prof?.ministry_name || null,
+          user_id: s.user_id,
+        };
+      });
+    },
+    refetchInterval: 30000, // refresh every 30s
   });
 
   // Auto-create the user's prayer session based on their name
@@ -499,36 +531,41 @@ const PrayerRoom = () => {
               </div>
 
               {/* Ministers Praying Now */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="mt-10"
-              >
-                <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                  {ministersPraying.map((minister) => (
-                    <div
-                      key={minister.id}
-                      className="flex-shrink-0 w-40 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
-                        <Users size={28} className="text-accent" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{minister.name}</p>
-                        <p className="text-xs text-muted-foreground">{minister.location}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4"
+              {prayingNow && prayingNow.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="mt-10"
+                >
+                  <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
+                  <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                    {prayingNow.map((minister) => (
+                      <div
+                        key={minister.id}
+                        className="flex-shrink-0 w-44 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
                       >
-                        Pray Now
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+                        <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                          <Users size={28} className="text-accent" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{minister.name}</p>
+                          {minister.ministry && (
+                            <p className="text-xs text-accent font-medium">{minister.ministry}</p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4"
+                          onClick={() => setIsPraying(true)}
+                        >
+                          Pray Now
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Prayer Requests & Testimonies */}
               <motion.div
