@@ -50,7 +50,7 @@ const tabGroups: TabGroup[] = [
       { id: "programs", label: "Programs", icon: CalendarDays },
       { id: "testimonies", label: "Testimonies", icon: MessageSquare },
       { id: "prayer-requests", label: "Prayer Requests", icon: HandHeart },
-      { id: "prayer-groups", label: "Prayer Groups", icon: UsersRound },
+      { id: "prayer-groups", label: "Communities", icon: UsersRound },
     ],
   },
   {
