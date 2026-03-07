@@ -531,36 +531,41 @@ const PrayerRoom = () => {
               </div>
 
               {/* Ministers Praying Now */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="mt-10"
-              >
-                <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                  {ministersPraying.map((minister) => (
-                    <div
-                      key={minister.id}
-                      className="flex-shrink-0 w-40 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
-                        <Users size={28} className="text-accent" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{minister.name}</p>
-                        <p className="text-xs text-muted-foreground">{minister.location}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4"
+              {prayingNow && prayingNow.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="mt-10"
+                >
+                  <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
+                  <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                    {prayingNow.map((minister) => (
+                      <div
+                        key={minister.id}
+                        className="flex-shrink-0 w-44 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
                       >
-                        Pray Now
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+                        <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                          <Users size={28} className="text-accent" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{minister.name}</p>
+                          {minister.ministry && (
+                            <p className="text-xs text-accent font-medium">{minister.ministry}</p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs rounded-full px-4"
+                          onClick={() => setIsPraying(true)}
+                        >
+                          Pray Now
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Prayer Requests & Testimonies */}
               <motion.div
