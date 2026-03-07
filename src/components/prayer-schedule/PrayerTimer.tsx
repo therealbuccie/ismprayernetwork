@@ -9,11 +9,11 @@ const PRAYER_DURATION = 15 * 60; // 15 minutes in seconds
 interface PrayerTimerProps {
   onComplete: () => void;
   onBack: () => void;
+  initialSeconds?: number;
 }
 
-const PrayerTimer = ({ onComplete, onBack }: PrayerTimerProps) => {
-  const [secondsLeft, setSecondsLeft] = useState(PRAYER_DURATION);
-  const [minimized, setMinimized] = useState(true);
+const PrayerTimer = ({ onComplete, onBack, initialSeconds }: PrayerTimerProps) => {
+  const [secondsLeft, setSecondsLeft] = useState(initialSeconds ?? PRAYER_DURATION);
 
   useEffect(() => {
     if (secondsLeft <= 0) {
