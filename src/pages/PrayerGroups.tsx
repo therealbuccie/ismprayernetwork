@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
-import { Users, Lock, Globe, Plus } from "lucide-react";
+import { Users, Lock, Globe, Plus, Share2, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+function generateSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
+}
+
 const PrayerGroups = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
+  const [shareSlug, setShareSlug] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -56,19 +62,21 @@ const PrayerGroups = () => {
     if (!user) { toast.error("Please sign in"); return; }
     setSubmitting(true);
     try {
+      const slug = generateSlug(name);
       const { data: group, error } = await supabase.from("prayer_groups").insert({
         name: name.trim(),
         description: description.trim() || null,
         is_public: isPublic,
         created_by: user.id,
+        slug,
       }).select().single();
       if (error) throw error;
-      // Auto-join as creator
       await supabase.from("group_members").insert({ group_id: group.id, user_id: user.id });
-      toast.success("Group created!");
+      toast.success("Community created! 🙏");
       setName("");
       setDescription("");
       setModalOpen(false);
+      setShareSlug(group.slug);
       queryClient.invalidateQueries({ queryKey: ["prayer-groups"] });
       queryClient.invalidateQueries({ queryKey: ["my-group-memberships"] });
     } catch (err: any) {
@@ -79,7 +87,7 @@ const PrayerGroups = () => {
   };
 
   const handleJoin = async (groupId: string) => {
-    if (!user) { toast.error("Please sign in to join a group"); return; }
+    if (!user) { toast.error("Please sign in to join this community"); return; }
     try {
       const { error } = await supabase.from("group_members").insert({
         group_id: groupId,
@@ -89,7 +97,7 @@ const PrayerGroups = () => {
         if (error.code === "23505") { toast.info("You're already a member"); return; }
         throw error;
       }
-      toast.success("Joined the group! 🙏");
+      toast.success("Welcome to the community! 🙏");
       queryClient.invalidateQueries({ queryKey: ["prayer-groups"] });
       queryClient.invalidateQueries({ queryKey: ["my-group-memberships"] });
     } catch (err: any) {
@@ -97,17 +105,12 @@ const PrayerGroups = () => {
     }
   };
 
-  const handleLeave = async (groupId: string) => {
-    if (!user) return;
-    try {
-      const { error } = await supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", user.id);
-      if (error) throw error;
-      toast.success("Left the group");
-      queryClient.invalidateQueries({ queryKey: ["prayer-groups"] });
-      queryClient.invalidateQueries({ queryKey: ["my-group-memberships"] });
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+  const handleCopyLink = (slug: string) => {
+    const url = `${window.location.origin}/groups/${slug}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    toast.success("Link copied! Share with loved ones 🔗");
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -117,10 +120,10 @@ const PrayerGroups = () => {
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-serif font-bold mb-3">
-              Prayer <span className="gold-gradient">Groups</span>
+              Prayer <span className="gold-gradient">Communities</span>
             </h1>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Find your prayer community. Join existing groups or create your own.
+              Build your prayer community. Create a group, share the link with loved ones, and pray together.
             </p>
           </motion.div>
 
@@ -128,45 +131,50 @@ const PrayerGroups = () => {
             <Button
               className="gold-gradient-bg text-accent-foreground hover:opacity-90 gap-2"
               onClick={() => {
-                if (!user) { toast.error("Please sign in to create a group"); return; }
+                if (!user) { toast.error("Please sign in to create a community"); return; }
                 setModalOpen(true);
               }}
             >
-              <Plus size={16} /> Create Group
+              <Plus size={16} /> Create Community
             </Button>
           </div>
 
           {isLoading ? (
-            <div className="text-center text-muted-foreground py-12">Loading groups...</div>
+            <div className="text-center text-muted-foreground py-12">Loading communities...</div>
           ) : !groups?.length ? (
-            <div className="text-center text-muted-foreground py-12">No groups yet. Create the first one!</div>
+            <div className="text-center text-muted-foreground py-12">No communities yet. Create the first one!</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {groups.map((group, i) => {
+              {groups.map((group: any, i: number) => {
                 const isMember = myMemberships?.includes(group.id);
                 return (
                   <motion.div key={group.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                    <GlassCard variant="hover" className="h-full">
+                    <GlassCard variant="hover" className="h-full flex flex-col">
                       <div className="flex items-center justify-between mb-3">
                         <Badge variant="secondary" className="text-xs flex items-center gap-1">
                           {group.is_public ? <Globe size={10} /> : <Lock size={10} />}
                           {group.is_public ? "Public" : "Private"}
                         </Badge>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Users size={12} /> {group.member_count}
+                          <Users size={12} /> {group.member_count} {group.member_count === 1 ? "member" : "members"}
                         </span>
                       </div>
                       <h3 className="font-serif font-semibold text-lg mb-2">{group.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-4">{group.description || "No description"}</p>
-                      {isMember ? (
-                        <Button size="sm" variant="outline" className="w-full text-destructive" onClick={() => handleLeave(group.id)}>
-                          Leave Group
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="outline" className="w-full" onClick={() => handleJoin(group.id)}>
-                          Join Group
-                        </Button>
-                      )}
+                      <p className="text-sm text-muted-foreground mb-4 flex-1">{group.description || "A prayer community"}</p>
+                      <div className="flex gap-2">
+                        {isMember ? (
+                          <>
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">✓ Member</Badge>
+                            <Button size="sm" variant="outline" className="ml-auto gap-1" onClick={() => handleCopyLink(group.slug)}>
+                              <Share2 size={13} /> Share
+                            </Button>
+                          </>
+                        ) : (
+                          <Button size="sm" className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90" onClick={() => handleJoin(group.id)}>
+                            Join Community
+                          </Button>
+                        )}
+                      </div>
                     </GlassCard>
                   </motion.div>
                 );
@@ -177,30 +185,52 @@ const PrayerGroups = () => {
       </div>
       <Footer />
 
+      {/* Create Community Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Prayer Group</DialogTitle>
+            <DialogTitle>Create Prayer Community</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
-              <Label>Group Name *</Label>
+              <Label>Community Name *</Label>
               <Input placeholder="e.g. Intercessors for Nations" value={name} onChange={e => setName(e.target.value)} />
             </div>
             <div>
               <Label>Description</Label>
-              <Textarea placeholder="What is this group about?" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
+              <Textarea placeholder="What is this community about?" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
             </div>
             <label className="flex items-center gap-2 text-sm">
               <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-              {isPublic ? "Public — anyone can join" : "Private — invite only"}
+              {isPublic ? "Public — anyone can find & join" : "Private — share link to invite"}
             </label>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button onClick={handleCreate} disabled={submitting}>
-                {submitting ? "Creating..." : "Create Group"}
+                {submitting ? "Creating..." : "Create Community"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Link Modal — shown after creating */}
+      <Dialog open={!!shareSlug} onOpenChange={() => setShareSlug(null)}>
+        <DialogContent className="max-w-md text-center">
+          <DialogHeader>
+            <DialogTitle>Your Community is Ready! 🎉</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-4">Share this link with family and loved ones so they can join your prayer community.</p>
+          <div className="flex items-center gap-2 bg-muted rounded-lg p-3">
+            <input
+              readOnly
+              value={`${window.location.origin}/groups/${shareSlug}`}
+              className="flex-1 bg-transparent text-sm outline-none text-foreground"
+            />
+            <Button size="sm" variant="outline" className="gap-1" onClick={() => shareSlug && handleCopyLink(shareSlug)}>
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? "Copied" : "Copy"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
