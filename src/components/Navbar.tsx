@@ -12,7 +12,7 @@ import logo from "@/assets/logo.png";
 
 const prayerItems = [
   { label: "Prayer Requests", href: "/prayer-requests" },
-  { label: "Communities", href: "/groups" },
+  { label: "Prayer Groups", href: "/groups" },
   { label: "Prayer Room", href: "/prayer-room" },
 ];
 
