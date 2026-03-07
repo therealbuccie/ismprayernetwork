@@ -3,6 +3,7 @@ import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Video, VideoOff, Monitor, PhoneOff, Users, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 interface VideoCallProps {
   roomUrl: string;
@@ -60,6 +61,15 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
     callObj.on("participant-updated", () => syncParticipants(callObj));
     callObj.on("participant-left", () => syncParticipants(callObj));
     callObj.on("left-meeting", () => {
+      onLeave();
+    });
+    callObj.on("error", (ev: any) => {
+      const msg = ev?.errorMsg || "Unknown error";
+      if (msg.includes("account-missing-payment-method")) {
+        toast.error("Video service requires billing setup. Please contact the administrator.");
+      } else {
+        toast.error(`Call error: ${msg}`);
+      }
       onLeave();
     });
     callObj.on("app-message", (ev: any) => {
