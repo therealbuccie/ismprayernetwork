@@ -216,6 +216,25 @@ const ApiDocs = () => {
         </div>
       </motion.section>
 
+      {/* Base URL */}
+      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13 }}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+            <Globe className="w-4 h-4 text-accent" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Base URL</h2>
+        </div>
+        <div className="border border-border/50 rounded-xl p-5 bg-card/50 space-y-3">
+          <p className="text-sm text-muted-foreground">
+            All API requests are made against the following base URL:
+          </p>
+          <CodeBlock code={`https://ismprayernetwork.org/api/v1`} />
+          <p className="text-xs text-muted-foreground">
+            Append the endpoint path to this base URL. For example, to list books: <code className="text-accent">https://ismprayernetwork.org/api/v1/books</code>
+          </p>
+        </div>
+      </motion.section>
+
       {/* Authentication — General, no secrets */}
       <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
         <div className="flex items-center gap-3 mb-4">
@@ -233,11 +252,11 @@ x-api-key: YOUR_API_KEY`} />
           <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
             <Shield className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
-              <strong className="text-foreground">Security:</strong> Your API key and endpoint URL are confidential. Never expose them in HTML, JavaScript, or any code that runs in a user's browser. Always make API calls from your <strong>server-side code</strong> (e.g., PHP).
+              <strong className="text-foreground">Security:</strong> Your API key is confidential. Never expose it in HTML, JavaScript, or any code that runs in a user's browser. Always make API calls from your <strong>server-side code</strong> (e.g., PHP).
             </p>
           </div>
           <p className="text-xs text-muted-foreground">
-            To receive your API key and endpoint URL, contact the ISM Prayer Network admin team directly.
+            To receive your API key, contact the ISM Prayer Network admin team directly.
           </p>
         </div>
       </motion.section>
