@@ -228,9 +228,9 @@ const ApiDocs = () => {
           <p className="text-sm text-muted-foreground">
             All API requests are made against the following base URL:
           </p>
-          <CodeBlock code={`https://ismprayernetwork.org/api/v1`} />
+          <CodeBlock code={`https://api.ismprayernetwork.org/api/v1`} />
           <p className="text-xs text-muted-foreground">
-            Append the endpoint path to this base URL. For example, to list books: <code className="text-accent">https://ismprayernetwork.org/api/v1/books</code>
+            Append the endpoint path to this base URL. For example, to list books: <code className="text-accent">https://api.ismprayernetwork.org/api/v1/books</code>
           </p>
         </div>
       </motion.section>
