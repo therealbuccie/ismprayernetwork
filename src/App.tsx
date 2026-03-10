@@ -35,6 +35,7 @@ import JoinPrayerRoom from "./pages/JoinPrayerRoom";
 import MyLibrary from "./pages/MyLibrary";
 import NotFound from "./pages/NotFound";
 import ApiDocs from "./pages/ApiDocs";
+import ApiKeyDocument from "./pages/ApiKeyDocument";
 
 const queryClient = new QueryClient({
   defaultOptions: {
