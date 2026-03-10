@@ -363,7 +363,7 @@ x-api-key: YOUR_API_KEY`} />
             <CodeBlock code={`<?php
 // config.php — store OUTSIDE your web root for security
 define('ISM_API_KEY', 'YOUR_API_KEY');    // Provided by ISM admin
-define('ISM_API_URL', 'YOUR_API_URL');    // Provided by ISM admin
+define('ISM_API_URL', 'https://ismprayernetwork.org/api/v1');
 
 // Make an API request
 function ism_api_request($endpoint, $method = 'GET', $data = null) {
