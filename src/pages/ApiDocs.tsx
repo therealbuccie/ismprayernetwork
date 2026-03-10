@@ -406,7 +406,7 @@ foreach ($books['books'] as $book) {
           </div>
           <h2 className="text-xl font-bold text-foreground">Request Your API Key</h2>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-            To integrate with the ISM Prayer Network API, contact the admin team to request your <strong>API key</strong> and <strong>endpoint URL</strong>. Credentials are issued to authorized partners only.
+            To integrate with the ISM Prayer Network API, contact the admin team to request your <strong>API key</strong>. Credentials are issued to authorized partners only.
           </p>
           <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20 text-left max-w-md mx-auto">
             <Shield className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
