@@ -50,7 +50,7 @@ const ApiKeyDocument = () => {
           <h2 className="text-lg font-semibold mb-3">Your API Key</h2>
           <div className="bg-gray-100 border border-gray-200 rounded-md px-5 py-4 font-mono text-sm break-all">
             <span className="text-muted-foreground select-none">x-api-key: </span>
-            <span className="text-red-600 font-bold">{"<YOUR_API_KEY_HERE>"}</span>
+            <span className="text-red-600 font-bold">ism-partner-2024-a7f3e9b1c4d8</span>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             ⚠️ Keep this key confidential. Do not share it publicly or commit it to version control.
