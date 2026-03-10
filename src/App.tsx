@@ -35,6 +35,7 @@ import JoinPrayerRoom from "./pages/JoinPrayerRoom";
 import MyLibrary from "./pages/MyLibrary";
 import NotFound from "./pages/NotFound";
 import ApiDocs from "./pages/ApiDocs";
+import ApiKeyDocument from "./pages/ApiKeyDocument";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/my-library" element={<MyLibrary />} />
             <Route path="/prayer-room/:slug" element={<JoinPrayerRoom />} />
             <Route path="/api-docs" element={<ApiDocs />} />
+            <Route path="/api-key-doc" element={<ApiKeyDocument />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
