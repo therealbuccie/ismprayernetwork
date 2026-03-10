@@ -228,9 +228,9 @@ const ApiDocs = () => {
           <p className="text-sm text-muted-foreground">
             All API requests are made against the following base URL:
           </p>
-          <CodeBlock code={`https://ismprayernetwork.org/api/v1`} />
+          <CodeBlock code={`https://api.ismprayernetwork.org/api/v1`} />
           <p className="text-xs text-muted-foreground">
-            Append the endpoint path to this base URL. For example, to list books: <code className="text-accent">https://ismprayernetwork.org/api/v1/books</code>
+            Append the endpoint path to this base URL. For example, to list books: <code className="text-accent">https://api.ismprayernetwork.org/api/v1/books</code>
           </p>
         </div>
       </motion.section>
@@ -363,7 +363,7 @@ x-api-key: YOUR_API_KEY`} />
             <CodeBlock code={`<?php
 // config.php — store OUTSIDE your web root for security
 define('ISM_API_KEY', 'YOUR_API_KEY');    // Provided by ISM admin
-define('ISM_API_URL', 'https://ismprayernetwork.org/api/v1');
+define('ISM_API_URL', 'https://api.ismprayernetwork.org/api/v1');
 
 // Make an API request
 function ism_api_request($endpoint, $method = 'GET', $data = null) {
