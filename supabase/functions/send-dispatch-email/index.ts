@@ -59,7 +59,7 @@ serve(async (req) => {
       if (recipients.length > 500) throw new Error("Too many recipients (max 500)");
 
       const fromName = sender_name || "ISM Prayer Network";
-      const fromEmail = "info@notify.jollof.space";
+      const fromEmail = "info@notify.ismprayernetwork.org";
       const results: { email: string; status: string; error?: string }[] = [];
 
       // Send emails one by one via Lovable AI Gateway (email endpoint)
