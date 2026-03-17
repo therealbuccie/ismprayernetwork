@@ -65,27 +65,32 @@ serve(async (req) => {
       // Send emails one by one via Lovable AI Gateway (email endpoint)
       for (const email of recipients) {
         try {
+          const payload = {
+            from: `${fromName} <${fromEmail}>`,
+            to: [email],
+            subject,
+            html: html_body,
+          };
+          console.log("Sending to:", email);
           const res = await fetch("https://email.lovable.dev/v1/send", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${LOVABLE_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              from: `${fromName} <${fromEmail}>`,
-              to: [email],
-              subject,
-              html: html_body,
-            }),
+            body: JSON.stringify(payload),
           });
 
+          const resText = await res.text();
+          console.log("Response:", res.status, resText);
+
           if (!res.ok) {
-            const errText = await res.text();
-            results.push({ email, status: "failed", error: `${res.status}: ${errText}` });
+            results.push({ email, status: "failed", error: `${res.status}: ${resText}` });
           } else {
             results.push({ email, status: "sent" });
           }
         } catch (err: any) {
+          console.error("Send error:", err.message);
           results.push({ email, status: "failed", error: err.message });
         }
       }
