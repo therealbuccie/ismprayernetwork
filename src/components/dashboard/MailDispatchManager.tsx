@@ -57,6 +57,16 @@ export function MailDispatchManager() {
     },
   });
 
+  const [bulkPasteOpen, setBulkPasteOpen] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const parseEmails = (text: string): string[] => {
+    const emailRegex = /[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+/g;
+    const matches = text.match(emailRegex) || [];
+    return [...new Set(matches.map((e) => e.toLowerCase().trim()))];
+  };
+
   const addManualEmail = () => {
     const email = manualEmail.trim().toLowerCase();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -69,6 +79,46 @@ export function MailDispatchManager() {
     }
     setManualEmails((prev) => [...prev, email]);
     setManualEmail("");
+  };
+
+  const addBulkEmails = () => {
+    const parsed = parseEmails(bulkText);
+    if (parsed.length === 0) {
+      toast.error("No valid emails found");
+      return;
+    }
+    const newEmails = parsed.filter((e) => !manualEmails.includes(e));
+    if (newEmails.length === 0) {
+      toast.info("All emails already added");
+      return;
+    }
+    setManualEmails((prev) => [...new Set([...prev, ...newEmails])]);
+    setBulkText("");
+    setBulkPasteOpen(false);
+    toast.success(`Added ${newEmails.length} email${newEmails.length !== 1 ? "s" : ""}`);
+  };
+
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".csv") && !file.name.endsWith(".txt")) {
+      toast.error("Please upload a .csv or .txt file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const parsed = parseEmails(text);
+      if (parsed.length === 0) {
+        toast.error("No valid emails found in file");
+        return;
+      }
+      const newEmails = parsed.filter((em) => !manualEmails.includes(em));
+      setManualEmails((prev) => [...new Set([...prev, ...newEmails])]);
+      toast.success(`Imported ${newEmails.length} email${newEmails.length !== 1 ? "s" : ""} from file`);
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeManualEmail = (email: string) => {
