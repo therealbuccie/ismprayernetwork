@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv, Banknote, ChevronDown, BarChart3, PackageOpen } from "lucide-react";
+import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv, Banknote, ChevronDown, BarChart3, PackageOpen, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
@@ -59,6 +59,7 @@ const tabGroups: TabGroup[] = [
       { id: "messages", label: "Messages", icon: Mail },
       { id: "newsletter", label: "Newsletter", icon: Newspaper },
       { id: "campaigns", label: "Campaigns", icon: Megaphone },
+      { id: "mail-dispatch", label: "Mail Dispatch", icon: Send },
     ],
   },
   {
