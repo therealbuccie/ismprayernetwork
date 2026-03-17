@@ -144,7 +144,7 @@ export function MailDispatchManager() {
       </div>
       <p className="text-muted-foreground text-sm">
         Compose and send emails to subscribers or specific addresses from{" "}
-        <span className="font-semibold text-foreground">info@notify.jollof.space</span>
+        <span className="font-semibold text-foreground">info@notify.ismprayernetwork.org</span>
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
