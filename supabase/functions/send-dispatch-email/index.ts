@@ -75,8 +75,7 @@ serve(async (req) => {
 
         try {
           const textBody = html_body
-            .replace(/<br\s*\/?/gi, "\n")
-            .replace(/>/g, (match, offset, input) => input[offset - 1] === "/" ? ">" : ">")
+            .replace(/<br\s*\/?>/gi, "\n")
             .replace(/<[^>]+>/g, " ")
             .replace(/&nbsp;/gi, " ")
             .replace(/&amp;/gi, "&")
