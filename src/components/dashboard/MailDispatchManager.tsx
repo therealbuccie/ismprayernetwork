@@ -252,6 +252,7 @@ export function MailDispatchManager() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* Single email */}
               <div className="flex gap-2">
                 <Input
                   value={manualEmail}
@@ -264,16 +265,76 @@ export function MailDispatchManager() {
                   <Plus size={16} /> Add
                 </Button>
               </div>
+
+              {/* Bulk actions */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setBulkPasteOpen(!bulkPasteOpen)}
+                >
+                  <ClipboardPaste size={14} className="mr-1" /> Paste Bulk
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={14} className="mr-1" /> Upload CSV
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.txt"
+                  className="hidden"
+                  onChange={handleCsvUpload}
+                />
+              </div>
+
+              {/* Bulk paste area */}
+              {bulkPasteOpen && (
+                <div className="space-y-2 p-3 border border-border rounded-lg bg-muted/30">
+                  <Label className="text-xs text-muted-foreground">
+                    Paste emails (comma, semicolon, newline, or space separated)
+                  </Label>
+                  <Textarea
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    placeholder={"john@example.com, jane@example.com\nmark@example.com; sara@example.com"}
+                    className="min-h-[100px] text-sm"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => { setBulkPasteOpen(false); setBulkText(""); }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={addBulkEmails} disabled={!bulkText.trim()}>
+                      Add Emails
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Tags */}
               {manualEmails.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {manualEmails.map((email) => (
-                    <Badge key={email} variant="secondary" className="flex items-center gap-1 pr-1">
-                      {email}
-                      <button onClick={() => removeManualEmail(email)} className="ml-1 hover:text-destructive">
-                        <X size={12} />
-                      </button>
-                    </Badge>
-                  ))}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{manualEmails.length} manual recipient{manualEmails.length !== 1 ? "s" : ""}</span>
+                    <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={() => setManualEmails([])}>
+                      Clear all
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 max-h-[150px] overflow-y-auto">
+                    {manualEmails.map((email) => (
+                      <Badge key={email} variant="secondary" className="flex items-center gap-1 pr-1 text-xs">
+                        {email}
+                        <button onClick={() => removeManualEmail(email)} className="ml-1 hover:text-destructive">
+                          <X size={12} />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
