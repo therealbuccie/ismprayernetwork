@@ -84,6 +84,24 @@ serve(async (req) => {
             .replace(/[ \t]+/g, " ")
             .trim();
 
+          const { data: existingToken, error: tokenReadError } = await supabase
+            .from("email_unsubscribe_tokens")
+            .select("token")
+            .eq("email", email)
+            .is("used_at", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (tokenReadError) throw tokenReadError;
+
+          const unsubscribeToken = existingToken?.token || crypto.randomUUID();
+          if (!existingToken?.token) {
+            const { error: tokenInsertError } = await supabase
+              .from("email_unsubscribe_tokens")
+              .insert({ email, token: unsubscribeToken });
+            if (tokenInsertError) throw tokenInsertError;
+          }
+
           const payload = {
             to: email,
             from: `${fromName} <${fromEmail}>`,
@@ -93,6 +111,7 @@ serve(async (req) => {
             text: textBody || subject,
             purpose: "transactional",
             label: "mail-dispatch",
+            unsubscribe_token: unsubscribeToken,
             message_id: messageId,
             idempotency_key: messageId,
             queued_at: new Date().toISOString(),
