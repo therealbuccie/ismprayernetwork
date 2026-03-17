@@ -54,52 +54,71 @@ serve(async (req) => {
         );
       }
 
-      // Validate inputs
       if (subject.length > 200) throw new Error("Subject too long");
       if (recipients.length > 500) throw new Error("Too many recipients (max 500)");
 
-      const fromName = sender_name || "ISM Prayer Network";
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const fromName = sender_name?.trim() || "ISM Prayer Network";
       const fromEmail = "info@notify.ismprayernetwork.org";
-      const results: { email: string; status: string; error?: string }[] = [];
+      const senderDomain = "notify.ismprayernetwork.org";
+      const uniqueRecipients = Array.from(
+        new Set(
+          recipients
+            .map((email: string) => email.trim().toLowerCase())
+            .filter((email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        )
+      );
+      const results: { email: string; status: string; error?: string; message_id?: string }[] = [];
 
-      // Send emails one by one via Lovable AI Gateway (email endpoint)
-      for (const email of recipients) {
+      for (const email of uniqueRecipients) {
+        const messageId = `mail-dispatch-${crypto.randomUUID()}`;
+
         try {
           const payload = {
+            to: email,
             from: `${fromName} <${fromEmail}>`,
-            to: [email],
+            sender_domain: senderDomain,
             subject,
             html: html_body,
+            purpose: "transactional",
+            label: "mail-dispatch",
+            message_id: messageId,
+            idempotency_key: messageId,
+            queued_at: new Date().toISOString(),
           };
-          console.log("Sending to:", email);
-          const res = await fetch("https://email.lovable.dev/v1/send", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
+
+          const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+            queue_name: "transactional_emails",
+            payload,
           });
+          if (enqueueError) throw enqueueError;
 
-          const resText = await res.text();
-          console.log("Response:", res.status, resText);
-
-          if (!res.ok) {
-            results.push({ email, status: "failed", error: `${res.status}: ${resText}` });
-          } else {
-            results.push({ email, status: "sent" });
+          const { error: logError } = await supabase.from("email_send_log").insert({
+            message_id: messageId,
+            template_name: "mail-dispatch",
+            recipient_email: email,
+            status: "pending",
+            metadata: {
+              subject,
+              sender_name: fromName,
+            },
+          });
+          if (logError) {
+            console.error("Failed to write pending email log:", logError);
           }
+
+          results.push({ email, status: "queued", message_id: messageId });
         } catch (err: any) {
-          console.error("Send error:", err.message);
-          results.push({ email, status: "failed", error: err.message });
+          console.error("Failed to queue email:", email, err?.message || err);
+          results.push({ email, status: "failed", error: err?.message || String(err) });
         }
       }
 
-      const sent = results.filter((r) => r.status === "sent").length;
+      const queued = results.filter((r) => r.status === "queued").length;
       const failed = results.filter((r) => r.status === "failed").length;
 
       return new Response(
-        JSON.stringify({ sent, failed, total: recipients.length, results }),
+        JSON.stringify({ sent: queued, queued, failed, total: uniqueRecipients.length, results }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

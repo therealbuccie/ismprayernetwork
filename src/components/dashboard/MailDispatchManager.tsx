@@ -323,7 +323,7 @@ export function MailDispatchManager() {
               {lastResult && (
                 <div className="text-sm p-3 rounded-lg bg-muted space-y-1">
                   <p className="font-medium">Last dispatch result:</p>
-                  <p className="text-green-600">✅ Sent: {lastResult.sent}</p>
+                  <p className="text-green-600">✅ {typeof lastResult.queued === "number" ? "Queued" : "Sent"}: {lastResult.queued ?? lastResult.sent}</p>
                   {lastResult.failed > 0 && (
                     <p className="text-destructive">❌ Failed: {lastResult.failed}</p>
                   )}
