@@ -122,12 +122,13 @@ export function MailDispatchManager() {
         sender_name: senderName.trim(),
       });
 
-      setLastResult({ sent: result.sent, failed: result.failed, total: result.total });
+      const queued = result.queued ?? result.sent;
+      setLastResult({ sent: result.sent, queued, failed: result.failed, total: result.total });
 
       if (result.failed === 0) {
-        toast.success(`✅ All ${result.sent} emails sent successfully!`);
+        toast.success(`✅ ${queued} email${queued !== 1 ? "s" : ""} queued successfully!`);
       } else {
-        toast.warning(`${result.sent} sent, ${result.failed} failed out of ${result.total}`);
+        toast.warning(`${queued} queued, ${result.failed} failed out of ${result.total}`);
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to send emails");
