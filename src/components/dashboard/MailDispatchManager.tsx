@@ -47,7 +47,7 @@ export function MailDispatchManager() {
   const [selectedSubscribers, setSelectedSubscribers] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [sending, setSending] = useState(false);
-  const [lastResult, setLastResult] = useState<{ sent: number; failed: number; total: number } | null>(null);
+  const [lastResult, setLastResult] = useState<{ sent: number; queued?: number; failed: number; total: number } | null>(null);
 
   const { data: subscribers = [], isLoading: loadingSubs, refetch: refetchSubs } = useQuery({
     queryKey: ["dispatch-subscribers"],
