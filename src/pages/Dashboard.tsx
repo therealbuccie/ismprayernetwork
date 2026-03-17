@@ -92,6 +92,7 @@ const Dashboard = () => {
             {activeTab === "live-tv" && <LiveTVManager />}
             {activeTab === "payment-settings" && <PaymentSettingsManager />}
             {activeTab === "settings" && <SiteSettingsManager />}
+            {activeTab === "mail-dispatch" && <MailDispatchManager />}
           </Suspense>
         </div>
       </main>
