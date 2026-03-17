@@ -78,6 +78,9 @@ const PublicDashboard = () => {
             {activeTab === "live-tv" && <LiveTVManager />}
             {activeTab === "payment-settings" && <PaymentSettingsManager />}
             {activeTab === "settings" && <SiteSettingsManager />}
+            {activeTab === "combo-packs" && <ComboPacksManager />}
+            {activeTab === "bookstore-analytics" && <BookstoreAnalytics />}
+            {activeTab === "mail-dispatch" && <MailDispatchManager />}
           </Suspense>
         </div>
       </main>
