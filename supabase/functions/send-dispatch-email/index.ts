@@ -59,8 +59,8 @@ serve(async (req) => {
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const fromName = sender_name?.trim() || "ISM Prayer Network";
-      const fromEmail = "info@notify.ismprayernetwork.org";
-      const senderDomain = "notify.ismprayernetwork.org";
+      const fromEmail = "info@ismprayernetwork.org";
+      const senderDomain = "ismprayernetwork.org";
       const uniqueRecipients = Array.from(
         new Set(
           recipients
