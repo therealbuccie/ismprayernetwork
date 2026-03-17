@@ -59,6 +59,7 @@ const tabGroups: TabGroup[] = [
       { id: "messages", label: "Messages", icon: Mail },
       { id: "newsletter", label: "Newsletter", icon: Newspaper },
       { id: "campaigns", label: "Campaigns", icon: Megaphone },
+      { id: "mail-dispatch", label: "Mail Dispatch", icon: Send },
     ],
   },
   {
