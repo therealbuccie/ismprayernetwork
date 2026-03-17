@@ -74,12 +74,24 @@ serve(async (req) => {
         const messageId = `mail-dispatch-${crypto.randomUUID()}`;
 
         try {
+          const textBody = html_body
+            .replace(/<br\s*\/?/gi, "\n")
+            .replace(/>/g, (match, offset, input) => input[offset - 1] === "/" ? ">" : ">")
+            .replace(/<[^>]+>/g, " ")
+            .replace(/&nbsp;/gi, " ")
+            .replace(/&amp;/gi, "&")
+            .replace(/\s+\n/g, "\n")
+            .replace(/\n\s+/g, "\n")
+            .replace(/[ \t]+/g, " ")
+            .trim();
+
           const payload = {
             to: email,
             from: `${fromName} <${fromEmail}>`,
             sender_domain: senderDomain,
             subject,
             html: html_body,
+            text: textBody || subject,
             purpose: "transactional",
             label: "mail-dispatch",
             message_id: messageId,
