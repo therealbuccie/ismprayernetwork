@@ -47,7 +47,7 @@ export function MailDispatchManager() {
   const [selectedSubscribers, setSelectedSubscribers] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [sending, setSending] = useState(false);
-  const [lastResult, setLastResult] = useState<{ sent: number; failed: number; total: number } | null>(null);
+  const [lastResult, setLastResult] = useState<{ sent: number; queued?: number; failed: number; total: number } | null>(null);
 
   const { data: subscribers = [], isLoading: loadingSubs, refetch: refetchSubs } = useQuery({
     queryKey: ["dispatch-subscribers"],
@@ -122,12 +122,13 @@ export function MailDispatchManager() {
         sender_name: senderName.trim(),
       });
 
-      setLastResult({ sent: result.sent, failed: result.failed, total: result.total });
+      const queued = result.queued ?? result.sent;
+      setLastResult({ sent: result.sent, queued, failed: result.failed, total: result.total });
 
       if (result.failed === 0) {
-        toast.success(`✅ All ${result.sent} emails sent successfully!`);
+        toast.success(`✅ ${queued} email${queued !== 1 ? "s" : ""} queued successfully!`);
       } else {
-        toast.warning(`${result.sent} sent, ${result.failed} failed out of ${result.total}`);
+        toast.warning(`${queued} queued, ${result.failed} failed out of ${result.total}`);
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to send emails");
@@ -322,7 +323,7 @@ export function MailDispatchManager() {
               {lastResult && (
                 <div className="text-sm p-3 rounded-lg bg-muted space-y-1">
                   <p className="font-medium">Last dispatch result:</p>
-                  <p className="text-green-600">✅ Sent: {lastResult.sent}</p>
+                  <p className="text-foreground">✅ {typeof lastResult.queued === "number" ? "Queued" : "Sent"}: {lastResult.queued ?? lastResult.sent}</p>
                   {lastResult.failed > 0 && (
                     <p className="text-destructive">❌ Failed: {lastResult.failed}</p>
                   )}
