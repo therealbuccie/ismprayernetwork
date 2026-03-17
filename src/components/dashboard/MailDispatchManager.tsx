@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isPublicDashboard, getStoredPin } from "@/hooks/useBookstoreAdmin";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Send, Users, Plus, X, Loader2, Mail, RefreshCw } from "lucide-react";
+import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -57,6 +57,16 @@ export function MailDispatchManager() {
     },
   });
 
+  const [bulkPasteOpen, setBulkPasteOpen] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const parseEmails = (text: string): string[] => {
+    const emailRegex = /[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+/g;
+    const matches = text.match(emailRegex) || [];
+    return [...new Set(matches.map((e) => e.toLowerCase().trim()))];
+  };
+
   const addManualEmail = () => {
     const email = manualEmail.trim().toLowerCase();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -69,6 +79,46 @@ export function MailDispatchManager() {
     }
     setManualEmails((prev) => [...prev, email]);
     setManualEmail("");
+  };
+
+  const addBulkEmails = () => {
+    const parsed = parseEmails(bulkText);
+    if (parsed.length === 0) {
+      toast.error("No valid emails found");
+      return;
+    }
+    const newEmails = parsed.filter((e) => !manualEmails.includes(e));
+    if (newEmails.length === 0) {
+      toast.info("All emails already added");
+      return;
+    }
+    setManualEmails((prev) => [...new Set([...prev, ...newEmails])]);
+    setBulkText("");
+    setBulkPasteOpen(false);
+    toast.success(`Added ${newEmails.length} email${newEmails.length !== 1 ? "s" : ""}`);
+  };
+
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".csv") && !file.name.endsWith(".txt")) {
+      toast.error("Please upload a .csv or .txt file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const parsed = parseEmails(text);
+      if (parsed.length === 0) {
+        toast.error("No valid emails found in file");
+        return;
+      }
+      const newEmails = parsed.filter((em) => !manualEmails.includes(em));
+      setManualEmails((prev) => [...new Set([...prev, ...newEmails])]);
+      toast.success(`Imported ${newEmails.length} email${newEmails.length !== 1 ? "s" : ""} from file`);
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeManualEmail = (email: string) => {
@@ -202,6 +252,7 @@ export function MailDispatchManager() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* Single email */}
               <div className="flex gap-2">
                 <Input
                   value={manualEmail}
@@ -214,16 +265,76 @@ export function MailDispatchManager() {
                   <Plus size={16} /> Add
                 </Button>
               </div>
+
+              {/* Bulk actions */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setBulkPasteOpen(!bulkPasteOpen)}
+                >
+                  <ClipboardPaste size={14} className="mr-1" /> Paste Bulk
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={14} className="mr-1" /> Upload CSV
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.txt"
+                  className="hidden"
+                  onChange={handleCsvUpload}
+                />
+              </div>
+
+              {/* Bulk paste area */}
+              {bulkPasteOpen && (
+                <div className="space-y-2 p-3 border border-border rounded-lg bg-muted/30">
+                  <Label className="text-xs text-muted-foreground">
+                    Paste emails (comma, semicolon, newline, or space separated)
+                  </Label>
+                  <Textarea
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    placeholder={"john@example.com, jane@example.com\nmark@example.com; sara@example.com"}
+                    className="min-h-[100px] text-sm"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => { setBulkPasteOpen(false); setBulkText(""); }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={addBulkEmails} disabled={!bulkText.trim()}>
+                      Add Emails
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Tags */}
               {manualEmails.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {manualEmails.map((email) => (
-                    <Badge key={email} variant="secondary" className="flex items-center gap-1 pr-1">
-                      {email}
-                      <button onClick={() => removeManualEmail(email)} className="ml-1 hover:text-destructive">
-                        <X size={12} />
-                      </button>
-                    </Badge>
-                  ))}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{manualEmails.length} manual recipient{manualEmails.length !== 1 ? "s" : ""}</span>
+                    <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={() => setManualEmails([])}>
+                      Clear all
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 max-h-[150px] overflow-y-auto">
+                    {manualEmails.map((email) => (
+                      <Badge key={email} variant="secondary" className="flex items-center gap-1 pr-1 text-xs">
+                        {email}
+                        <button onClick={() => removeManualEmail(email)} className="ml-1 hover:text-destructive">
+                          <X size={12} />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
