@@ -1,13 +1,13 @@
 project_id = "ryitxoymayasdlabojsx"
 
-[functions.partner-api]
-verify_jwt = false
-
-[functions.daily-room]
-verify_jwt = false
-
-[functions.send-dispatch-email]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.daily-room]
+    verify_jwt = false
+  [functions.partner-api]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.send-dispatch-email]
+    verify_jwt = false
