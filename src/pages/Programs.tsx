@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
 import { Calendar, MapPin } from "lucide-react";
-import AutoPlayVideo from "@/components/AutoPlayVideo";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
@@ -49,11 +49,19 @@ const Programs = () => {
                     {upcoming.map((prog: any, i: number) => (
                       <motion.div key={prog.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                         <GlassCard className="h-full">
-                        {prog.video_url ? (
-                          <AutoPlayVideo url={prog.video_url} title={prog.title} />
-                        ) : prog.image_url ? (
-                          <img src={prog.image_url} alt={prog.title} className="w-full h-48 object-cover rounded-lg mb-4" />
-                        ) : null}
+                          {prog.video_url ? (
+                            <AspectRatio ratio={16 / 9} className="mb-4 rounded-lg overflow-hidden bg-black">
+                              <iframe
+                                src={prog.video_url.includes("youtube.com/watch") ? prog.video_url.replace("watch?v=", "embed/") : prog.video_url.includes("youtu.be/") ? `https://www.youtube.com/embed/${prog.video_url.split("youtu.be/")[1]}` : prog.video_url}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title={prog.title}
+                              />
+                            </AspectRatio>
+                          ) : prog.image_url ? (
+                            <img src={prog.image_url} alt={prog.title} className="w-full h-48 object-cover rounded-lg mb-4" />
+                          ) : null}
                           <h3 className="text-xl font-serif font-bold">{prog.title}</h3>
                           {prog.event_date && (
                             <p className="text-sm text-accent flex items-center gap-1 mt-2">

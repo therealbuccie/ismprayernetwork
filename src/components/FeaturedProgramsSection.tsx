@@ -4,7 +4,7 @@ import { GlassCard } from "./GlassCard";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
-import AutoPlayVideo from "./AutoPlayVideo";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -42,7 +42,15 @@ const FeaturedProgramsSection = () => {
             <motion.div key={prog.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
               <GlassCard className="h-full flex flex-col">
                 {prog.video_url ? (
-                  <AutoPlayVideo url={prog.video_url} title={prog.title} />
+                  <AspectRatio ratio={16 / 9} className="mb-4 rounded-lg overflow-hidden bg-black">
+                    <iframe
+                      src={prog.video_url.includes("youtube.com/watch") ? prog.video_url.replace("watch?v=", "embed/") : prog.video_url.includes("youtu.be/") ? `https://www.youtube.com/embed/${prog.video_url.split("youtu.be/")[1]}` : prog.video_url}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={prog.title}
+                    />
+                  </AspectRatio>
                 ) : prog.image_url ? (
                   <img src={prog.image_url} alt={prog.title} className="w-full h-48 object-cover rounded-lg mb-4" />
                 ) : null}
