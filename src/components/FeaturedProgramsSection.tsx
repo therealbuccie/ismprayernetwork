@@ -77,7 +77,9 @@ const FeaturedProgramsSection = () => {
                   <AspectRatio ratio={16 / 9}>
                     <iframe
                       src={getEmbedUrl(hero.video_url)}
-                      className="w-full h-full"
+                      className="w-full h-full border-0"
+                      style={{ overflow: "hidden" }}
+                      scrolling="no"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       title={hero.title}
@@ -151,7 +153,9 @@ const FeaturedProgramsSection = () => {
                       <AspectRatio ratio={16 / 9}>
                         <iframe
                           src={getEmbedUrl(prog.video_url)}
-                          className="w-full h-full"
+                          className="w-full h-full border-0"
+                          style={{ overflow: "hidden" }}
+                          scrolling="no"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                           title={prog.title}
