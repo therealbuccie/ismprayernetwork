@@ -7,16 +7,45 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-const getEmbedUrl = (url: string) => {
-  let embedUrl = url;
+const isYouTube = (url: string) =>
+  url.includes("youtube.com/watch") || url.includes("youtu.be/");
+
+const getYouTubeEmbedUrl = (url: string) => {
+  let videoId = "";
   if (url.includes("youtube.com/watch")) {
-    const videoId = new URL(url).searchParams.get("v");
-    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    videoId = new URL(url).searchParams.get("v") || "";
   } else if (url.includes("youtu.be/")) {
-    const videoId = url.split("youtu.be/")[1]?.split("?")[0];
-    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
   }
-  return `${embedUrl}?mute=1&autoplay=0&modestbranding=1&rel=0&fs=0&iv_load_policy=3`;
+  return `https://www.youtube.com/embed/${videoId}?mute=1&autoplay=0&modestbranding=1&rel=0&fs=0&iv_load_policy=3`;
+};
+
+const VideoPlayer = ({ url, title }: { url: string; title: string }) => {
+  if (isYouTube(url)) {
+    return (
+      <iframe
+        src={getYouTubeEmbedUrl(url)}
+        className="w-full h-full border-0"
+        style={{ overflow: "hidden" }}
+        scrolling="no"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        title={title}
+      />
+    );
+  }
+  return (
+    <video
+      src={url}
+      className="w-full h-full object-cover"
+      muted
+      autoPlay
+      loop
+      playsInline
+      controlsList="nodownload"
+      disablePictureInPicture
+    />
+  );
 };
 
 const FeaturedProgramsSection = () => {
@@ -76,15 +105,7 @@ const FeaturedProgramsSection = () => {
               <div className="relative bg-black">
                 {hero.video_url ? (
                   <AspectRatio ratio={16 / 9}>
-                    <iframe
-                      src={getEmbedUrl(hero.video_url)}
-                      className="w-full h-full border-0"
-                      style={{ overflow: "hidden" }}
-                      scrolling="no"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      title={hero.title}
-                    />
+                    <VideoPlayer url={hero.video_url} title={hero.title} />
                   </AspectRatio>
                 ) : hero.image_url ? (
                   <AspectRatio ratio={16 / 9}>
@@ -152,15 +173,7 @@ const FeaturedProgramsSection = () => {
                   {prog.video_url ? (
                     <div className="relative bg-black">
                       <AspectRatio ratio={16 / 9}>
-                        <iframe
-                          src={getEmbedUrl(prog.video_url)}
-                          className="w-full h-full border-0"
-                          style={{ overflow: "hidden" }}
-                          scrolling="no"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title={prog.title}
-                        />
+                        <VideoPlayer url={prog.video_url} title={prog.title} />
                       </AspectRatio>
                     </div>
                   ) : prog.image_url ? (
