@@ -10,12 +10,13 @@ import { Link } from "react-router-dom";
 const getEmbedUrl = (url: string) => {
   let embedUrl = url;
   if (url.includes("youtube.com/watch")) {
-    embedUrl = url.replace("watch?v=", "embed/");
+    const videoId = new URL(url).searchParams.get("v");
+    embedUrl = `https://www.youtube.com/embed/${videoId}`;
   } else if (url.includes("youtu.be/")) {
-    embedUrl = `https://www.youtube.com/embed/${url.split("youtu.be/")[1]}`;
+    const videoId = url.split("youtu.be/")[1]?.split("?")[0];
+    embedUrl = `https://www.youtube.com/embed/${videoId}`;
   }
-  const separator = embedUrl.includes("?") ? "&" : "?";
-  return `${embedUrl}${separator}mute=1&autoplay=1&loop=1&controls=0&modestbranding=1&rel=0&showinfo=0`;
+  return `${embedUrl}?mute=1&autoplay=0&modestbranding=1&rel=0&fs=0&iv_load_policy=3`;
 };
 
 const FeaturedProgramsSection = () => {
