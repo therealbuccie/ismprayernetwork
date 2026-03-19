@@ -6,6 +6,7 @@ import FeaturesSection from "@/components/FeaturesSection";
 import TestimoniesSection from "@/components/TestimoniesSection";
 import CTASection from "@/components/CTASection";
 import FeaturedBooksSection from "@/components/FeaturedBooksSection";
+import FeaturedProgramsSection from "@/components/FeaturedProgramsSection";
 import CampaignCard from "@/components/CampaignCard";
 import CampaignPopup from "@/components/CampaignPopup";
 import NewsletterSection from "@/components/NewsletterSection";
