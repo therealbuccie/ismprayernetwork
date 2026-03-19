@@ -4,7 +4,7 @@ import { GlassCard } from "./GlassCard";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import AutoPlayVideo from "./AutoPlayVideo";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
