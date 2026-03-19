@@ -13,9 +13,9 @@ import { Plus, Pencil, Trash2, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProgramForm {
-  title: string; description: string; location: string; event_date: string; image_url: string; is_upcoming: boolean;
+  title: string; description: string; location: string; event_date: string; image_url: string; video_url: string; is_upcoming: boolean;
 }
-const emptyForm: ProgramForm = { title: "", description: "", location: "", event_date: "", image_url: "", is_upcoming: true };
+const emptyForm: ProgramForm = { title: "", description: "", location: "", event_date: "", image_url: "", video_url: "", is_upcoming: true };
 
 export function ProgramsManager() {
   const queryClient = useQueryClient();
