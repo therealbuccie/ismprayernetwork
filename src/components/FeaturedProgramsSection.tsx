@@ -173,15 +173,7 @@ const FeaturedProgramsSection = () => {
                   {prog.video_url ? (
                     <div className="relative bg-black">
                       <AspectRatio ratio={16 / 9}>
-                        <iframe
-                          src={getEmbedUrl(prog.video_url)}
-                          className="w-full h-full border-0"
-                          style={{ overflow: "hidden" }}
-                          scrolling="no"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title={prog.title}
-                        />
+                        <VideoPlayer url={prog.video_url} title={prog.title} />
                       </AspectRatio>
                     </div>
                   ) : prog.image_url ? (
