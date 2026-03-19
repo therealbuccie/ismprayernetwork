@@ -119,6 +119,7 @@ export function ProgramsManager() {
               <div><Label>Event Date</Label><Input type="datetime-local" value={form.event_date} onChange={e => set("event_date", e.target.value)} /></div>
             </div>
             <div><Label>Image URL</Label><Input value={form.image_url} onChange={e => set("image_url", e.target.value)} /></div>
+            <div><Label>Promo Video URL</Label><Input value={form.video_url} onChange={e => set("video_url", e.target.value)} placeholder="https://youtube.com/watch?v=... or direct video URL" /></div>
             <label className="flex items-center gap-2 text-sm"><Switch checked={form.is_upcoming} onCheckedChange={v => set("is_upcoming", v)} /> Upcoming</label>
             <div className="flex justify-end gap-2 pt-2"><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button></div>
           </div>
