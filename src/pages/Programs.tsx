@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
 import { Calendar, MapPin } from "lucide-react";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
