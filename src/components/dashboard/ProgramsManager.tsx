@@ -53,7 +53,7 @@ export function ProgramsManager() {
       const record: any = {
         title: form.title, description: form.description || null,
         location: form.location || null, event_date: form.event_date || null,
-        image_url: form.image_url || null, is_upcoming: form.is_upcoming,
+        image_url: form.image_url || null, video_url: form.video_url || null, is_upcoming: form.is_upcoming,
       };
       if (editingId) {
         if (isPublic) await adminUpdate("programs", { id: editingId, ...record });
