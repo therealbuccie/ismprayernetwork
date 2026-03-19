@@ -701,6 +701,7 @@ export type Database = {
           is_upcoming: boolean
           location: string | null
           title: string
+          video_url: string | null
         }
         Insert: {
           created_at?: string
@@ -712,6 +713,7 @@ export type Database = {
           is_upcoming?: boolean
           location?: string | null
           title: string
+          video_url?: string | null
         }
         Update: {
           created_at?: string
@@ -723,6 +725,7 @@ export type Database = {
           is_upcoming?: boolean
           location?: string | null
           title?: string
+          video_url?: string | null
         }
         Relationships: []
       }
