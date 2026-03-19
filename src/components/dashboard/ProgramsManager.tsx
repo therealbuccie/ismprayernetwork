@@ -41,7 +41,7 @@ export function ProgramsManager() {
     setForm({
       title: p.title, description: p.description || "", location: p.location || "",
       event_date: p.event_date ? new Date(p.event_date).toISOString().slice(0, 16) : "",
-      image_url: p.image_url || "", is_upcoming: p.is_upcoming,
+      image_url: p.image_url || "", video_url: p.video_url || "", is_upcoming: p.is_upcoming,
     });
     setEditingId(p.id); setOpen(true);
   };
