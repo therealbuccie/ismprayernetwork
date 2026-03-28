@@ -17,18 +17,12 @@ import AuthGateModal from "@/components/AuthGateModal";
 import PrayerSchedule from "@/components/prayer-schedule/PrayerSchedule";
 import PrayerTimer from "@/components/prayer-schedule/PrayerTimer";
 
-const todaysPrayerPoint = {
-  date: new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }),
-  title: "PRAY CONCERNING TELEVISION AND RADIO BROADCAST OF THE HEALING STREAMS",
-  scripture:
-    "Romans 10:18 NKJV - \"But I say, have they not heard? Yes indeed: 'Their sound has gone out to all the earth, and their words to the ends of the world'\"",
-  body: "Thank God for the global broadcast of the Healing Streams Live Healing Services with Pastor Chris through television and radio networks around the world. Pray that every viewer and listener receives miracles, salvation, and restoration through every transmission. Pray that the signals are clear and unhindered, reaching every language, territory, and nation.",
-};
+const todaysDate = new Date().toLocaleDateString("en-US", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 
 const FALLBACK_BASE_URL = "https://ismprayernetwork.org";
 
@@ -46,6 +40,21 @@ const PrayerRoom = () => {
   const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const { data: todaysPrayerPoint } = useQuery({
+    queryKey: ["prayer-points-room"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prayer_points")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   useEffect(() => {
     setShowAuthModal(!loading && !user);
@@ -460,15 +469,21 @@ const PrayerRoom = () => {
                     <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
                   </div>
                   <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-                    📅 {todaysPrayerPoint.date}
+                    📅 {todaysDate}
                   </p>
-                  <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
-                    {todaysPrayerPoint.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
-                    {todaysPrayerPoint.scripture}
-                  </p>
-                  <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                  {todaysPrayerPoint ? (
+                    <>
+                      <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
+                        {todaysPrayerPoint.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
+                        {todaysPrayerPoint.scripture}
+                      </p>
+                      <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No prayer point available.</p>
+                  )}
                 </div>
 
                 {/* Participants */}
@@ -517,15 +532,21 @@ const PrayerRoom = () => {
                       <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
                     </div>
                     <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-                      📅 {todaysPrayerPoint.date}
+                      📅 {todaysDate}
                     </p>
-                    <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
-                      {todaysPrayerPoint.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
-                      {todaysPrayerPoint.scripture}
-                    </p>
-                    <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                    {todaysPrayerPoint ? (
+                      <>
+                        <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
+                          {todaysPrayerPoint.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
+                          {todaysPrayerPoint.scripture}
+                        </p>
+                        <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No prayer point available.</p>
+                    )}
                   </div>
 
                   {/* Prayer Room Info */}
