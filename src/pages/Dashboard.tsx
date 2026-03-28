@@ -85,6 +85,7 @@ const Dashboard = () => {
             {activeTab === "newsletter" && <NewsletterManager />}
             {activeTab === "prayer-requests" && <PrayerRequestsManager />}
             {activeTab === "prayer-groups" && <PrayerGroupsManager />}
+            {activeTab === "prayer-points" && <PrayerPointsManager />}
             {activeTab === "purchases" && <PurchasesManager />}
             {activeTab === "orders" && <OrdersManager />}
             {activeTab === "combo-packs" && <ComboPacksManager />}

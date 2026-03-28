@@ -51,6 +51,7 @@ const tabGroups: TabGroup[] = [
       { id: "testimonies", label: "Testimonies", icon: MessageSquare },
       { id: "prayer-requests", label: "Prayer Requests", icon: HandHeart },
       { id: "prayer-groups", label: "Prayer Groups", icon: UsersRound },
+      { id: "prayer-points", label: "Prayer Points", icon: BookOpen },
     ],
   },
   {
