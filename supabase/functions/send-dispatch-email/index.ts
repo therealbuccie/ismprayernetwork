@@ -46,6 +46,39 @@ serve(async (req) => {
       });
     }
 
+    if (action === "get_dispatch_status") {
+      const { message_ids } = body;
+      if (!message_ids?.length) {
+        return new Response(JSON.stringify({ error: "message_ids required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data, error } = await supabase
+        .from("email_send_log")
+        .select("message_id, recipient_email, status, error_message, created_at")
+        .in("message_id", message_ids)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+
+      // Deduplicate: latest status per message_id
+      const latest = new Map<string, any>();
+      for (const row of data || []) {
+        if (!latest.has(row.message_id)) {
+          latest.set(row.message_id, row);
+        }
+      }
+      const results = Array.from(latest.values());
+      const sent = results.filter(r => r.status === "sent").length;
+      const failed = results.filter(r => ["dlq", "failed"].includes(r.status)).length;
+      const pending = results.filter(r => r.status === "pending").length;
+      const suppressed = results.filter(r => r.status === "suppressed").length;
+
+      return new Response(JSON.stringify({
+        sent, failed, pending, suppressed, total: results.length, results,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "send") {
       if (!recipients?.length || !subject || !html_body) {
         return new Response(
