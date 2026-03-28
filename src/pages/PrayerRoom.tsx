@@ -469,15 +469,21 @@ const PrayerRoom = () => {
                     <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
                   </div>
                   <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-                    📅 {todaysPrayerPoint.date}
+                    📅 {todaysDate}
                   </p>
-                  <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
-                    {todaysPrayerPoint.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
-                    {todaysPrayerPoint.scripture}
-                  </p>
-                  <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                  {todaysPrayerPoint ? (
+                    <>
+                      <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
+                        {todaysPrayerPoint.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
+                        {todaysPrayerPoint.scripture}
+                      </p>
+                      <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No prayer point available.</p>
+                  )}
                 </div>
 
                 {/* Participants */}
