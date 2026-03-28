@@ -38,7 +38,13 @@ const PrayerPoints = () => {
     }, {})
   ).map(([category, points]) => ({ category, points }));
 
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(prayerPoints[0]?.category ?? null);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+  // Auto-expand first category when data loads
+  const firstCat = prayerPoints[0]?.category ?? null;
+  if (firstCat && expandedCategory === null && prayerPoints.length > 0) {
+    setExpandedCategory(firstCat);
+  }
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
