@@ -127,6 +127,7 @@ const PrayerPoints = () => {
             </motion.div>
           ))}
         </div>
+        )}
       </div>
 
       <Footer />
