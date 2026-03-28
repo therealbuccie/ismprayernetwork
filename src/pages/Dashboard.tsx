@@ -26,8 +26,9 @@ const BookstoreAnalytics = lazy(() => import("@/components/dashboard/BookstoreAn
 
 const ComboPacksManager = lazy(() => import("@/components/dashboard/ComboPacksManager").then(m => ({ default: m.ComboPacksManager })));
 const MailDispatchManager = lazy(() => import("@/components/dashboard/MailDispatchManager").then(m => ({ default: m.MailDispatchManager })));
+const PrayerPointsManager = lazy(() => import("@/components/dashboard/PrayerPointsManager").then(m => ({ default: m.PrayerPointsManager })));
 
-export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch";
+export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch";
 
 function TabSkeleton() {
   return (
@@ -84,6 +85,7 @@ const Dashboard = () => {
             {activeTab === "newsletter" && <NewsletterManager />}
             {activeTab === "prayer-requests" && <PrayerRequestsManager />}
             {activeTab === "prayer-groups" && <PrayerGroupsManager />}
+            {activeTab === "prayer-points" && <PrayerPointsManager />}
             {activeTab === "purchases" && <PurchasesManager />}
             {activeTab === "orders" && <OrdersManager />}
             {activeTab === "combo-packs" && <ComboPacksManager />}

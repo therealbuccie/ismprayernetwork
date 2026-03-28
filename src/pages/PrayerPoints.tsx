@@ -3,72 +3,48 @@ import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { BookOpen, Flame, Calendar, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const prayerPoints = [
-  {
-    category: "Healing Streams",
-    points: [
-      {
-        title: "PRAY CONCERNING TELEVISION AND RADIO BROADCAST",
-        scripture: 'Romans 10:18 NKJV - "But I say, have they not heard? Yes indeed: \'Their sound has gone out to all the earth, and their words to the ends of the world\'"',
-        body: "Thank God for the global broadcast of the Healing Streams Live Healing Services with Pastor Chris through television and radio networks around the world. Pray that every viewer and listener receives miracles, salvation, and restoration through every transmission.",
-      },
-      {
-        title: "PRAY FOR MIRACLES AND HEALING",
-        scripture: 'Mark 16:18 - "They shall lay hands on the sick, and they shall recover."',
-        body: "Pray that as the word goes forth in the Healing Streams services, signs and wonders follow. Pray for creative miracles, divine healing, and total restoration for every participant.",
-      },
-    ],
-  },
-  {
-    category: "Nations & Leaders",
-    points: [
-      {
-        title: "PRAY FOR LEADERS OF NATIONS",
-        scripture: '1 Timothy 2:1-2 - "I exhort therefore, that, first of all, supplications, prayers, intercessions, and giving of thanks, be made for all men; for kings, and for all that are in authority."',
-        body: "Pray for world leaders to make godly decisions. Pray for peace, justice, and righteousness in every nation. Pray against corruption and ungodly policies.",
-      },
-      {
-        title: "PRAY FOR OPEN DOORS IN RESTRICTED NATIONS",
-        scripture: 'Revelation 3:8 - "I have set before thee an open door, and no man can shut it."',
-        body: "Pray for the gospel to penetrate nations where Christianity is restricted. Pray for boldness for ministers and believers in such regions.",
-      },
-    ],
-  },
-  {
-    category: "Ministers & Ministry",
-    points: [
-      {
-        title: "PRAY FOR MINISTERS OF THE GOSPEL",
-        scripture: 'Ephesians 6:19 - "And for me, that utterance may be given unto me, that I may open my mouth boldly, to make known the mystery of the gospel."',
-        body: "Pray for every minister of the gospel to receive divine utterance and boldness. Pray for protection, provision, and increased anointing for all ISM ministers worldwide.",
-      },
-      {
-        title: "PRAY FOR CHURCH GROWTH",
-        scripture: 'Acts 2:47 - "And the Lord added to the church daily such as should be saved."',
-        body: "Pray for exponential growth in churches and ministries across the world. Pray that the harvest of souls continues unabated.",
-      },
-    ],
-  },
-  {
-    category: "Personal & Family",
-    points: [
-      {
-        title: "PRAY FOR YOUR FAMILY",
-        scripture: 'Joshua 24:15 - "As for me and my house, we will serve the Lord."',
-        body: "Pray for salvation, unity, and divine protection over your family. Pray that every member of your household walks in the light of God's word.",
-      },
-      {
-        title: "PRAY FOR SPIRITUAL GROWTH",
-        scripture: '2 Peter 3:18 - "But grow in grace, and in the knowledge of our Lord and Saviour Jesus Christ."',
-        body: "Pray for a deeper personal relationship with the Lord. Pray for wisdom, understanding, and spiritual maturity in your walk with God.",
-      },
-    ],
-  },
-];
+interface PrayerPoint {
+  id: string;
+  category: string;
+  title: string;
+  scripture: string;
+  body: string;
+  sort_order: number;
+}
 
 const PrayerPoints = () => {
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(prayerPoints[0].category);
+  const { data: rawPoints = [], isLoading } = useQuery({
+    queryKey: ["prayer-points"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prayer_points")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data as PrayerPoint[];
+    },
+  });
+
+  // Group by category
+  const prayerPoints = Object.entries(
+    rawPoints.reduce<Record<string, PrayerPoint[]>>((acc, p) => {
+      (acc[p.category] = acc[p.category] || []).push(p);
+      return acc;
+    }, {})
+  ).map(([category, points]) => ({ category, points }));
+
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+  // Auto-expand first category when data loads
+  const firstCat = prayerPoints[0]?.category ?? null;
+  if (firstCat && expandedCategory === null && prayerPoints.length > 0) {
+    setExpandedCategory(firstCat);
+  }
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -100,6 +76,13 @@ const PrayerPoints = () => {
       </div>
 
       <div className="flex-1 container mx-auto px-4 py-10 max-w-3xl">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+          </div>
+        ) : prayerPoints.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">No prayer points available yet.</div>
+        ) : (
         <div className="space-y-4">
           {prayerPoints.map((cat, ci) => (
             <motion.div
@@ -144,6 +127,7 @@ const PrayerPoints = () => {
             </motion.div>
           ))}
         </div>
+        )}
       </div>
 
       <Footer />

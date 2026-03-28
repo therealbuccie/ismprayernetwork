@@ -520,6 +520,42 @@ export type Database = {
           },
         ]
       }
+      prayer_points: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          scripture: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          category: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          scripture?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          scripture?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prayer_requests: {
         Row: {
           author_name: string
