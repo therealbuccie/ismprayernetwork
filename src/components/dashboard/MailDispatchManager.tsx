@@ -161,8 +161,9 @@ export function MailDispatchManager() {
 
     setSending(true);
     setLastResult(null);
+    setLastMessageIds([]);
+    setPollingActive(false);
     try {
-      // Wrap body in a simple HTML template
       const htmlBody = `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff;">
           <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #d4a843;">
@@ -185,7 +186,19 @@ export function MailDispatchManager() {
       });
 
       const queued = result.queued ?? result.sent;
-      setLastResult({ sent: result.sent, queued, failed: result.failed, total: result.total });
+      const messageIds = (result.results || [])
+        .filter((r: any) => r.message_id)
+        .map((r: any) => r.message_id);
+
+      setLastMessageIds(messageIds);
+      setLastResult({
+        sent: 0, queued, failed: result.failed, pending: queued, suppressed: 0,
+        total: result.total, results: [],
+      });
+
+      if (messageIds.length > 0) {
+        setPollingActive(true);
+      }
 
       if (result.failed === 0) {
         toast.success(`✅ ${queued} email${queued !== 1 ? "s" : ""} queued successfully!`);
@@ -198,6 +211,33 @@ export function MailDispatchManager() {
       setSending(false);
     }
   };
+
+  // Poll for delivery status
+  const checkStatus = useCallback(async () => {
+    if (lastMessageIds.length === 0) return;
+    try {
+      const data = await dispatchCall(getPin(), "get_dispatch_status", {
+        message_ids: lastMessageIds,
+      });
+      setLastResult(data as DispatchResult);
+      // Stop polling when no more pending
+      if (data.pending === 0) {
+        setPollingActive(false);
+      }
+    } catch (err) {
+      console.error("Status check failed:", err);
+    }
+  }, [lastMessageIds]);
+
+  useEffect(() => {
+    if (!pollingActive || lastMessageIds.length === 0) return;
+    // Initial check after 5s, then every 8s
+    const timeout = setTimeout(() => {
+      checkStatus();
+    }, 5000);
+    const interval = setInterval(checkStatus, 8000);
+    return () => { clearTimeout(timeout); clearInterval(interval); };
+  }, [pollingActive, checkStatus]);
 
   return (
     <div className="space-y-6">
