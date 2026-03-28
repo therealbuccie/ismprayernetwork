@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isPublicDashboard, getStoredPin } from "@/hooks/useBookstoreAdmin";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste } from "lucide-react";
+import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,6 +18,16 @@ interface Subscriber {
   email: string;
   full_name: string | null;
   is_active: boolean;
+}
+
+interface DispatchResult {
+  sent: number;
+  queued: number;
+  failed: number;
+  pending: number;
+  suppressed: number;
+  total: number;
+  results: { message_id: string; recipient_email: string; status: string; error_message?: string; created_at: string }[];
 }
 
 async function dispatchCall(pin: string, action: string, params: Record<string, any> = {}) {
@@ -32,10 +43,8 @@ export function MailDispatchManager() {
   const { profile } = useAuth();
   const isPublic = isPublicDashboard();
 
-  // Get PIN - from session for public, or use auth for admin
   const getPin = (): string => {
     if (isPublic) return getStoredPin() || "";
-    // For authenticated admin, we use a stored PIN or the admin PIN
     return sessionStorage.getItem("dashboard_pin") || "2323";
   };
 
@@ -47,7 +56,10 @@ export function MailDispatchManager() {
   const [selectedSubscribers, setSelectedSubscribers] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [sending, setSending] = useState(false);
-  const [lastResult, setLastResult] = useState<{ sent: number; queued?: number; failed: number; total: number } | null>(null);
+  const [lastResult, setLastResult] = useState<DispatchResult | null>(null);
+  const [lastMessageIds, setLastMessageIds] = useState<string[]>([]);
+  const [pollingActive, setPollingActive] = useState(false);
+  const [drilldownStatus, setDrilldownStatus] = useState<string | null>(null);
 
   const { data: subscribers = [], isLoading: loadingSubs, refetch: refetchSubs } = useQuery({
     queryKey: ["dispatch-subscribers"],
