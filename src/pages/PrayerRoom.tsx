@@ -41,6 +41,21 @@ const PrayerRoom = () => {
   const queryClient = useQueryClient();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  const { data: todaysPrayerPoint } = useQuery({
+    queryKey: ["prayer-points-room"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prayer_points")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   useEffect(() => {
     setShowAuthModal(!loading && !user);
   }, [loading, user]);
