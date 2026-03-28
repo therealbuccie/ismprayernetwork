@@ -484,18 +484,131 @@ export function MailDispatchManager() {
               </Button>
 
               {lastResult && (
-                <div className="text-sm p-3 rounded-lg bg-muted space-y-1">
-                  <p className="font-medium">Last dispatch result:</p>
-                  <p className="text-foreground">✅ {typeof lastResult.queued === "number" ? "Queued" : "Sent"}: {lastResult.queued ?? lastResult.sent}</p>
-                  {lastResult.failed > 0 && (
-                    <p className="text-destructive">❌ Failed: {lastResult.failed}</p>
+                <div className="text-sm p-3 rounded-lg bg-muted space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">Dispatch Status:</p>
+                    {pollingActive && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Loader2 size={12} className="animate-spin" /> Tracking...
+                      </span>
+                    )}
+                    {!pollingActive && lastMessageIds.length > 0 && (
+                      <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={checkStatus}>
+                        <RefreshCw size={12} className="mr-1" /> Refresh
+                      </Button>
+                    )}
+                  </div>
+
+                  {lastResult.pending > 0 && (
+                    <button
+                      onClick={() => setDrilldownStatus("pending")}
+                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-amber-600">
+                        <Clock size={14} /> Queued / Pending
+                      </span>
+                      <span className="font-semibold">{lastResult.pending}</span>
+                    </button>
                   )}
+                  {lastResult.sent > 0 && (
+                    <button
+                      onClick={() => setDrilldownStatus("sent")}
+                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-green-600">
+                        <CheckCircle size={14} /> Sent Successfully
+                      </span>
+                      <span className="font-semibold">{lastResult.sent}</span>
+                    </button>
+                  )}
+                  {lastResult.failed > 0 && (
+                    <button
+                      onClick={() => setDrilldownStatus("failed")}
+                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-destructive">
+                        <XCircle size={14} /> Failed
+                      </span>
+                      <span className="font-semibold">{lastResult.failed}</span>
+                    </button>
+                  )}
+                  {lastResult.suppressed > 0 && (
+                    <button
+                      onClick={() => setDrilldownStatus("suppressed")}
+                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <X size={14} /> Suppressed
+                      </span>
+                      <span className="font-semibold">{lastResult.suppressed}</span>
+                    </button>
+                  )}
+
+                  <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+                    Total: {lastResult.total} • Click a status to see details
+                  </p>
                 </div>
               )}
+
+              {/* Drilldown dialog */}
+              <Dialog open={!!drilldownStatus} onOpenChange={() => setDrilldownStatus(null)}>
+                <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      {drilldownStatus === "sent" && <><CheckCircle size={18} className="text-green-600" /> Sent Emails</>}
+                      {drilldownStatus === "failed" && <><XCircle size={18} className="text-destructive" /> Failed Emails</>}
+                      {drilldownStatus === "pending" && <><Clock size={18} className="text-amber-600" /> Pending Emails</>}
+                      {drilldownStatus === "suppressed" && <><X size={18} className="text-muted-foreground" /> Suppressed Emails</>}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-2">
+                    {lastResult?.results
+                      ?.filter(r => {
+                        if (drilldownStatus === "failed") return ["dlq", "failed"].includes(r.status);
+                        return r.status === drilldownStatus;
+                      })
+                      .map((r, i) => (
+                        <div key={i} className="flex items-start justify-between p-2 rounded-lg bg-muted/50 text-sm">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{r.recipient_email}</p>
+                            {r.error_message && (
+                              <p className="text-xs text-destructive mt-0.5 line-clamp-2">{r.error_message}</p>
+                            )}
+                          </div>
+                          <Badge variant={
+                            r.status === "sent" ? "default" :
+                            ["dlq", "failed"].includes(r.status) ? "destructive" :
+                            "secondary"
+                          } className="shrink-0 ml-2 text-[10px]">
+                            {r.status}
+                          </Badge>
+                        </div>
+                      )) || (
+                        <p className="text-sm text-muted-foreground">No emails in this category.</p>
+                      )
+                    }
+                    {drilldownStatus === "pending" && (
+                      <p className="text-xs text-muted-foreground italic">
+                        Pending emails are being processed. They'll move to Sent or Failed shortly.
+                      </p>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Sending limits info */}
+      <Card className="border-accent/30">
+        <CardContent className="pt-4 pb-4">
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">Sending limits:</strong> Max <strong>500 recipients</strong> per dispatch.
+            Emails are queued and processed at ~120 emails/minute. Large batches may take a few minutes to fully deliver.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
