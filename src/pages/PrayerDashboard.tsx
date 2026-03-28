@@ -66,7 +66,7 @@ const PrayerDashboard = () => {
       </header>
       <main className="flex-1">
         <iframe
-          src="https://jcontrol.pro/embed?session=ism-prayer-network"
+          src="https://jcontrol.pro/embed/signin?session=ism-prayer-network"
           className="w-full h-[calc(100vh-57px)] border-0"
           title="Prayer Room Dashboard"
           allow="microphone; camera; fullscreen"
