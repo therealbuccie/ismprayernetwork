@@ -10,7 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste, CheckCircle, XCircle, Clock } from "lucide-react";
+import { RichEmailComposer } from "./RichEmailComposer";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -170,7 +171,7 @@ export function MailDispatchManager() {
             <h2 style="color: #1a1a1a; margin: 0; font-size: 20px;">${senderName}</h2>
           </div>
           <div style="color: #333333; line-height: 1.7; font-size: 15px;">
-            ${body.replace(/\n/g, "<br/>")}
+            ${body}
           </div>
           <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e5e5; text-align: center;">
             <p style="color: #999; font-size: 12px; margin: 0;">Sent from ISM Prayer Network</p>
@@ -282,17 +283,11 @@ export function MailDispatchManager() {
                   maxLength={200}
                 />
               </div>
-              <div>
-                <Label htmlFor="body">Body (plain text, line breaks preserved)</Label>
-                <Textarea
-                  id="body"
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="Write your email content here..."
-                  className="mt-1 min-h-[200px]"
-                  maxLength={10000}
-                />
-              </div>
+              <RichEmailComposer
+                value={body}
+                onChange={setBody}
+                senderName={senderName}
+              />
             </CardContent>
           </Card>
 
