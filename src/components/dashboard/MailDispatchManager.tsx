@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isPublicDashboard, getStoredPin } from "@/hooks/useBookstoreAdmin";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste } from "lucide-react";
+import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,6 +18,16 @@ interface Subscriber {
   email: string;
   full_name: string | null;
   is_active: boolean;
+}
+
+interface DispatchResult {
+  sent: number;
+  queued: number;
+  failed: number;
+  pending: number;
+  suppressed: number;
+  total: number;
+  results: { message_id: string; recipient_email: string; status: string; error_message?: string; created_at: string }[];
 }
 
 async function dispatchCall(pin: string, action: string, params: Record<string, any> = {}) {
@@ -32,10 +43,8 @@ export function MailDispatchManager() {
   const { profile } = useAuth();
   const isPublic = isPublicDashboard();
 
-  // Get PIN - from session for public, or use auth for admin
   const getPin = (): string => {
     if (isPublic) return getStoredPin() || "";
-    // For authenticated admin, we use a stored PIN or the admin PIN
     return sessionStorage.getItem("dashboard_pin") || "2323";
   };
 
@@ -47,7 +56,10 @@ export function MailDispatchManager() {
   const [selectedSubscribers, setSelectedSubscribers] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [sending, setSending] = useState(false);
-  const [lastResult, setLastResult] = useState<{ sent: number; queued?: number; failed: number; total: number } | null>(null);
+  const [lastResult, setLastResult] = useState<DispatchResult | null>(null);
+  const [lastMessageIds, setLastMessageIds] = useState<string[]>([]);
+  const [pollingActive, setPollingActive] = useState(false);
+  const [drilldownStatus, setDrilldownStatus] = useState<string | null>(null);
 
   const { data: subscribers = [], isLoading: loadingSubs, refetch: refetchSubs } = useQuery({
     queryKey: ["dispatch-subscribers"],
@@ -149,8 +161,9 @@ export function MailDispatchManager() {
 
     setSending(true);
     setLastResult(null);
+    setLastMessageIds([]);
+    setPollingActive(false);
     try {
-      // Wrap body in a simple HTML template
       const htmlBody = `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff;">
           <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #d4a843;">
@@ -173,7 +186,19 @@ export function MailDispatchManager() {
       });
 
       const queued = result.queued ?? result.sent;
-      setLastResult({ sent: result.sent, queued, failed: result.failed, total: result.total });
+      const messageIds = (result.results || [])
+        .filter((r: any) => r.message_id)
+        .map((r: any) => r.message_id);
+
+      setLastMessageIds(messageIds);
+      setLastResult({
+        sent: 0, queued, failed: result.failed, pending: queued, suppressed: 0,
+        total: result.total, results: [],
+      });
+
+      if (messageIds.length > 0) {
+        setPollingActive(true);
+      }
 
       if (result.failed === 0) {
         toast.success(`✅ ${queued} email${queued !== 1 ? "s" : ""} queued successfully!`);
@@ -186,6 +211,33 @@ export function MailDispatchManager() {
       setSending(false);
     }
   };
+
+  // Poll for delivery status
+  const checkStatus = useCallback(async () => {
+    if (lastMessageIds.length === 0) return;
+    try {
+      const data = await dispatchCall(getPin(), "get_dispatch_status", {
+        message_ids: lastMessageIds,
+      });
+      setLastResult(data as DispatchResult);
+      // Stop polling when no more pending
+      if (data.pending === 0) {
+        setPollingActive(false);
+      }
+    } catch (err) {
+      console.error("Status check failed:", err);
+    }
+  }, [lastMessageIds]);
+
+  useEffect(() => {
+    if (!pollingActive || lastMessageIds.length === 0) return;
+    // Initial check after 5s, then every 8s
+    const timeout = setTimeout(() => {
+      checkStatus();
+    }, 5000);
+    const interval = setInterval(checkStatus, 8000);
+    return () => { clearTimeout(timeout); clearInterval(interval); };
+  }, [pollingActive, checkStatus]);
 
   return (
     <div className="space-y-6">
@@ -432,18 +484,131 @@ export function MailDispatchManager() {
               </Button>
 
               {lastResult && (
-                <div className="text-sm p-3 rounded-lg bg-muted space-y-1">
-                  <p className="font-medium">Last dispatch result:</p>
-                  <p className="text-foreground">✅ {typeof lastResult.queued === "number" ? "Queued" : "Sent"}: {lastResult.queued ?? lastResult.sent}</p>
-                  {lastResult.failed > 0 && (
-                    <p className="text-destructive">❌ Failed: {lastResult.failed}</p>
+                <div className="text-sm p-3 rounded-lg bg-muted space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">Dispatch Status:</p>
+                    {pollingActive && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Loader2 size={12} className="animate-spin" /> Tracking...
+                      </span>
+                    )}
+                    {!pollingActive && lastMessageIds.length > 0 && (
+                      <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={checkStatus}>
+                        <RefreshCw size={12} className="mr-1" /> Refresh
+                      </Button>
+                    )}
+                  </div>
+
+                  {lastResult.pending > 0 && (
+                    <button
+                      onClick={() => setDrilldownStatus("pending")}
+                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-amber-600">
+                        <Clock size={14} /> Queued / Pending
+                      </span>
+                      <span className="font-semibold">{lastResult.pending}</span>
+                    </button>
                   )}
+                  {lastResult.sent > 0 && (
+                    <button
+                      onClick={() => setDrilldownStatus("sent")}
+                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-green-600">
+                        <CheckCircle size={14} /> Sent Successfully
+                      </span>
+                      <span className="font-semibold">{lastResult.sent}</span>
+                    </button>
+                  )}
+                  {lastResult.failed > 0 && (
+                    <button
+                      onClick={() => setDrilldownStatus("failed")}
+                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-destructive">
+                        <XCircle size={14} /> Failed
+                      </span>
+                      <span className="font-semibold">{lastResult.failed}</span>
+                    </button>
+                  )}
+                  {lastResult.suppressed > 0 && (
+                    <button
+                      onClick={() => setDrilldownStatus("suppressed")}
+                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <X size={14} /> Suppressed
+                      </span>
+                      <span className="font-semibold">{lastResult.suppressed}</span>
+                    </button>
+                  )}
+
+                  <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+                    Total: {lastResult.total} • Click a status to see details
+                  </p>
                 </div>
               )}
+
+              {/* Drilldown dialog */}
+              <Dialog open={!!drilldownStatus} onOpenChange={() => setDrilldownStatus(null)}>
+                <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      {drilldownStatus === "sent" && <><CheckCircle size={18} className="text-green-600" /> Sent Emails</>}
+                      {drilldownStatus === "failed" && <><XCircle size={18} className="text-destructive" /> Failed Emails</>}
+                      {drilldownStatus === "pending" && <><Clock size={18} className="text-amber-600" /> Pending Emails</>}
+                      {drilldownStatus === "suppressed" && <><X size={18} className="text-muted-foreground" /> Suppressed Emails</>}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-2">
+                    {lastResult?.results
+                      ?.filter(r => {
+                        if (drilldownStatus === "failed") return ["dlq", "failed"].includes(r.status);
+                        return r.status === drilldownStatus;
+                      })
+                      .map((r, i) => (
+                        <div key={i} className="flex items-start justify-between p-2 rounded-lg bg-muted/50 text-sm">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{r.recipient_email}</p>
+                            {r.error_message && (
+                              <p className="text-xs text-destructive mt-0.5 line-clamp-2">{r.error_message}</p>
+                            )}
+                          </div>
+                          <Badge variant={
+                            r.status === "sent" ? "default" :
+                            ["dlq", "failed"].includes(r.status) ? "destructive" :
+                            "secondary"
+                          } className="shrink-0 ml-2 text-[10px]">
+                            {r.status}
+                          </Badge>
+                        </div>
+                      )) || (
+                        <p className="text-sm text-muted-foreground">No emails in this category.</p>
+                      )
+                    }
+                    {drilldownStatus === "pending" && (
+                      <p className="text-xs text-muted-foreground italic">
+                        Pending emails are being processed. They'll move to Sent or Failed shortly.
+                      </p>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Sending limits info */}
+      <Card className="border-accent/30">
+        <CardContent className="pt-4 pb-4">
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">Sending limits:</strong> Max <strong>500 recipients</strong> per dispatch.
+            Emails are queued and processed at ~120 emails/minute. Large batches may take a few minutes to fully deliver.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
