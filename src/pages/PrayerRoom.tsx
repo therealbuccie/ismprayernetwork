@@ -17,18 +17,12 @@ import AuthGateModal from "@/components/AuthGateModal";
 import PrayerSchedule from "@/components/prayer-schedule/PrayerSchedule";
 import PrayerTimer from "@/components/prayer-schedule/PrayerTimer";
 
-const todaysPrayerPoint = {
-  date: new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }),
-  title: "PRAY CONCERNING TELEVISION AND RADIO BROADCAST OF THE HEALING STREAMS",
-  scripture:
-    "Romans 10:18 NKJV - \"But I say, have they not heard? Yes indeed: 'Their sound has gone out to all the earth, and their words to the ends of the world'\"",
-  body: "Thank God for the global broadcast of the Healing Streams Live Healing Services with Pastor Chris through television and radio networks around the world. Pray that every viewer and listener receives miracles, salvation, and restoration through every transmission. Pray that the signals are clear and unhindered, reaching every language, territory, and nation.",
-};
+const todaysDate = new Date().toLocaleDateString("en-US", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 
 const FALLBACK_BASE_URL = "https://ismprayernetwork.org";
 
