@@ -171,7 +171,7 @@ export function MailDispatchManager() {
             <h2 style="color: #1a1a1a; margin: 0; font-size: 20px;">${senderName}</h2>
           </div>
           <div style="color: #333333; line-height: 1.7; font-size: 15px;">
-            ${body.replace(/\n/g, "<br/>")}
+            ${body}
           </div>
           <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e5e5; text-align: center;">
             <p style="color: #999; font-size: 12px; margin: 0;">Sent from ISM Prayer Network</p>
