@@ -283,17 +283,11 @@ export function MailDispatchManager() {
                   maxLength={200}
                 />
               </div>
-              <div>
-                <Label htmlFor="body">Body (plain text, line breaks preserved)</Label>
-                <Textarea
-                  id="body"
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="Write your email content here..."
-                  className="mt-1 min-h-[200px]"
-                  maxLength={10000}
-                />
-              </div>
+              <RichEmailComposer
+                value={body}
+                onChange={setBody}
+                senderName={senderName}
+              />
             </CardContent>
           </Card>
 
