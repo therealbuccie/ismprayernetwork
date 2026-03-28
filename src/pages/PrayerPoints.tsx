@@ -76,6 +76,13 @@ const PrayerPoints = () => {
       </div>
 
       <div className="flex-1 container mx-auto px-4 py-10 max-w-3xl">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+          </div>
+        ) : prayerPoints.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">No prayer points available yet.</div>
+        ) : (
         <div className="space-y-4">
           {prayerPoints.map((cat, ci) => (
             <motion.div
