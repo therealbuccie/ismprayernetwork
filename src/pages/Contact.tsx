@@ -101,7 +101,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">Email</h3>
-                    <p className="text-sm text-muted-foreground">contact@prayernetwork.org</p>
+                    <p className="text-sm text-muted-foreground">info@ismprayernetwork.org</p>
                   </div>
                 </div>
               </GlassCard>
