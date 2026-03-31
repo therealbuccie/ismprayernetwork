@@ -113,7 +113,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">Phone</h3>
-                    <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
+                    <p className="text-sm text-muted-foreground">+44 751 430 0785</p>
                   </div>
                 </div>
               </GlassCard>
