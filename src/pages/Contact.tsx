@@ -101,7 +101,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">Email</h3>
-                    <p className="text-sm text-muted-foreground">contact@prayernetwork.org</p>
+                    <p className="text-sm text-muted-foreground">info@ismprayernetwork.org</p>
                   </div>
                 </div>
               </GlassCard>
@@ -113,7 +113,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">Phone</h3>
-                    <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
+                    <p className="text-sm text-muted-foreground">+44 751 430 0785</p>
                   </div>
                 </div>
               </GlassCard>
