@@ -132,6 +132,7 @@ const PrayerRoom = () => {
           ministry: prof?.ministry_name || null,
           user_id: s.user_id,
           slug: sessionMap.get(s.user_id) || null,
+          joinLink: null as string | null,
           isSample: false,
         };
       });
