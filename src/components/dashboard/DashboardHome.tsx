@@ -152,7 +152,7 @@ export function DashboardHome() {
           const rows = await adminQuery(table);
           allData[table] = Array.isArray(rows) ? rows : [];
         } else {
-          const { data } = await supabase.from(table).select("*");
+          const { data } = await supabase.from(table as any).select("*");
           allData[table] = data ?? [];
         }
       }
