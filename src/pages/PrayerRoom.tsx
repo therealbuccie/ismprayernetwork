@@ -175,14 +175,22 @@ const PrayerRoom = () => {
     queryFn: async () => {
       const res = await fetch("https://hlwxuludfjuiocrzcjzy.supabase.co/storage/v1/object/public/public-data/ism-prayer-network/caller-profiles.json");
       if (!res.ok) throw new Error("Failed to fetch caller profiles");
-      const profiles: { id?: string; name: string; ministry?: string; country?: string }[] = await res.json();
-      return profiles.map((p, i) => ({
+      const profiles: { id?: string; name: string; ministry?: string; country?: string; join_link?: string }[] = await res.json();
+      // Deduplicate by name (case-insensitive)
+      const seen = new Set<string>();
+      return profiles.filter(p => {
+        const key = p.name.toLowerCase().trim();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).map((p, i) => ({
         id: p.id || `caller-${i}`,
         name: p.name,
         ministry: p.ministry || null,
         country: p.country || null,
         user_id: p.id || `caller-${i}`,
         slug: null,
+        joinLink: p.join_link || null,
         isSample: true,
       }));
     },
