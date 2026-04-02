@@ -688,22 +688,18 @@ const PrayerRoom = () => {
                         </div>
                         <Button
                           size="sm"
-                          className={`text-xs rounded-full px-4 ${
-                            minister.isSample
-                              ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
-                              : "bg-primary text-primary-foreground hover:bg-primary/90"
-                          }`}
+                          className="text-xs rounded-full px-4 bg-primary text-primary-foreground hover:bg-primary/90"
                           onClick={() => {
-                            if (minister.isSample) {
-                              toast.info("This room is full. Join another minister's prayer session!");
-                            } else if (minister.slug) {
+                            if (!minister.isSample && minister.slug) {
                               navigate(`/prayer-room/${minister.slug}`);
+                            } else if (minister.joinLink) {
+                              window.open(minister.joinLink, "_blank", "noopener");
                             } else {
                               setIsPraying(true);
                             }
                           }}
                         >
-                          {minister.isSample ? "Room Full" : "Join Prayer"}
+                          Join Prayer
                         </Button>
                       </div>
                     ))}
