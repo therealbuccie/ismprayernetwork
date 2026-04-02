@@ -635,10 +635,26 @@ const PrayerRoom = () => {
                 className="mt-10"
               >
                 <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                  {allPrayingNow.map((minister) => (
+                <div className="overflow-hidden relative">
+                  {/* Fade edges */}
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+                  <motion.div
+                    className="flex gap-4 pb-4"
+                    animate={{ x: [0, -(allPrayingNow.length * 192)] }}
+                    transition={{
+                      x: {
+                        repeat: Infinity,
+                        repeatType: "loop",
+                        duration: allPrayingNow.length * 4,
+                        ease: "linear",
+                      },
+                    }}
+                  >
+                    {/* Duplicate items for seamless loop */}
+                    {[...allPrayingNow, ...allPrayingNow].map((minister, idx) => (
                       <div
-                        key={minister.id}
+                        key={`${minister.id}-${idx}`}
                         className="flex-shrink-0 w-44 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
                       >
                         <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
@@ -671,6 +687,7 @@ const PrayerRoom = () => {
                         </Button>
                       </div>
                     ))}
+                  </motion.div>
                 </div>
               </motion.div>
 
