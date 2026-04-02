@@ -4,8 +4,10 @@ import { isPublicDashboard, dashboardAdminCall, adminQuery } from "@/hooks/useBo
 import {
   BookOpen, Tag, Users, Mail, MessageSquare, CalendarDays, Newspaper,
   HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
-  Clock, CheckCircle, XCircle, ArrowUpRight, Flame
+  Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
@@ -134,12 +136,70 @@ export function DashboardHome() {
     return `${Math.floor(hrs / 24)}d ago`;
   };
 
+  const exportableTables = [
+    "books", "categories", "profiles", "testimonies", "programs", "events",
+    "contact_messages", "newsletter_subscribers", "prayer_requests", "prayer_groups",
+    "purchase_orders", "purchases", "combo_packs", "campaigns", "prayer_points",
+  ];
+
+  const exportAllAsCSV = async () => {
+    try {
+      toast.info("Exporting database...");
+      const allData: Record<string, any[]> = {};
+
+      for (const table of exportableTables) {
+        if (isPublic) {
+          const rows = await adminQuery(table);
+          allData[table] = Array.isArray(rows) ? rows : [];
+        } else {
+          const { data } = await supabase.from(table as any).select("*");
+          allData[table] = data ?? [];
+        }
+      }
+
+      // Build CSV per table and zip into one combined file
+      const sections: string[] = [];
+      for (const [table, rows] of Object.entries(allData)) {
+        if (rows.length === 0) {
+          sections.push(`\n--- ${table.toUpperCase()} (0 rows) ---\n`);
+          continue;
+        }
+        const headers = Object.keys(rows[0]);
+        const csvRows = rows.map(row =>
+          headers.map(h => {
+            const val = row[h];
+            const str = val === null || val === undefined ? "" : typeof val === "object" ? JSON.stringify(val) : String(val);
+            return `"${str.replace(/"/g, '""')}"`;
+          }).join(",")
+        );
+        sections.push(`\n--- ${table.toUpperCase()} (${rows.length} rows) ---\n${headers.join(",")}\n${csvRows.join("\n")}`);
+      }
+
+      const blob = new Blob([sections.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `database-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Database exported successfully!");
+    } catch (err: any) {
+      toast.error("Export failed: " + err.message);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
-        <p className="text-muted-foreground text-sm mt-1">Platform analytics and management at a glance</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
+          <p className="text-muted-foreground text-sm mt-1">Platform analytics and management at a glance</p>
+        </div>
+        <Button onClick={exportAllAsCSV} variant="outline" size="sm" className="gap-2">
+          <Download size={16} />
+          Export Database
+        </Button>
       </div>
 
       {/* Pending Alerts */}
