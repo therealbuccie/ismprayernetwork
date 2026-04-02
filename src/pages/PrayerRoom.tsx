@@ -169,17 +169,29 @@ const PrayerRoom = () => {
     return () => { supabase.removeChannel(channel); };
   }, [todayStr, queryClient]);
 
-  // Sample ministers always shown, plus real ones
-  const sampleMinisters = [
-    { id: "sample-1", name: "Min. Grace Okafor", ministry: "Grace Tabernacle", user_id: "sample-1", slug: null, isSample: true },
-    { id: "sample-2", name: "Pst. David Mensah", ministry: "House of Glory", user_id: "sample-2", slug: null, isSample: true },
-    { id: "sample-3", name: "Evg. Ruth Kimani", ministry: "Fire & Light Ministry", user_id: "sample-3", slug: null, isSample: true },
-    { id: "sample-4", name: "Dcns. Blessing Eze", ministry: "Kingdom Embassy", user_id: "sample-4", slug: null, isSample: true },
-  ];
+  // Fetch caller profiles from external JSON
+  const { data: callerProfiles } = useQuery({
+    queryKey: ["caller-profiles"],
+    queryFn: async () => {
+      const res = await fetch("https://hlwxuludfjuiocrzcjzy.supabase.co/storage/v1/object/public/public-data/ism-prayer-network/caller-profiles.json");
+      if (!res.ok) throw new Error("Failed to fetch caller profiles");
+      const profiles: { id?: string; name: string; ministry?: string; country?: string }[] = await res.json();
+      return profiles.map((p, i) => ({
+        id: p.id || `caller-${i}`,
+        name: p.name,
+        ministry: p.ministry || null,
+        country: p.country || null,
+        user_id: p.id || `caller-${i}`,
+        slug: null,
+        isSample: true,
+      }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const allPrayingNow = [
     ...(prayingNow || []),
-    ...sampleMinisters.filter(s => !(prayingNow || []).some(r => r.name === s.name)),
+    ...(callerProfiles || []).filter(s => !(prayingNow || []).some(r => r.name === s.name)),
   ];
 
   // Auto-create the user's prayer session based on their name
