@@ -4,8 +4,10 @@ import { isPublicDashboard, dashboardAdminCall, adminQuery } from "@/hooks/useBo
 import {
   BookOpen, Tag, Users, Mail, MessageSquare, CalendarDays, Newspaper,
   HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
-  Clock, CheckCircle, XCircle, ArrowUpRight, Flame
+  Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
