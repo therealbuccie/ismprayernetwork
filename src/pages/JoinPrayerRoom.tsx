@@ -64,11 +64,8 @@ const JoinPrayerRoom = () => {
     const remaining = PRAYER_DURATION - elapsed;
 
     if (remaining <= 0) {
+      // Don't end session — just set to 0, timer component handles overtime
       setSyncedSecondsLeft(0);
-      if (isPraying) {
-        setIsPraying(false);
-        toast.success("Prayer session complete! God bless you! 🙏🔥");
-      }
     } else {
       setSyncedSecondsLeft(remaining);
     }
