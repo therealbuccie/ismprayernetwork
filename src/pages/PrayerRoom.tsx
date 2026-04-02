@@ -139,6 +139,36 @@ const PrayerRoom = () => {
     refetchInterval: 30000, // refresh every 30s
   });
 
+  // Realtime subscription for prayer_slots changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("praying-now-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "prayer_slots",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["praying-now", todayStr] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "prayer_room_sessions",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["praying-now", todayStr] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [todayStr, queryClient]);
+
   // Sample ministers always shown, plus real ones
   const sampleMinisters = [
     { id: "sample-1", name: "Min. Grace Okafor", ministry: "Grace Tabernacle", user_id: "sample-1", slug: null, isSample: true },
@@ -605,10 +635,26 @@ const PrayerRoom = () => {
                 className="mt-10"
               >
                 <h2 className="text-center font-serif font-bold text-xl mb-6 tracking-wide uppercase">Praying Now</h2>
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                  {allPrayingNow.map((minister) => (
+                <div className="overflow-hidden relative">
+                  {/* Fade edges */}
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+                  <motion.div
+                    className="flex gap-4 pb-4"
+                    animate={{ x: [0, -(allPrayingNow.length * 192)] }}
+                    transition={{
+                      x: {
+                        repeat: Infinity,
+                        repeatType: "loop",
+                        duration: allPrayingNow.length * 4,
+                        ease: "linear",
+                      },
+                    }}
+                  >
+                    {/* Duplicate items for seamless loop */}
+                    {[...allPrayingNow, ...allPrayingNow].map((minister, idx) => (
                       <div
-                        key={minister.id}
+                        key={`${minister.id}-${idx}`}
                         className="flex-shrink-0 w-44 glass-card rounded-xl p-4 border border-border/50 flex flex-col items-center gap-3 text-center"
                       >
                         <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
@@ -641,6 +687,7 @@ const PrayerRoom = () => {
                         </Button>
                       </div>
                     ))}
+                  </motion.div>
                 </div>
               </motion.div>
 
