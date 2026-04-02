@@ -139,6 +139,36 @@ const PrayerRoom = () => {
     refetchInterval: 30000, // refresh every 30s
   });
 
+  // Realtime subscription for prayer_slots changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("praying-now-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "prayer_slots",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["praying-now", todayStr] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "prayer_room_sessions",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["praying-now", todayStr] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [todayStr, queryClient]);
+
   // Sample ministers always shown, plus real ones
   const sampleMinisters = [
     { id: "sample-1", name: "Min. Grace Okafor", ministry: "Grace Tabernacle", user_id: "sample-1", slug: null, isSample: true },
