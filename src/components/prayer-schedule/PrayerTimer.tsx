@@ -15,20 +15,38 @@ interface PrayerTimerProps {
 const PrayerTimer = ({ onComplete, onBack, initialSeconds }: PrayerTimerProps) => {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds ?? PRAYER_DURATION);
   const [minimized, setMinimized] = useState(true);
+  const [overtime, setOvertime] = useState(false);
+  const [overtimeSeconds, setOvertimeSeconds] = useState(0);
 
   useEffect(() => {
+    if (overtime) {
+      const timer = setInterval(() => setOvertimeSeconds((s) => s + 1), 1000);
+      return () => clearInterval(timer);
+    }
+
     if (secondsLeft <= 0) {
-      toast.success("Prayer session complete! God bless you! 🙏🔥");
-      onComplete();
+      toast.success("15 minutes complete! Keep going — extra time is being tracked 🙏🔥");
+      setOvertime(true);
       return;
     }
     const timer = setInterval(() => setSecondsLeft((s) => s - 1), 1000);
     return () => clearInterval(timer);
-  }, [secondsLeft, onComplete]);
+  }, [secondsLeft, overtime]);
 
-  const minutes = Math.floor(secondsLeft / 60);
-  const seconds = secondsLeft % 60;
-  const progress = ((PRAYER_DURATION - secondsLeft) / PRAYER_DURATION) * 100;
+  const displayMinutes = overtime
+    ? Math.floor(overtimeSeconds / 60)
+    : Math.floor(secondsLeft / 60);
+  const displaySeconds = overtime
+    ? overtimeSeconds % 60
+    : secondsLeft % 60;
+  const progress = overtime
+    ? 100
+    : ((PRAYER_DURATION - secondsLeft) / PRAYER_DURATION) * 100;
+
+  const totalPrayed = overtime
+    ? PRAYER_DURATION + overtimeSeconds
+    : PRAYER_DURATION - secondsLeft;
+  const totalMin = Math.floor(totalPrayed / 60);
 
   if (minimized) {
     return (
@@ -38,8 +56,9 @@ const PrayerTimer = ({ onComplete, onBack, initialSeconds }: PrayerTimerProps) =
         onClick={() => setMinimized(false)}
         className="flex items-center gap-2 px-3 py-2 rounded-full bg-background/90 backdrop-blur-md border border-accent/30 shadow-lg text-sm font-mono font-bold text-foreground hover:bg-background transition-colors"
       >
-        <Flame size={14} className="text-accent animate-pulse" />
-        {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
+        <Flame size={14} className={`text-accent ${overtime ? "animate-bounce" : "animate-pulse"}`} />
+        {overtime ? "+" : ""}
+        {displayMinutes.toString().padStart(2, "0")}:{displaySeconds.toString().padStart(2, "0")}
       </motion.button>
     );
   }
@@ -53,8 +72,10 @@ const PrayerTimer = ({ onComplete, onBack, initialSeconds }: PrayerTimerProps) =
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          <Flame size={14} className="text-accent animate-pulse" />
-          <span className="text-[11px] font-semibold text-foreground">Praying</span>
+          <Flame size={14} className={`text-accent ${overtime ? "animate-bounce" : "animate-pulse"}`} />
+          <span className="text-[11px] font-semibold text-foreground">
+            {overtime ? "Extra Time" : "Praying"}
+          </span>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -80,25 +101,31 @@ const PrayerTimer = ({ onComplete, onBack, initialSeconds }: PrayerTimerProps) =
           <circle cx="50" cy="50" r="44" fill="none" stroke="hsl(var(--muted))" strokeWidth="4" />
           <circle
             cx="50" cy="50" r="44" fill="none"
-            stroke="hsl(var(--accent))" strokeWidth="4" strokeLinecap="round"
+            stroke={overtime ? "hsl(var(--primary))" : "hsl(var(--accent))"}
+            strokeWidth="4" strokeLinecap="round"
             strokeDasharray={2 * Math.PI * 44}
-            strokeDashoffset={2 * Math.PI * 44 * (1 - progress / 100)}
+            strokeDashoffset={overtime ? 0 : 2 * Math.PI * 44 * (1 - progress / 100)}
             className="transition-all duration-1000 ease-linear"
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold font-mono text-foreground tabular-nums">
-            {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
+            {overtime ? "+" : ""}
+            {displayMinutes.toString().padStart(2, "0")}:{displaySeconds.toString().padStart(2, "0")}
           </span>
-          <span className="text-[9px] text-muted-foreground">remaining</span>
+          <span className="text-[9px] text-muted-foreground">
+            {overtime ? `${totalMin} min total` : "remaining"}
+          </span>
         </div>
       </div>
 
       {/* Scripture */}
       <p className="text-[10px] text-center text-muted-foreground italic leading-snug">
-        {minutes > 7
-          ? "\"Be still, and know that I am God\""
-          : "\"Pray without ceasing\""}
+        {overtime
+          ? "\"The effectual fervent prayer of a righteous man availeth much\""
+          : displayMinutes > 7
+            ? "\"Be still, and know that I am God\""
+            : "\"Pray without ceasing\""}
       </p>
     </motion.div>
   );
