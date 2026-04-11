@@ -149,11 +149,20 @@ const FeaturedProgramsSection = () => {
                     {hero.description}
                   </p>
                 )}
-                <Link to="/programs">
-                  <Button className="gap-2 w-fit bg-accent hover:bg-accent/90 text-accent-foreground">
-                    Learn More <ArrowRight size={16} />
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Link to="/programs">
+                    <Button className="gap-2 w-fit bg-accent hover:bg-accent/90 text-accent-foreground">
+                      Learn More <ArrowRight size={16} />
+                    </Button>
+                  </Link>
+                  {hero.registration_url && (
+                    <a href={hero.registration_url} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" className="gap-2 w-fit border-accent/30 hover:bg-accent/10 hover:text-accent">
+                        Register Now <ArrowRight size={16} />
+                      </Button>
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>

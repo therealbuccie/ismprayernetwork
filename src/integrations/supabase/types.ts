@@ -736,6 +736,7 @@ export type Database = {
           image_url: string | null
           is_upcoming: boolean
           location: string | null
+          registration_url: string | null
           title: string
           video_url: string | null
         }
@@ -748,6 +749,7 @@ export type Database = {
           image_url?: string | null
           is_upcoming?: boolean
           location?: string | null
+          registration_url?: string | null
           title: string
           video_url?: string | null
         }
@@ -760,6 +762,7 @@ export type Database = {
           image_url?: string | null
           is_upcoming?: boolean
           location?: string | null
+          registration_url?: string | null
           title?: string
           video_url?: string | null
         }

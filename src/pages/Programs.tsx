@@ -3,7 +3,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -75,6 +76,13 @@ const Programs = () => {
                             </p>
                           )}
                           {prog.description && <p className="text-sm text-muted-foreground mt-3">{prog.description}</p>}
+                          {prog.registration_url && (
+                            <a href={prog.registration_url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block">
+                              <Button className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground">
+                                Register Now <ArrowRight size={16} />
+                              </Button>
+                            </a>
+                          )}
                         </GlassCard>
                       </motion.div>
                     ))}
