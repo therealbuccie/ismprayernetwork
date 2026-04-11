@@ -18,11 +18,15 @@ function FullScreenReader({
   documentId,
   title,
   coverUrl,
+  userEmail,
+  userName,
   onClose,
 }: {
   documentId: string;
   title: string;
   coverUrl?: string;
+  userEmail?: string;
+  userName?: string;
   onClose: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +81,16 @@ function FullScreenReader({
     };
   }, []);
 
+  // Visibility API — blur when tab is hidden (mobile screenshot, app switch)
+  useEffect(() => {
+    const onVisChange = () => {
+      if (document.hidden) setIsBlurred(true);
+      else setIsBlurred(false);
+    };
+    document.addEventListener("visibilitychange", onVisChange);
+    return () => document.removeEventListener("visibilitychange", onVisChange);
+  }, []);
+
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onFsChange);
@@ -95,24 +109,39 @@ function FullScreenReader({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !document.fullscreenElement) onClose();
-      // Block PrintScreen
+      // Block PrintScreen — also clear clipboard
       if (e.key === "PrintScreen") {
         e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard?.writeText?.("").catch(() => {});
+        setIsBlurred(true);
+        setTimeout(() => setIsBlurred(false), 1500);
       }
       // Block Ctrl+P (print), Ctrl+S (save), Ctrl+Shift+S
       if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "s" || e.key === "P" || e.key === "S")) {
         e.preventDefault();
       }
-      // Block Ctrl+Shift+I (dev tools)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i")) {
+      // Block Ctrl+Shift+I (dev tools), Ctrl+Shift+C (inspect element)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && /^[iIcCjJ]$/.test(e.key)) {
         e.preventDefault();
       }
+      // Block F12 (dev tools)
+      if (e.key === "F12") {
+        e.preventDefault();
+      }
+      // Block Windows Snipping Tool shortcut (Win+Shift+S)
+      if (e.shiftKey && (e.key === "S" || e.key === "s") && (e.metaKey || e.getModifierState("Meta"))) {
+        e.preventDefault();
+        navigator.clipboard?.writeText?.("").catch(() => {});
+        setIsBlurred(true);
+        setTimeout(() => setIsBlurred(false), 1500);
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
-  // Prevent right-click context menu
+  // Prevent right-click context menu, copy, selection, drag
   useEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
@@ -128,6 +157,8 @@ function FullScreenReader({
       wrapper.removeEventListener("selectstart", prevent);
     };
   }, []);
+
+  const watermarkText = userEmail || userName || "Licensed Reader";
 
   return (
     <motion.div
@@ -167,15 +198,58 @@ function FullScreenReader({
       </div>
 
       {/* Reader area */}
-      <div className="flex-1 overflow-hidden relative" style={{ filter: isBlurred ? "blur(20px)" : "none", transition: "filter 0.15s" }}>
+      <div className="flex-1 overflow-hidden relative" style={{ filter: isBlurred ? "blur(30px)" : "none", transition: "filter 0.1s" }}>
         <div
           ref={containerRef}
           className="w-full h-full"
           style={{ backgroundColor: "#f5f0e8" }}
         />
+
+        {/* Dynamic watermark overlay — traceable to user */}
+        <div
+          className="absolute inset-0 pointer-events-none z-40 overflow-hidden"
+          aria-hidden="true"
+          style={{ mixBlendMode: "multiply" }}
+        >
+          <div
+            className="w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 120px,
+                rgba(0,0,0,0.015) 120px,
+                rgba(0,0,0,0.015) 121px
+              )`,
+            }}
+          >
+            {Array.from({ length: 60 }).map((_, i) => (
+              <span
+                key={i}
+                className="inline-block text-[11px] font-mono select-none"
+                style={{
+                  color: "rgba(0,0,0,0.04)",
+                  transform: "rotate(-35deg)",
+                  padding: "60px 40px",
+                  whiteSpace: "nowrap",
+                  letterSpacing: "2px",
+                }}
+              >
+                {watermarkText}
+              </span>
+            ))}
+          </div>
+        </div>
+
         {isBlurred && (
-          <div className="absolute inset-0 bg-[#f5f0e8]/80 flex items-center justify-center z-50">
-            <p className="text-[#3b2f1e] font-serif text-lg">Click to continue reading</p>
+          <div className="absolute inset-0 bg-[#f5f0e8] flex flex-col items-center justify-center z-50">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-[#3b2f1e]/10 flex items-center justify-center mx-auto mb-4">
+                <Eye size={28} className="text-[#3b2f1e]/60" />
+              </div>
+              <p className="text-[#3b2f1e] font-serif text-lg font-semibold">Content Protected</p>
+              <p className="text-[#3b2f1e]/60 text-sm mt-1">Click here or return to this tab to continue reading</p>
+            </div>
           </div>
         )}
       </div>
@@ -184,7 +258,7 @@ function FullScreenReader({
 }
 
 const MyLibrary = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: purchases, isLoading } = useMyPurchases();
   const [viewingBook, setViewingBook] = useState<Purchase | null>(null);
@@ -295,6 +369,8 @@ const MyLibrary = () => {
             documentId={viewingBook.books.cloudpdf_document_id}
             title={viewingBook.books.title || "Book"}
             coverUrl={viewingBook.books.cover_image_url || undefined}
+            userEmail={user?.email || undefined}
+            userName={profile?.full_name || undefined}
             onClose={() => setViewingBook(null)}
           />
         )}
