@@ -29,11 +29,13 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [prayerOpen, setPrayerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [mobilePrayerOpen, setMobilePrayerOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
