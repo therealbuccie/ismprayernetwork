@@ -369,6 +369,8 @@ const MyLibrary = () => {
             documentId={viewingBook.books.cloudpdf_document_id}
             title={viewingBook.books.title || "Book"}
             coverUrl={viewingBook.books.cover_image_url || undefined}
+            userEmail={user?.email || undefined}
+            userName={profile?.full_name || undefined}
             onClose={() => setViewingBook(null)}
           />
         )}
