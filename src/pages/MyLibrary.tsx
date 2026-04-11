@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useMyPurchases, Purchase } from "@/hooks/usePurchases";
+import { useMyOrders } from "@/hooks/usePurchaseOrders";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Library, Eye, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
+import { BookOpen, Library, Eye, ArrowLeft, Maximize2, Minimize2, Clock, CheckCircle2, XCircle, Package, ChevronDown, ChevronUp } from "lucide-react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 
 declare global {
@@ -261,7 +263,9 @@ const MyLibrary = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: purchases, isLoading } = useMyPurchases();
+  const { data: orders, isLoading: ordersLoading } = useMyOrders();
   const [viewingBook, setViewingBook] = useState<Purchase | null>(null);
+  const [ordersExpanded, setOrdersExpanded] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -357,6 +361,100 @@ const MyLibrary = () => {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Order History Section */}
+      <section className="container mx-auto px-4 pb-12">
+        <button
+          onClick={() => setOrdersExpanded(!ordersExpanded)}
+          className="flex items-center gap-2 mb-4 text-foreground hover:text-accent transition-colors cursor-pointer"
+        >
+          <Package size={20} />
+          <h2 className="text-lg font-semibold">Order History</h2>
+          {ordersExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {orders && orders.length > 0 && (
+            <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{orders.length}</span>
+          )}
+        </button>
+
+        <AnimatePresence>
+          {ordersExpanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              {ordersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map(i => (
+                    <div key={i} className="glass-card rounded-xl p-4 animate-pulse">
+                      <div className="h-4 bg-muted rounded w-1/3 mb-2" />
+                      <div className="h-3 bg-muted rounded w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              ) : !orders || orders.length === 0 ? (
+                <div className="glass-card rounded-xl p-8 text-center">
+                  <Package className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No orders yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {orders.map((order) => {
+                    const statusConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+                      pending: { icon: <Clock size={14} />, color: "text-yellow-500 bg-yellow-500/10", label: "Pending Review" },
+                      approved: { icon: <CheckCircle2 size={14} />, color: "text-green-500 bg-green-500/10", label: "Approved" },
+                      rejected: { icon: <XCircle size={14} />, color: "text-red-500 bg-red-500/10", label: "Rejected" },
+                      completed: { icon: <CheckCircle2 size={14} />, color: "text-green-500 bg-green-500/10", label: "Completed" },
+                    };
+                    const status = statusConfig[order.status] || statusConfig.pending;
+
+                    return (
+                      <motion.div
+                        key={order.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="glass-card rounded-xl p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                              <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${status.color}`}>
+                                {status.icon}
+                                {status.label}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(order.created_at), "MMM d, yyyy")}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              {(order.items as any[]).map((item: any, idx: number) => (
+                                <p key={idx} className="text-sm text-foreground">
+                                  {item.title || "Book"}{" "}
+                                  <span className="text-muted-foreground text-xs">× {item.quantity} • {item.format}</span>
+                                </p>
+                              ))}
+                            </div>
+                            {order.admin_note && (
+                              <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-accent/30 pl-2">
+                                Admin: {order.admin_note}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-semibold text-foreground">${order.total_amount.toFixed(2)}</p>
+                            <p className="text-[10px] text-muted-foreground capitalize">{order.payment_method.replace("_", " ")}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       <Footer />
