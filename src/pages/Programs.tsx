@@ -21,8 +21,9 @@ const Programs = () => {
     },
   });
 
-  const upcoming = programs?.filter((p: any) => p.is_upcoming) ?? [];
-  const past = programs?.filter((p: any) => !p.is_upcoming) ?? [];
+  const now = new Date().toISOString();
+  const upcoming = programs?.filter((p: any) => p.is_upcoming && (!p.event_date || p.event_date >= now)) ?? [];
+  const past = programs?.filter((p: any) => !p.is_upcoming || (p.event_date && p.event_date < now)) ?? [];
 
   return (
     <div className="min-h-screen bg-background">

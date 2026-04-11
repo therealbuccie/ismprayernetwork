@@ -56,6 +56,7 @@ const FeaturedProgramsSection = () => {
         .from("programs")
         .select("*")
         .eq("is_upcoming", true)
+        .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(4);
       if (error) throw error;
