@@ -27,6 +27,7 @@ function FullScreenReader({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isBlurred, setIsBlurred] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,6 +64,18 @@ function FullScreenReader({
       if (container) container.innerHTML = "";
     };
   }, [documentId]);
+
+  // Blur content when window loses focus (screenshot protection)
+  useEffect(() => {
+    const onBlur = () => setIsBlurred(true);
+    const onFocus = () => setIsBlurred(false);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
