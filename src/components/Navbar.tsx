@@ -37,7 +37,7 @@ const Navbar = () => {
   const moreRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const cart = useCartContext();
