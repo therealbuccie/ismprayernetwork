@@ -81,6 +81,16 @@ function FullScreenReader({
     };
   }, []);
 
+  // Visibility API — blur when tab is hidden (mobile screenshot, app switch)
+  useEffect(() => {
+    const onVisChange = () => {
+      if (document.hidden) setIsBlurred(true);
+      else setIsBlurred(false);
+    };
+    document.addEventListener("visibilitychange", onVisChange);
+    return () => document.removeEventListener("visibilitychange", onVisChange);
+  }, []);
+
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onFsChange);
@@ -99,24 +109,39 @@ function FullScreenReader({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !document.fullscreenElement) onClose();
-      // Block PrintScreen
+      // Block PrintScreen — also clear clipboard
       if (e.key === "PrintScreen") {
         e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard?.writeText?.("").catch(() => {});
+        setIsBlurred(true);
+        setTimeout(() => setIsBlurred(false), 1500);
       }
       // Block Ctrl+P (print), Ctrl+S (save), Ctrl+Shift+S
       if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "s" || e.key === "P" || e.key === "S")) {
         e.preventDefault();
       }
-      // Block Ctrl+Shift+I (dev tools)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i")) {
+      // Block Ctrl+Shift+I (dev tools), Ctrl+Shift+C (inspect element)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && /^[iIcCjJ]$/.test(e.key)) {
         e.preventDefault();
       }
+      // Block F12 (dev tools)
+      if (e.key === "F12") {
+        e.preventDefault();
+      }
+      // Block Windows Snipping Tool shortcut (Win+Shift+S)
+      if (e.shiftKey && (e.key === "S" || e.key === "s") && (e.metaKey || e.getModifierState("Meta"))) {
+        e.preventDefault();
+        navigator.clipboard?.writeText?.("").catch(() => {});
+        setIsBlurred(true);
+        setTimeout(() => setIsBlurred(false), 1500);
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
-  // Prevent right-click context menu
+  // Prevent right-click context menu, copy, selection, drag
   useEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
@@ -132,6 +157,8 @@ function FullScreenReader({
       wrapper.removeEventListener("selectstart", prevent);
     };
   }, []);
+
+  const watermarkText = userEmail || userName || "Licensed Reader";
 
   return (
     <motion.div
