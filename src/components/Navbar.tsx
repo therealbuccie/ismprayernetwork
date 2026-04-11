@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Radio, ShoppingCart, User, Library } from "lucide-react";
+import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Radio, ShoppingCart, User, Library, ShoppingBag, HandHeart, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -207,19 +207,34 @@ const Navbar = () => {
                     className={dropdownMenuClass}
                     style={{ right: 0, left: "auto" }}
                   >
-                    <div className="px-4 py-2 border-b border-border/40">
-                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    <div className="px-4 py-2.5 border-b border-border/40">
+                      <p className="text-xs font-medium text-foreground truncate">{profile?.full_name || "User"}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
                     </div>
                     <Link to="/my-library" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
                       <Library size={14} /> My Library
                     </Link>
-                    <button
-                      onClick={() => { setProfileOpen(false); void handleSignOut(); }}
-                      disabled={isSigningOut}
-                      className={dropdownItemClass + " w-full text-left flex items-center gap-2 text-destructive cursor-pointer"}
-                    >
-                      <LogOut size={14} /> {isSigningOut ? "Signing Out..." : "Sign Out"}
-                    </button>
+                    <Link to="/bookstore" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
+                      <ShoppingBag size={14} /> Bookstore
+                    </Link>
+                    <Link to="/prayer-requests" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
+                      <HandHeart size={14} /> My Prayer Requests
+                    </Link>
+                    <Link to="/testimonies" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
+                      <MessageSquare size={14} /> Testimonies
+                    </Link>
+                    <Link to="/partner" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
+                      <Heart size={14} /> Partner With Us
+                    </Link>
+                    <div className="border-t border-border/40 mt-1 pt-1">
+                      <button
+                        onClick={() => { setProfileOpen(false); void handleSignOut(); }}
+                        disabled={isSigningOut}
+                        className={dropdownItemClass + " w-full text-left flex items-center gap-2 text-destructive cursor-pointer"}
+                      >
+                        <LogOut size={14} /> {isSigningOut ? "Signing Out..." : "Sign Out"}
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

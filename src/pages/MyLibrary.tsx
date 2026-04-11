@@ -42,6 +42,8 @@ function FullScreenReader({
           {
             documentId,
             darkMode: false,
+            download: false,
+            print: false,
           },
           container
         );
@@ -80,10 +82,39 @@ function FullScreenReader({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !document.fullscreenElement) onClose();
+      // Block PrintScreen
+      if (e.key === "PrintScreen") {
+        e.preventDefault();
+      }
+      // Block Ctrl+P (print), Ctrl+S (save), Ctrl+Shift+S
+      if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "s" || e.key === "P" || e.key === "S")) {
+        e.preventDefault();
+      }
+      // Block Ctrl+Shift+I (dev tools)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i")) {
+        e.preventDefault();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // Prevent right-click context menu
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const prevent = (e: Event) => e.preventDefault();
+    wrapper.addEventListener("contextmenu", prevent);
+    wrapper.addEventListener("copy", prevent);
+    wrapper.addEventListener("cut", prevent);
+    wrapper.addEventListener("selectstart", prevent);
+    return () => {
+      wrapper.removeEventListener("contextmenu", prevent);
+      wrapper.removeEventListener("copy", prevent);
+      wrapper.removeEventListener("cut", prevent);
+      wrapper.removeEventListener("selectstart", prevent);
+    };
+  }, []);
 
   return (
     <motion.div
@@ -91,8 +122,13 @@ function FullScreenReader({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex flex-col"
-      style={{ backgroundColor: "#f5f0e8" }}
+      className="fixed inset-0 z-[200] flex flex-col select-none"
+      style={{
+        backgroundColor: "#f5f0e8",
+        WebkitUserSelect: "none",
+        userSelect: "none",
+      }}
+      onDragStart={(e) => e.preventDefault()}
     >
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-[#3b2f1e] text-[#f5f0e8] shadow-md z-10 shrink-0">
