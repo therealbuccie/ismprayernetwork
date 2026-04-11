@@ -198,15 +198,58 @@ function FullScreenReader({
       </div>
 
       {/* Reader area */}
-      <div className="flex-1 overflow-hidden relative" style={{ filter: isBlurred ? "blur(20px)" : "none", transition: "filter 0.15s" }}>
+      <div className="flex-1 overflow-hidden relative" style={{ filter: isBlurred ? "blur(30px)" : "none", transition: "filter 0.1s" }}>
         <div
           ref={containerRef}
           className="w-full h-full"
           style={{ backgroundColor: "#f5f0e8" }}
         />
+
+        {/* Dynamic watermark overlay — traceable to user */}
+        <div
+          className="absolute inset-0 pointer-events-none z-40 overflow-hidden"
+          aria-hidden="true"
+          style={{ mixBlendMode: "multiply" }}
+        >
+          <div
+            className="w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 120px,
+                rgba(0,0,0,0.015) 120px,
+                rgba(0,0,0,0.015) 121px
+              )`,
+            }}
+          >
+            {Array.from({ length: 60 }).map((_, i) => (
+              <span
+                key={i}
+                className="inline-block text-[11px] font-mono select-none"
+                style={{
+                  color: "rgba(0,0,0,0.04)",
+                  transform: "rotate(-35deg)",
+                  padding: "60px 40px",
+                  whiteSpace: "nowrap",
+                  letterSpacing: "2px",
+                }}
+              >
+                {watermarkText}
+              </span>
+            ))}
+          </div>
+        </div>
+
         {isBlurred && (
-          <div className="absolute inset-0 bg-[#f5f0e8]/80 flex items-center justify-center z-50">
-            <p className="text-[#3b2f1e] font-serif text-lg">Click to continue reading</p>
+          <div className="absolute inset-0 bg-[#f5f0e8] flex flex-col items-center justify-center z-50">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-[#3b2f1e]/10 flex items-center justify-center mx-auto mb-4">
+                <Eye size={28} className="text-[#3b2f1e]/60" />
+              </div>
+              <p className="text-[#3b2f1e] font-serif text-lg font-semibold">Content Protected</p>
+              <p className="text-[#3b2f1e]/60 text-sm mt-1">Click here or return to this tab to continue reading</p>
+            </div>
           </div>
         )}
       </div>
