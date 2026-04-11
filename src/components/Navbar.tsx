@@ -306,6 +306,12 @@ const Navbar = () => {
                 )}
               </AnimatePresence>
 
+              {user && (
+                <Link to="/my-library" className="text-sm text-muted-foreground hover:text-foreground py-2 transition-colors flex items-center gap-1" onClick={() => setMobileOpen(false)}>
+                  <Library size={14} /> My Library
+                </Link>
+              )}
+
               {isAdmin && (
                 <Link to="/admin" className="text-sm text-accent hover:text-accent/80 py-2 transition-colors flex items-center gap-1" onClick={() => setMobileOpen(false)}>
                   <LayoutDashboard size={14} /> Dashboard
