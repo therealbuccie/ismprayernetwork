@@ -188,15 +188,42 @@ const Navbar = () => {
             </HeroButton>
           </Link>
           {user ? (
-              <HeroButton
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-                disabled={isSigningOut}
-                className="text-foreground border-border hover:bg-muted gap-1.5 cursor-pointer"
+            <div ref={profileRef} className="relative">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-foreground/90 hover:bg-muted/50 transition-colors cursor-pointer border border-border/60"
               >
-                <LogOut size={14} /> {isSigningOut ? "Signing Out..." : "Sign Out"}
-              </HeroButton>
+                <User size={14} />
+                <span className="max-w-[100px] truncate">{profile?.full_name || user.email?.split("@")[0] || "Account"}</span>
+                <ChevronDown size={12} className={`transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence>
+                {profileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.15 }}
+                    className={dropdownMenuClass}
+                    style={{ right: 0, left: "auto" }}
+                  >
+                    <div className="px-4 py-2 border-b border-border/40">
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <Link to="/my-library" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
+                      <Library size={14} /> My Library
+                    </Link>
+                    <button
+                      onClick={() => { setProfileOpen(false); void handleSignOut(); }}
+                      disabled={isSigningOut}
+                      className={dropdownItemClass + " w-full text-left flex items-center gap-2 text-destructive cursor-pointer"}
+                    >
+                      <LogOut size={14} /> {isSigningOut ? "Signing Out..." : "Sign Out"}
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ) : (
             <Link to="/auth">
               <HeroButton variant="outline" size="sm" className="text-foreground border-border hover:bg-muted">
