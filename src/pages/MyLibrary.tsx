@@ -258,7 +258,7 @@ function FullScreenReader({
 }
 
 const MyLibrary = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: purchases, isLoading } = useMyPurchases();
   const [viewingBook, setViewingBook] = useState<Purchase | null>(null);
