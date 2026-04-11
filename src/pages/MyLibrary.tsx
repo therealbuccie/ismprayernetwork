@@ -167,12 +167,17 @@ function FullScreenReader({
       </div>
 
       {/* Reader area */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden relative" style={{ filter: isBlurred ? "blur(20px)" : "none", transition: "filter 0.15s" }}>
         <div
           ref={containerRef}
           className="w-full h-full"
           style={{ backgroundColor: "#f5f0e8" }}
         />
+        {isBlurred && (
+          <div className="absolute inset-0 bg-[#f5f0e8]/80 flex items-center justify-center z-50">
+            <p className="text-[#3b2f1e] font-serif text-lg">Click to continue reading</p>
+          </div>
+        )}
       </div>
     </motion.div>
   );
