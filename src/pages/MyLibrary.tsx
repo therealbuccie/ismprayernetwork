@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMyPurchases, Purchase } from "@/hooks/usePurchases";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { motion } from "framer-motion";
-import { BookOpen, Library, Eye } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { BookOpen, Library, Eye, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 declare global {
   interface Window {
@@ -15,16 +14,37 @@ declare global {
   }
 }
 
-function CloudPDFViewer({ documentId, title }: { documentId: string; title: string }) {
+function FullScreenReader({
+  documentId,
+  title,
+  coverUrl,
+  onClose,
+}: {
+  documentId: string;
+  title: string;
+  coverUrl?: string;
+  onClose: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const container = document.getElementById("cloudpdf-viewer");
+    const container = containerRef.current;
     if (!container) return;
 
-    // Load CloudPDF script if not already loaded
-    const existingScript = document.querySelector('script[src="https://cloudpdf.io/viewer.min.js"]');
+    const existingScript = document.querySelector(
+      'script[src="https://cloudpdf.io/viewer.min.js"]'
+    );
     const initViewer = () => {
       if (window.CloudPDF && container) {
-        window.CloudPDF({ documentId, darkMode: true }, container);
+        window.CloudPDF(
+          {
+            documentId,
+            darkMode: false,
+          },
+          container
+        );
       }
     };
 
@@ -42,7 +62,71 @@ function CloudPDFViewer({ documentId, title }: { documentId: string; title: stri
     };
   }, [documentId]);
 
-  return <div id="cloudpdf-viewer" style={{ width: "100%", minHeight: "80vh" }} />;
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!wrapperRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      wrapperRef.current.requestFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !document.fullscreenElement) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <motion.div
+      ref={wrapperRef}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex flex-col"
+      style={{ backgroundColor: "#f5f0e8" }}
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-2 bg-[#3b2f1e] text-[#f5f0e8] shadow-md z-10 shrink-0">
+        <button
+          onClick={onClose}
+          className="flex items-center gap-2 text-sm font-medium hover:text-[#d4a574] transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={18} />
+          <span className="hidden sm:inline">Back to Library</span>
+        </button>
+
+        <h2 className="text-sm sm:text-base font-semibold truncate max-w-[50%] text-center font-serif">
+          {title}
+        </h2>
+
+        <button
+          onClick={toggleFullscreen}
+          className="p-2 hover:text-[#d4a574] transition-colors cursor-pointer"
+          title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+        >
+          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+        </button>
+      </div>
+
+      {/* Reader area */}
+      <div className="flex-1 overflow-hidden relative">
+        <div
+          ref={containerRef}
+          className="w-full h-full"
+          style={{ backgroundColor: "#f5f0e8" }}
+        />
+      </div>
+    </motion.div>
+  );
 }
 
 const MyLibrary = () => {
@@ -55,9 +139,15 @@ const MyLibrary = () => {
     if (!authLoading && !user) navigate("/auth");
   }, [authLoading, user, navigate]);
 
-  const digitalPurchases = purchases?.filter(
-    p => (p.format === "digital" || p.format === "both") && p.books?.cloudpdf_document_id
-  );
+  // Prevent body scroll when reader is open
+  useEffect(() => {
+    if (viewingBook) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [viewingBook]);
 
   if (authLoading) return null;
 
@@ -109,22 +199,23 @@ const MyLibrary = () => {
                 key={purchase.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass-card rounded-xl overflow-hidden group"
+                className="glass-card rounded-xl overflow-hidden group cursor-pointer"
+                onClick={() => {
+                  if (purchase.books?.cloudpdf_document_id && (purchase.format === "digital" || purchase.format === "both")) {
+                    setViewingBook(purchase);
+                  }
+                }}
               >
                 <div className="relative aspect-[3/4] overflow-hidden bg-muted">
                   <img
                     src={purchase.books?.cover_image_url || "/placeholder.svg"}
                     alt={purchase.books?.title || "Book"}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     {purchase.books?.cloudpdf_document_id && (purchase.format === "digital" || purchase.format === "both") && (
-                      <Button
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => setViewingBook(purchase)}
-                      >
-                        <Eye size={14} /> Read
+                      <Button size="sm" className="gap-2 rounded-full px-6 bg-[#3b2f1e] hover:bg-[#3b2f1e]/90">
+                        <Eye size={14} /> Read Now
                       </Button>
                     )}
                   </div>
@@ -142,22 +233,18 @@ const MyLibrary = () => {
 
       <Footer />
 
-      {/* CloudPDF Reader Modal */}
-      <Dialog open={!!viewingBook} onOpenChange={() => setViewingBook(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 overflow-hidden">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle>{viewingBook?.books?.title}</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden p-4 pt-2">
-            {viewingBook?.books?.cloudpdf_document_id && (
-              <CloudPDFViewer
-                documentId={viewingBook.books.cloudpdf_document_id}
-                title={viewingBook.books.title || "Book"}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Full-screen book reader */}
+      <AnimatePresence>
+        {viewingBook?.books?.cloudpdf_document_id && (
+          <FullScreenReader
+            key={viewingBook.id}
+            documentId={viewingBook.books.cloudpdf_document_id}
+            title={viewingBook.books.title || "Book"}
+            coverUrl={viewingBook.books.cover_image_url || undefined}
+            onClose={() => setViewingBook(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
