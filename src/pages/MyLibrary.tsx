@@ -18,11 +18,15 @@ function FullScreenReader({
   documentId,
   title,
   coverUrl,
+  userEmail,
+  userName,
   onClose,
 }: {
   documentId: string;
   title: string;
   coverUrl?: string;
+  userEmail?: string;
+  userName?: string;
   onClose: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
