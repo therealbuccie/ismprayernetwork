@@ -13,9 +13,9 @@ import { Plus, Pencil, Trash2, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProgramForm {
-  title: string; description: string; location: string; event_date: string; image_url: string; video_url: string; is_upcoming: boolean;
+  title: string; description: string; location: string; event_date: string; image_url: string; video_url: string; registration_url: string; is_upcoming: boolean;
 }
-const emptyForm: ProgramForm = { title: "", description: "", location: "", event_date: "", image_url: "", video_url: "", is_upcoming: true };
+const emptyForm: ProgramForm = { title: "", description: "", location: "", event_date: "", image_url: "", video_url: "", registration_url: "", is_upcoming: true };
 
 export function ProgramsManager() {
   const queryClient = useQueryClient();
@@ -41,7 +41,7 @@ export function ProgramsManager() {
     setForm({
       title: p.title, description: p.description || "", location: p.location || "",
       event_date: p.event_date ? new Date(p.event_date).toISOString().slice(0, 16) : "",
-      image_url: p.image_url || "", video_url: p.video_url || "", is_upcoming: p.is_upcoming,
+      image_url: p.image_url || "", video_url: p.video_url || "", registration_url: p.registration_url || "", is_upcoming: p.is_upcoming,
     });
     setEditingId(p.id); setOpen(true);
   };
@@ -53,7 +53,7 @@ export function ProgramsManager() {
       const record: any = {
         title: form.title, description: form.description || null,
         location: form.location || null, event_date: form.event_date || null,
-        image_url: form.image_url || null, video_url: form.video_url || null, is_upcoming: form.is_upcoming,
+        image_url: form.image_url || null, video_url: form.video_url || null, registration_url: form.registration_url || null, is_upcoming: form.is_upcoming,
       };
       if (editingId) {
         if (isPublic) await adminUpdate("programs", { id: editingId, ...record });
@@ -120,6 +120,7 @@ export function ProgramsManager() {
             </div>
             <div><Label>Image URL</Label><Input value={form.image_url} onChange={e => set("image_url", e.target.value)} /></div>
             <div><Label>Promo Video URL</Label><Input value={form.video_url} onChange={e => set("video_url", e.target.value)} placeholder="https://youtube.com/watch?v=... or direct video URL" /></div>
+            <div><Label>Registration URL</Label><Input value={form.registration_url} onChange={e => set("registration_url", e.target.value)} placeholder="https://forms.google.com/... or registration link" /></div>
             <label className="flex items-center gap-2 text-sm"><Switch checked={form.is_upcoming} onCheckedChange={v => set("is_upcoming", v)} /> Upcoming</label>
             <div className="flex justify-end gap-2 pt-2"><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button></div>
           </div>
