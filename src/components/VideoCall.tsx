@@ -50,12 +50,38 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
     const callObj = DailyIframe.createCallObject({
       audioSource: true,
       videoSource: false,
-      // Enable Daily's simulcast + adaptive bitrate so senders publish
-      // multiple layers and the SFU picks the best one per receiver.
+      // High-quality audio: use browser AEC/NS/AGC + Daily's music-mode-friendly
+      // stereo/high-bitrate Opus so voices come through crisp, not crackly.
       dailyConfig: {
         useDevicePreferenceCookies: true,
-      },
+        micAudioMode: "speech",
+        audioBitrate: 64000,
+      } as any,
     });
+
+    // Best-in-class capture constraints for the mic (Opus + browser DSP).
+    try {
+      callObj.setAudioSource?.({
+        // @ts-ignore — Daily accepts MediaTrackConstraints here at runtime.
+        deviceId: undefined,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+        sampleRate: 48000,
+        sampleSize: 16,
+      } as any);
+    } catch {}
+
+    // Prefer high-quality Opus send settings (stereo-capable, 32kbps floor).
+    try {
+      (callObj as any).updateSendSettings?.({
+        audio: {
+          channelCount: 1,
+          maxBitrate: 64000,
+        },
+      });
+    } catch {}
     callRef.current = callObj;
 
     // Adaptive send quality — start balanced, react to network quality.
