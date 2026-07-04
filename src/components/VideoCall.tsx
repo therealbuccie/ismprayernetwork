@@ -117,47 +117,49 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
     setChatInput("");
   };
 
-  // Attach video + audio tracks
+  // Attach video + audio tracks into per-participant slots
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
+
   useEffect(() => {
-    if (!joined || !containerRef.current || !callRef.current) return;
-    const container = containerRef.current;
-
-    // Clear old media
-    container.querySelectorAll("video,audio").forEach(v => v.remove());
-
+    if (!joined || !callRef.current) return;
     const all = callRef.current.participants();
     Object.values(all).forEach((p: any) => {
-      if (p.videoTrack) {
-        const video = document.createElement("video");
-        video.srcObject = new MediaStream([p.videoTrack]);
-        video.autoplay = true;
-        video.playsInline = true;
-        video.muted = p.local;
-        video.dataset.sessionId = p.session_id;
-        video.className = "w-full h-full object-cover rounded-xl";
-        container.appendChild(video);
+      const videoEl = videoRefs.current[p.session_id];
+      if (videoEl) {
+        if (p.videoTrack) {
+          const current = videoEl.srcObject as MediaStream | null;
+          const currentId = current?.getVideoTracks()[0]?.id;
+          if (currentId !== p.videoTrack.id) {
+            videoEl.srcObject = new MediaStream([p.videoTrack]);
+            videoEl.play().catch(() => {});
+          }
+        } else if (videoEl.srcObject) {
+          videoEl.srcObject = null;
+        }
       }
-      // Attach remote audio so participants can hear each other.
-      // Skip local to avoid echo.
-      if (!p.local && p.audioTrack) {
-        const audio = document.createElement("audio");
-        audio.srcObject = new MediaStream([p.audioTrack]);
-        audio.autoplay = true;
-        (audio as any).playsInline = true;
-        audio.dataset.sessionId = p.session_id;
-        container.appendChild(audio);
-        audio.play().catch(() => {
-          // Autoplay may be blocked until a user gesture; toast once.
-          toast.info("Tap anywhere to enable audio", { id: "audio-unlock" });
-          const unlock = () => {
-            audio.play().catch(() => {});
-            document.removeEventListener("click", unlock);
-          };
-          document.addEventListener("click", unlock);
-        });
+      const audioEl = audioRefs.current[p.session_id];
+      if (audioEl && !p.local) {
+        if (p.audioTrack) {
+          const current = audioEl.srcObject as MediaStream | null;
+          const currentId = current?.getAudioTracks()[0]?.id;
+          if (currentId !== p.audioTrack.id) {
+            audioEl.srcObject = new MediaStream([p.audioTrack]);
+            audioEl.play().catch(() => {
+              toast.info("Tap anywhere to enable audio", { id: "audio-unlock" });
+              const unlock = () => {
+                audioEl.play().catch(() => {});
+                document.removeEventListener("click", unlock);
+              };
+              document.addEventListener("click", unlock);
+            });
+          }
+        } else if (audioEl.srcObject) {
+          audioEl.srcObject = null;
+        }
       }
     });
-  }, [joined, participants, camOn]);
+  }, [joined, participants]);
 
   const gridCols = participants.length <= 1 ? "grid-cols-1" :
     participants.length <= 4 ? "grid-cols-2" :
@@ -188,6 +190,19 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
               key={p.session_id}
               className="relative bg-muted/20 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden"
             >
+              <video
+                ref={(el) => { videoRefs.current[p.session_id] = el; }}
+                autoPlay
+                playsInline
+                muted={p.local}
+                className={`absolute inset-0 w-full h-full object-cover ${p.video ? "" : "hidden"}`}
+              />
+              {!p.local && (
+                <audio
+                  ref={(el) => { audioRefs.current[p.session_id] = el; }}
+                  autoPlay
+                />
+              )}
               {!p.video && (
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-white">
@@ -197,7 +212,7 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
                 </div>
               )}
               {/* Name tag */}
-              <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-0.5 rounded text-white text-xs flex items-center gap-1">
+              <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-0.5 rounded text-white text-xs flex items-center gap-1 z-10">
                 {!p.audio && <MicOff size={10} className="text-red-400" />}
                 {p.local ? "You" : p.user_name}
               </div>
