@@ -61,8 +61,7 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
 
     // Best-in-class capture constraints for the mic (Opus + browser DSP).
     try {
-      callObj.setAudioSource?.({
-        // @ts-ignore — Daily accepts MediaTrackConstraints here at runtime.
+      (callObj as any).setAudioSource?.({
         deviceId: undefined,
         echoCancellation: true,
         noiseSuppression: true,
@@ -70,7 +69,7 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
         channelCount: 1,
         sampleRate: 48000,
         sampleSize: 16,
-      } as any);
+      });
     } catch {}
 
     // Prefer high-quality Opus send settings (stereo-capable, 32kbps floor).
