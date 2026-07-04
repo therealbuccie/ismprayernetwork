@@ -50,18 +50,42 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
     const callObj = DailyIframe.createCallObject({
       audioSource: true,
       videoSource: false,
+      // Enable Daily's simulcast + adaptive bitrate so senders publish
+      // multiple layers and the SFU picks the best one per receiver.
+      dailyConfig: {
+        useDevicePreferenceCookies: true,
+      },
     });
     callRef.current = callObj;
+
+    // Adaptive send quality — start balanced, react to network quality.
+    const applySendPreset = (preset: "bandwidth-optimized" | "default-video" | "bandwidth-and-quality-balanced") => {
+      try {
+        callObj.updateSendSettings({ video: preset as any });
+      } catch {}
+    };
 
     callObj.on("joined-meeting", () => {
       setJoined(true);
       syncParticipants(callObj);
+      applySendPreset("bandwidth-and-quality-balanced");
     });
     callObj.on("participant-joined", () => syncParticipants(callObj));
     callObj.on("participant-updated", () => syncParticipants(callObj));
     callObj.on("participant-left", () => syncParticipants(callObj));
     callObj.on("left-meeting", () => {
       onLeave();
+    });
+    // React to changing network conditions in real time.
+    callObj.on("network-quality-change", (ev: any) => {
+      const threshold = ev?.threshold; // "good" | "low" | "very-low"
+      if (threshold === "very-low") {
+        applySendPreset("bandwidth-optimized");
+      } else if (threshold === "low") {
+        applySendPreset("bandwidth-and-quality-balanced");
+      } else {
+        applySendPreset("default-video");
+      }
     });
     callObj.on("error", (ev: any) => {
       const msg = ev?.errorMsg || "Unknown error";
