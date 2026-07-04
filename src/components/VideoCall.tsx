@@ -117,13 +117,13 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
     setChatInput("");
   };
 
-  // Attach video tracks
+  // Attach video + audio tracks
   useEffect(() => {
     if (!joined || !containerRef.current || !callRef.current) return;
     const container = containerRef.current;
-    
-    // Clear old videos
-    container.querySelectorAll("video").forEach(v => v.remove());
+
+    // Clear old media
+    container.querySelectorAll("video,audio").forEach(v => v.remove());
 
     const all = callRef.current.participants();
     Object.values(all).forEach((p: any) => {
@@ -136,6 +136,25 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
         video.dataset.sessionId = p.session_id;
         video.className = "w-full h-full object-cover rounded-xl";
         container.appendChild(video);
+      }
+      // Attach remote audio so participants can hear each other.
+      // Skip local to avoid echo.
+      if (!p.local && p.audioTrack) {
+        const audio = document.createElement("audio");
+        audio.srcObject = new MediaStream([p.audioTrack]);
+        audio.autoplay = true;
+        (audio as any).playsInline = true;
+        audio.dataset.sessionId = p.session_id;
+        container.appendChild(audio);
+        audio.play().catch(() => {
+          // Autoplay may be blocked until a user gesture; toast once.
+          toast.info("Tap anywhere to enable audio", { id: "audio-unlock" });
+          const unlock = () => {
+            audio.play().catch(() => {});
+            document.removeEventListener("click", unlock);
+          };
+          document.addEventListener("click", unlock);
+        });
       }
     });
   }, [joined, participants, camOn]);
