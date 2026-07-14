@@ -259,8 +259,10 @@ const LiveTV = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * i }}
                 >
-                  <Link
-                    to={item.href}
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="group block relative rounded-xl overflow-hidden border border-border/60 aspect-[4/5] bg-card"
                   >
                     <img src={item.img} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500" />
@@ -272,7 +274,7 @@ const LiveTV = () => {
                       <h3 className="font-semibold text-sm text-white leading-tight">{item.title}</h3>
                       <p className="text-[11px] text-white/70 mt-0.5">{item.tag}</p>
                     </div>
-                  </Link>
+                  </a>
                 </motion.div>
               ))}
             </div>
