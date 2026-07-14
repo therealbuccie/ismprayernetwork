@@ -25,7 +25,10 @@ interface Participant {
   local: boolean;
 }
 
-export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCallProps) {
+export default function VideoCall({ roomUrl, token, userName, onLeave, groupId, userId }: VideoCallProps) {
+  const participationIdRef = useRef<string | null>(null);
+  const joinedAtRef = useRef<number | null>(null);
+
   const callRef = useRef<DailyCall | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
