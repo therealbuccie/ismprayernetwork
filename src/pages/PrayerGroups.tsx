@@ -149,9 +149,12 @@ const PrayerGroups = () => {
         roomUrl={callInfo.url}
         token={callInfo.token}
         userName={profile?.full_name || user?.user_metadata?.full_name || "Guest"}
+        groupId={callInfo.groupId}
+        userId={user?.id}
         onLeave={() => setCallInfo(null)}
       />
     );
+
   }
 
   return (
