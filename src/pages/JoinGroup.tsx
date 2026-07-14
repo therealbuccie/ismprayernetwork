@@ -101,10 +101,13 @@ const JoinGroup = () => {
         roomUrl={callInfo.url}
         token={callInfo.token}
         userName={profile?.full_name || user?.user_metadata?.full_name || "Guest"}
+        groupId={group?.id}
+        userId={user?.id}
         onLeave={() => setCallInfo(null)}
       />
     );
   }
+
 
   if (isLoading || authLoading) {
     return (
