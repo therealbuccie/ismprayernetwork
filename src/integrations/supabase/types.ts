@@ -475,6 +475,45 @@ export type Database = {
           },
         ]
       }
+      group_prayer_assignments: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          prayer_point_id: string
+          sent_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          prayer_point_id: string
+          sent_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          prayer_point_id?: string
+          sent_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_prayer_assignments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_prayer_assignments_prayer_point_id_fkey"
+            columns: ["prayer_point_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           email: string
