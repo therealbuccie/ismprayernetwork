@@ -149,10 +149,20 @@ export default function VideoCall({ roomUrl, token, userName, onLeave, groupId, 
     callObj.join({ url: roomUrl, token, userName });
 
     return () => {
+      const pid = participationIdRef.current;
+      const startedAt = joinedAtRef.current;
+      if (pid && startedAt) {
+        const durationSec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+        supabase.from("group_call_participations")
+          .update({ left_at: new Date().toISOString(), duration_seconds: durationSec })
+          .eq("id", pid)
+          .then(() => {});
+      }
       callObj.leave().catch(() => {});
       callObj.destroy();
     };
-  }, [roomUrl, token, userName]);
+  }, [roomUrl, token, userName, groupId, userId]);
+
 
   const toggleMic = () => {
     callRef.current?.setLocalAudio(!micOn);
