@@ -305,7 +305,7 @@ const LiveTV = () => {
 
             <Link to="/prayer-room" className="group rounded-xl border border-border/60 bg-gradient-to-br from-teal-500/10 to-transparent p-4 hover:border-accent/40 transition">
               <Users size={22} className="text-teal-400 mb-2" />
-              <h4 className="font-semibold text-sm">24/7 Prayer</h4>
+              <h4 className="font-semibold text-sm">ISM Prayer Room</h4>
               <p className="text-xs text-muted-foreground mt-1">We're here for you anytime you need us.</p>
               <span className="text-xs text-accent mt-2 inline-flex items-center gap-1 font-semibold">Enter Room <ChevronRight size={12} /></span>
             </Link>
