@@ -405,6 +405,47 @@ export type Database = {
         }
         Relationships: []
       }
+      group_call_participations: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          group_id: string
+          id: string
+          joined_at: string
+          left_at: string | null
+          participant_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number
+          group_id: string
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          participant_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          group_id?: string
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          participant_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_call_participations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           group_id: string
