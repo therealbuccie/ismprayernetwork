@@ -16,6 +16,7 @@ import {
   HandHeart,
   Sparkles,
   ChevronRight,
+  Share2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -65,12 +66,22 @@ const LiveTV = () => {
   }, [hlsUrl]);
 
   const featured = [
-    { title: "Standing in the Gap", tag: "Prayers that change nations", time: "5:00 PM", img: bannerStandingGap, href: "/prayer-room" },
-    { title: "Inside ISM", tag: "Ministry insights", time: "3:00 PM", img: bannerInside, href: "/programs" },
-    { title: "Master Class", tag: "For Ministers", time: "7:00 PM", img: bannerMaster, href: "/programs" },
-    { title: "Online School", tag: "Grow in the Word", time: "9:00 PM", img: bannerSchool, href: "/programs" },
-    { title: "Digital Library", tag: "Read & study", time: "Anytime", img: bannerLibrary, href: "/bookstore" },
+    { title: "Standing in the Gap", tag: "Prayers that change nations", time: "5:00 PM", img: bannerStandingGap, href: "https://isminspire.tv" },
+    { title: "Inside ISM", tag: "Ministry insights", time: "3:00 PM", img: bannerInside, href: "https://isminspire.tv" },
+    { title: "Master Class", tag: "For Ministers", time: "7:00 PM", img: bannerMaster, href: "https://isminspire.tv" },
+    { title: "Online School", tag: "Grow in the Word", time: "9:00 PM", img: bannerSchool, href: "https://isminspire.tv" },
+    { title: "Digital Library", tag: "Read & study", time: "Anytime", img: bannerLibrary, href: "https://isminspire.tv" },
   ];
+
+  const handleShare = async () => {
+    const shareData = { title: "ISM Live TV", text: "Watch ISM Live Service", url: window.location.href };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(window.location.href);
+      }
+    } catch {}
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,14 +131,6 @@ const LiveTV = () => {
                 <span className="text-xs text-muted-foreground">3.5K watching now</span>
               </div>
 
-              <div className="mt-auto rounded-xl border border-border/60 bg-background/40 p-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                  <Clock size={12} /> Coming Up
-                </div>
-                <p className="text-xs text-muted-foreground">Today, 5:00 PM</p>
-                <p className="font-semibold text-sm mt-0.5">Standing in the Gap</p>
-                <p className="text-xs text-muted-foreground">Prayers that change nations</p>
-              </div>
             </motion.aside>
 
             {/* CENTER — Player */}
@@ -157,6 +160,28 @@ const LiveTV = () => {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Action buttons below player */}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Link
+                  to="/partner"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-accent to-amber-500 text-accent-foreground text-sm font-bold shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-105 transition"
+                >
+                  <Heart size={16} fill="currentColor" /> Give / Partner
+                </Link>
+                <Link
+                  to="/testimonies"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition"
+                >
+                  <MessageSquareHeart size={16} /> Share Testimony
+                </Link>
+                <button
+                  onClick={handleShare}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-foreground text-sm font-semibold hover:bg-muted/40 transition"
+                >
+                  <Share2 size={16} /> Share
+                </button>
               </div>
             </motion.div>
 
@@ -234,8 +259,10 @@ const LiveTV = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * i }}
                 >
-                  <Link
-                    to={item.href}
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="group block relative rounded-xl overflow-hidden border border-border/60 aspect-[4/5] bg-card"
                   >
                     <img src={item.img} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500" />
@@ -247,7 +274,7 @@ const LiveTV = () => {
                       <h3 className="font-semibold text-sm text-white leading-tight">{item.title}</h3>
                       <p className="text-[11px] text-white/70 mt-0.5">{item.tag}</p>
                     </div>
-                  </Link>
+                  </a>
                 </motion.div>
               ))}
             </div>
@@ -278,7 +305,7 @@ const LiveTV = () => {
 
             <Link to="/prayer-room" className="group rounded-xl border border-border/60 bg-gradient-to-br from-teal-500/10 to-transparent p-4 hover:border-accent/40 transition">
               <Users size={22} className="text-teal-400 mb-2" />
-              <h4 className="font-semibold text-sm">24/7 Prayer</h4>
+              <h4 className="font-semibold text-sm">ISM Prayer Room</h4>
               <p className="text-xs text-muted-foreground mt-1">We're here for you anytime you need us.</p>
               <span className="text-xs text-accent mt-2 inline-flex items-center gap-1 font-semibold">Enter Room <ChevronRight size={12} /></span>
             </Link>
