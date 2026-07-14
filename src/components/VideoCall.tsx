@@ -97,11 +97,23 @@ export default function VideoCall({ roomUrl, token, userName, onLeave, groupId, 
       } catch {}
     };
 
-    callObj.on("joined-meeting", () => {
+    callObj.on("joined-meeting", async () => {
       setJoined(true);
       syncParticipants(callObj);
       applySendPreset("bandwidth-and-quality-balanced");
+      if (groupId && userId) {
+        joinedAtRef.current = Date.now();
+        try {
+          const { data } = await supabase.from("group_call_participations").insert({
+            group_id: groupId,
+            user_id: userId,
+            participant_name: userName,
+          }).select("id").single();
+          if (data) participationIdRef.current = data.id;
+        } catch {}
+      }
     });
+
     callObj.on("participant-joined", () => syncParticipants(callObj));
     callObj.on("participant-updated", () => syncParticipants(callObj));
     callObj.on("participant-left", () => syncParticipants(callObj));
