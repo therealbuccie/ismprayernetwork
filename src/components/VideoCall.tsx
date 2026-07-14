@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Video, VideoOff, Monitor, PhoneOff, Users, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VideoCallProps {
   roomUrl: string;
   token: string;
   userName: string;
   onLeave: () => void;
+  groupId?: string;
+  userId?: string;
 }
+
 
 interface Participant {
   session_id: string;
@@ -21,7 +25,10 @@ interface Participant {
   local: boolean;
 }
 
-export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCallProps) {
+export default function VideoCall({ roomUrl, token, userName, onLeave, groupId, userId }: VideoCallProps) {
+  const participationIdRef = useRef<string | null>(null);
+  const joinedAtRef = useRef<number | null>(null);
+
   const callRef = useRef<DailyCall | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -90,11 +97,23 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
       } catch {}
     };
 
-    callObj.on("joined-meeting", () => {
+    callObj.on("joined-meeting", async () => {
       setJoined(true);
       syncParticipants(callObj);
       applySendPreset("bandwidth-and-quality-balanced");
+      if (groupId && userId) {
+        joinedAtRef.current = Date.now();
+        try {
+          const { data } = await supabase.from("group_call_participations").insert({
+            group_id: groupId,
+            user_id: userId,
+            participant_name: userName,
+          }).select("id").single();
+          if (data) participationIdRef.current = data.id;
+        } catch {}
+      }
     });
+
     callObj.on("participant-joined", () => syncParticipants(callObj));
     callObj.on("participant-updated", () => syncParticipants(callObj));
     callObj.on("participant-left", () => syncParticipants(callObj));
@@ -130,10 +149,20 @@ export default function VideoCall({ roomUrl, token, userName, onLeave }: VideoCa
     callObj.join({ url: roomUrl, token, userName });
 
     return () => {
+      const pid = participationIdRef.current;
+      const startedAt = joinedAtRef.current;
+      if (pid && startedAt) {
+        const durationSec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+        supabase.from("group_call_participations")
+          .update({ left_at: new Date().toISOString(), duration_seconds: durationSec })
+          .eq("id", pid)
+          .then(() => {});
+      }
       callObj.leave().catch(() => {});
       callObj.destroy();
     };
-  }, [roomUrl, token, userName]);
+  }, [roomUrl, token, userName, groupId, userId]);
+
 
   const toggleMic = () => {
     callRef.current?.setLocalAudio(!micOn);
