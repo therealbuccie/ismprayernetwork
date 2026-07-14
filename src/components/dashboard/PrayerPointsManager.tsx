@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookOpen, Plus, Pencil, Trash2, GripVertical } from "lucide-react";
+import { BookOpen, Plus, Pencil, Trash2, GripVertical, Copy, Send, Search } from "lucide-react";
 import { toast } from "sonner";
 
 interface PrayerPoint {
@@ -28,6 +29,12 @@ export function PrayerPointsManager() {
   const [editing, setEditing] = useState<PrayerPoint | null>(null);
   const [form, setForm] = useState(emptyForm);
 
+  // Send-to-groups dialog state
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sendingPoint, setSendingPoint] = useState<PrayerPoint | null>(null);
+  const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+  const [groupSearch, setGroupSearch] = useState("");
+
   const { data: points = [], isLoading } = useQuery({
     queryKey: ["prayer-points-admin"],
     queryFn: async () => {
@@ -37,6 +44,18 @@ export function PrayerPointsManager() {
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return data as PrayerPoint[];
+    },
+  });
+
+  const { data: groups = [] } = useQuery({
+    queryKey: ["prayer-groups-for-send"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prayer_groups")
+        .select("id, name, member_count")
+        .order("name");
+      if (error) throw error;
+      return data as { id: string; name: string; member_count: number }[];
     },
   });
 
@@ -74,6 +93,26 @@ export function PrayerPointsManager() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const duplicateMutation = useMutation({
+    mutationFn: async (p: PrayerPoint) => {
+      const { error } = await supabase.from("prayer_points").insert({
+        category: p.category,
+        title: `${p.title} (Copy)`,
+        scripture: p.scripture,
+        body: p.body,
+        sort_order: p.sort_order + 1,
+        is_active: p.is_active,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["prayer-points-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["prayer-points"] });
+      toast.success("Prayer point duplicated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("prayer_points").delete().eq("id", id);
@@ -99,6 +138,30 @@ export function PrayerPointsManager() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const sendMutation = useMutation({
+    mutationFn: async () => {
+      if (!sendingPoint || selectedGroups.size === 0) throw new Error("Pick at least one group");
+      const { data: userData } = await supabase.auth.getUser();
+      const rows = Array.from(selectedGroups).map(gid => ({
+        group_id: gid,
+        prayer_point_id: sendingPoint.id,
+        sent_by: userData.user?.id ?? null,
+      }));
+      const { error } = await supabase
+        .from("group_prayer_assignments")
+        .upsert(rows, { onConflict: "group_id,prayer_point_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`Sent to ${selectedGroups.size} group${selectedGroups.size === 1 ? "" : "s"}`);
+      setSendOpen(false);
+      setSendingPoint(null);
+      setSelectedGroups(new Set());
+      setGroupSearch("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const openCreate = () => {
     setEditing(null);
     setForm({ ...emptyForm, sort_order: points.length });
@@ -109,6 +172,13 @@ export function PrayerPointsManager() {
     setEditing(p);
     setForm({ category: p.category, title: p.title, scripture: p.scripture, body: p.body, sort_order: p.sort_order, is_active: p.is_active });
     setDialogOpen(true);
+  };
+
+  const openSend = (p: PrayerPoint) => {
+    setSendingPoint(p);
+    setSelectedGroups(new Set());
+    setGroupSearch("");
+    setSendOpen(true);
   };
 
   const closeDialog = () => {
@@ -126,8 +196,30 @@ export function PrayerPointsManager() {
     saveMutation.mutate(editing ? { ...form, id: editing.id } : form);
   };
 
-  // Group by category for display
   const categories = [...new Set(points.map(p => p.category))];
+
+  const filteredGroups = useMemo(() => {
+    const q = groupSearch.trim().toLowerCase();
+    if (!q) return groups;
+    return groups.filter(g => g.name.toLowerCase().includes(q));
+  }, [groups, groupSearch]);
+
+  const toggleGroup = (id: string) => {
+    setSelectedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllVisible = () => {
+    setSelectedGroups(prev => {
+      const next = new Set(prev);
+      filteredGroups.forEach(g => next.add(g.id));
+      return next;
+    });
+  };
+  const clearAll = () => setSelectedGroups(new Set());
 
   return (
     <div>
@@ -235,13 +327,20 @@ export function PrayerPointsManager() {
                         checked={point.is_active}
                         onCheckedChange={v => toggleMutation.mutate({ id: point.id, is_active: v })}
                       />
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(point)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Send to groups" onClick={() => openSend(point)}>
+                        <Send size={14} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Duplicate" onClick={() => duplicateMutation.mutate(point)}>
+                        <Copy size={14} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" onClick={() => openEdit(point)}>
                         <Pencil size={14} />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
+                        title="Delete"
                         onClick={() => { if (confirm("Delete this prayer point?")) deleteMutation.mutate(point.id); }}
                       >
                         <Trash2 size={14} />
@@ -254,6 +353,64 @@ export function PrayerPointsManager() {
           ))}
         </div>
       )}
+
+      {/* Send-to-Groups Dialog */}
+      <Dialog open={sendOpen} onOpenChange={(o) => { setSendOpen(o); if (!o) { setSendingPoint(null); setSelectedGroups(new Set()); } }}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Send to Prayer Groups</DialogTitle>
+          </DialogHeader>
+          {sendingPoint && (
+            <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+              <p className="font-medium">{sendingPoint.title}</p>
+              <p className="text-xs text-muted-foreground italic mt-0.5 line-clamp-2">{sendingPoint.scripture}</p>
+            </div>
+          )}
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
+            <Input
+              placeholder="Search groups..."
+              value={groupSearch}
+              onChange={e => setGroupSearch(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{selectedGroups.size} selected</span>
+            <div className="flex gap-2">
+              <button type="button" onClick={selectAllVisible} className="hover:text-foreground underline">Select visible</button>
+              <button type="button" onClick={clearAll} className="hover:text-foreground underline">Clear</button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto rounded-md border border-border divide-y divide-border">
+            {filteredGroups.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground text-center">No groups found</p>
+            ) : filteredGroups.map(g => (
+              <label key={g.id} className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer">
+                <Checkbox
+                  checked={selectedGroups.has(g.id)}
+                  onCheckedChange={() => toggleGroup(g.id)}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{g.name}</p>
+                  <p className="text-xs text-muted-foreground">{g.member_count} members</p>
+                </div>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setSendOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => sendMutation.mutate()}
+              disabled={sendMutation.isPending || selectedGroups.size === 0}
+              className="gap-2"
+            >
+              <Send size={14} />
+              {sendMutation.isPending ? "Sending..." : `Send to ${selectedGroups.size} group${selectedGroups.size === 1 ? "" : "s"}`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
