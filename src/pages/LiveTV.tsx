@@ -16,6 +16,7 @@ import {
   HandHeart,
   Sparkles,
   ChevronRight,
+  Share2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
