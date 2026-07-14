@@ -161,6 +161,28 @@ const LiveTV = () => {
                   )}
                 </div>
               </div>
+
+              {/* Action buttons below player */}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Link
+                  to="/partner"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-accent to-amber-500 text-accent-foreground text-sm font-bold shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-105 transition"
+                >
+                  <Heart size={16} fill="currentColor" /> Give / Partner
+                </Link>
+                <Link
+                  to="/testimonies"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition"
+                >
+                  <MessageSquareHeart size={16} /> Share Testimony
+                </Link>
+                <button
+                  onClick={handleShare}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-foreground text-sm font-semibold hover:bg-muted/40 transition"
+                >
+                  <Share2 size={16} /> Share
+                </button>
+              </div>
             </motion.div>
 
             {/* RIGHT — Promo stack (in-platform CTAs) */}
