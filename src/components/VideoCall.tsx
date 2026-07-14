@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Video, VideoOff, Monitor, PhoneOff, Users, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VideoCallProps {
   roomUrl: string;
   token: string;
   userName: string;
   onLeave: () => void;
+  groupId?: string;
+  userId?: string;
 }
+
 
 interface Participant {
   session_id: string;
