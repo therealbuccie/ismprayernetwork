@@ -66,12 +66,22 @@ const LiveTV = () => {
   }, [hlsUrl]);
 
   const featured = [
-    { title: "Standing in the Gap", tag: "Prayers that change nations", time: "5:00 PM", img: bannerStandingGap, href: "/prayer-room" },
-    { title: "Inside ISM", tag: "Ministry insights", time: "3:00 PM", img: bannerInside, href: "/programs" },
-    { title: "Master Class", tag: "For Ministers", time: "7:00 PM", img: bannerMaster, href: "/programs" },
-    { title: "Online School", tag: "Grow in the Word", time: "9:00 PM", img: bannerSchool, href: "/programs" },
-    { title: "Digital Library", tag: "Read & study", time: "Anytime", img: bannerLibrary, href: "/bookstore" },
+    { title: "Standing in the Gap", tag: "Prayers that change nations", time: "5:00 PM", img: bannerStandingGap, href: "https://isminspire.tv" },
+    { title: "Inside ISM", tag: "Ministry insights", time: "3:00 PM", img: bannerInside, href: "https://isminspire.tv" },
+    { title: "Master Class", tag: "For Ministers", time: "7:00 PM", img: bannerMaster, href: "https://isminspire.tv" },
+    { title: "Online School", tag: "Grow in the Word", time: "9:00 PM", img: bannerSchool, href: "https://isminspire.tv" },
+    { title: "Digital Library", tag: "Read & study", time: "Anytime", img: bannerLibrary, href: "https://isminspire.tv" },
   ];
+
+  const handleShare = async () => {
+    const shareData = { title: "ISM Live TV", text: "Watch ISM Live Service", url: window.location.href };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(window.location.href);
+      }
+    } catch {}
+  };
 
   return (
     <div className="min-h-screen bg-background">
