@@ -134,7 +134,7 @@ const PrayerGroups = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setCallInfo({ url: data.url, token: data.token });
+      setCallInfo({ url: data.url, token: data.token, groupId: group.id });
     } catch (err: any) {
       toast.error(err.message || "Failed to start call");
     } finally {
