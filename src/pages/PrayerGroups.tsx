@@ -33,7 +33,7 @@ const PrayerGroups = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // Video call state
-  const [callInfo, setCallInfo] = useState<{ url: string; token: string } | null>(null);
+  const [callInfo, setCallInfo] = useState<{ url: string; token: string; groupId: string } | null>(null);
   const [joiningCall, setJoiningCall] = useState<string | null>(null);
 
   const { data: groups, isLoading } = useQuery({
