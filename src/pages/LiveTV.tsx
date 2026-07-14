@@ -131,14 +131,6 @@ const LiveTV = () => {
                 <span className="text-xs text-muted-foreground">3.5K watching now</span>
               </div>
 
-              <div className="mt-auto rounded-xl border border-border/60 bg-background/40 p-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                  <Clock size={12} /> Coming Up
-                </div>
-                <p className="text-xs text-muted-foreground">Today, 5:00 PM</p>
-                <p className="font-semibold text-sm mt-0.5">Standing in the Gap</p>
-                <p className="text-xs text-muted-foreground">Prayers that change nations</p>
-              </div>
             </motion.aside>
 
             {/* CENTER — Player */}
