@@ -68,6 +68,20 @@ export function PrayerGroupsManager() {
 
   const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
 
+  // Fallback name map derived from participation history (covers cases where
+  // profiles RLS hides rows for the viewing admin).
+  const partNameMap = new Map<string, string>();
+  (participations || []).forEach((r: any) => {
+    if (r.user_id && r.participant_name && !partNameMap.has(r.user_id)) {
+      partNameMap.set(r.user_id, r.participant_name);
+    }
+  });
+
+  const resolveName = (userId: string) => {
+    const p: any = profileMap.get(userId);
+    return p?.full_name || partNameMap.get(userId) || p?.email || "Member";
+  };
+
   const groupStats = (groupId: string) => {
     const rows = (participations || []).filter((r: any) => r.group_id === groupId);
     const totalSec = rows.reduce((a: number, r: any) => a + (r.duration_seconds || 0), 0);
@@ -81,7 +95,7 @@ export function PrayerGroupsManager() {
       .filter((m: any) => m.group_id === groupId)
       .map((m: any) => {
         const p: any = profileMap.get(m.user_id);
-        return { user_id: m.user_id, name: p?.full_name || "Unknown", email: p?.email || "", joined_at: m.joined_at };
+        return { user_id: m.user_id, name: resolveName(m.user_id), email: p?.email || "", joined_at: m.joined_at };
       });
 
   const handleDelete = async (id: string) => {
