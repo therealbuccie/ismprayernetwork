@@ -204,22 +204,27 @@ export function DatabaseManager() {
       });
 
       const CHUNK = 500;
-      let inserted = 0;
+      let processed = 0;
+      let skipped = 0;
       for (let i = 0; i < unique.length; i += CHUNK) {
         const chunk = unique.slice(i, i + CHUNK);
-        const withEmail = chunk.filter(r => r.email);
-        const withoutEmail = chunk.filter(r => !r.email);
-        if (withEmail.length) {
-          const { error } = await supabase.from("contacts").upsert(withEmail, { onConflict: "email", ignoreDuplicates: false });
+        const emails = chunk.map(r => r.email).filter(Boolean) as string[];
+        let existing = new Set<string>();
+        if (emails.length) {
+          const { data: found, error: findErr } = await supabase.from("contacts").select("email").in("email", emails);
+          if (findErr) throw findErr;
+          existing = new Set((found || []).map((f: any) => (f.email || "").toLowerCase()));
+        }
+        const toInsert = chunk.filter(r => !r.email || !existing.has(r.email));
+        skipped += chunk.length - toInsert.length;
+        if (toInsert.length) {
+          const { error } = await supabase.from("contacts").insert(toInsert);
           if (error) throw error;
         }
-        if (withoutEmail.length) {
-          const { error } = await supabase.from("contacts").insert(withoutEmail);
-          if (error) throw error;
-        }
-        inserted += chunk.length;
-        setProgress(Math.round((inserted / unique.length) * 100));
+        processed += chunk.length;
+        setProgress(Math.round((processed / unique.length) * 100));
       }
+      if (skipped) toast.info(`${skipped} existing email(s) skipped`);
       toast.success(`Imported ${unique.length} records`);
       setPreview(null); setUploadOpen(false); setUploadGroup("");
       refresh();
