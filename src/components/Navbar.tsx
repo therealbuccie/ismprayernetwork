@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Radio, ShoppingCart, User, Library, ShoppingBag, HandHeart, MessageSquare } from "lucide-react";
+import { Menu, X, ChevronDown, Tv, Heart, LayoutDashboard, LogOut, MoreHorizontal, Radio, ShoppingCart, User, Library, ShoppingBag, HandHeart, MessageSquare , ClipboardList, Archive } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ const prayerItems = [
   { label: "Prayer Requests", href: "/prayer-requests" },
   { label: "Prayer Groups", href: "/groups" },
   { label: "Prayer Room", href: "/prayer-room" },
+  { label: "Send Report", href: "/report" },
 ];
 
 const moreItems = [
@@ -22,6 +23,7 @@ const moreItems = [
   { label: "Programs", href: "/programs" },
   { label: "Online Radio", href: "/radio" },
   { label: "Our Impact", href: "/our-impact" },
+  { label: "Archives", href: "/archives" },
   { label: "About", href: "/about" },
 ];
 
@@ -222,6 +224,12 @@ const Navbar = () => {
                     </Link>
                     <Link to="/testimonies" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
                       <MessageSquare size={14} /> Testimonies
+                    </Link>
+                    <Link to="/report" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
+                      <ClipboardList size={14} /> Send Report
+                    </Link>
+                    <Link to="/archives" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
+                      <Archive size={14} /> Archives
                     </Link>
                     <Link to="/partner" onClick={() => setProfileOpen(false)} className={dropdownItemClass + " flex items-center gap-2"}>
                       <Heart size={14} /> Partner With Us
