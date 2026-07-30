@@ -615,6 +615,16 @@ export function DatabaseManager() {
               <Input className="mt-1" value={newAccount.full_name}
                 onChange={(e) => setNewAccount(p => ({ ...p, full_name: e.target.value }))} />
             </div>
+            <div>
+              <Label className="text-xs">Country</Label>
+              <Select value={newAccount.country} onValueChange={(v) => setNewAccount(p => ({ ...p, country: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select country" /></SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
             {!profileByEmail.has(newAccount.email.trim().toLowerCase()) && (
               <div>
                 <Label className="text-xs">Temporary password</Label>
