@@ -295,6 +295,102 @@ Deno.serve(async (req) => {
       });
     }
 
+    // --- GET /announcements?archived=&category=&limit=&offset= ---
+    if (req.method === "GET" && (resource === "announcements" || (isDetailRequest && secondLast === "announcements"))) {
+      if (isDetailRequest) {
+        const { data, error } = await supabase.from("announcements").select("*").eq("id", resource).maybeSingle();
+        if (error) throw error;
+        if (!data) return jsonResponse({ error: "Announcement not found" }, 404);
+        return jsonResponse({ announcement: data });
+      }
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 200);
+      const offset = parseInt(url.searchParams.get("offset") || "0");
+      const archived = url.searchParams.get("archived");
+      const category = url.searchParams.get("category");
+      let q = supabase.from("announcements").select("*", { count: "exact" }).eq("is_active", true);
+      q = q.eq("archived", archived === "true");
+      if (category) q = q.eq("category", category);
+      const { data, error, count } = await q.order("published_at", { ascending: false }).range(offset, offset + limit - 1);
+      if (error) throw error;
+      return jsonResponse({ announcements: data, total: count ?? 0, limit, offset });
+    }
+
+    // --- GET /prayer-points?archived=&category=&limit=&offset= ---
+    if (req.method === "GET" && resource === "prayer-points") {
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 200);
+      const offset = parseInt(url.searchParams.get("offset") || "0");
+      const archived = url.searchParams.get("archived");
+      const category = url.searchParams.get("category");
+      let q = supabase.from("prayer_points").select("*", { count: "exact" }).eq("is_active", true);
+      q = q.eq("archived", archived === "true");
+      if (category) q = q.eq("category", category);
+      const { data, error, count } = await q.order("sort_order", { ascending: true }).range(offset, offset + limit - 1);
+      if (error) throw error;
+      return jsonResponse({ prayer_points: data, total: count ?? 0, limit, offset });
+    }
+
+    // --- GET /reports?status=&limit=&offset= ---
+    if (req.method === "GET" && (resource === "reports" || (isDetailRequest && secondLast === "reports"))) {
+      if (isDetailRequest) {
+        const { data, error } = await supabase.from("prayer_reports").select("*").eq("id", resource).maybeSingle();
+        if (error) throw error;
+        if (!data) return jsonResponse({ error: "Report not found" }, 404);
+        return jsonResponse({ report: data });
+      }
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 500);
+      const offset = parseInt(url.searchParams.get("offset") || "0");
+      const status = url.searchParams.get("status");
+      let q = supabase.from("prayer_reports").select("*", { count: "exact" });
+      if (status) q = q.eq("status", status);
+      const { data, error, count } = await q.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+      if (error) throw error;
+      return jsonResponse({ reports: data, total: count ?? 0, limit, offset });
+    }
+
+    // --- GET /reports-stats ---
+    if (req.method === "GET" && resource === "reports-stats") {
+      const { data, error } = await supabase.from("prayer_reports").select("status, attendance, church, prayer_date");
+      if (error) throw error;
+      const rows = data || [];
+      const byChurch: Record<string, number> = {};
+      rows.forEach((r: any) => { const k = r.church || "unknown"; byChurch[k] = (byChurch[k] || 0) + 1; });
+      return jsonResponse({
+        total: rows.length,
+        pending: rows.filter((r: any) => r.status === "pending").length,
+        reviewed: rows.filter((r: any) => r.status === "reviewed").length,
+        total_attendance: rows.reduce((s: number, r: any) => s + (r.attendance || 0), 0),
+        by_church: byChurch,
+      });
+    }
+
+    // --- POST /reports ---
+    if (req.method === "POST" && resource === "reports") {
+      const body = await req.json();
+      const minister_name = String(body?.minister_name ?? "").trim();
+      const church = String(body?.church ?? "").trim();
+      const prayer_date = String(body?.prayer_date ?? "").trim();
+      const attendance = Number(body?.attendance);
+
+      if (!minister_name || !church || !prayer_date || !Number.isFinite(attendance) || attendance < 0) {
+        return jsonResponse({ error: "minister_name, church, prayer_date and a valid attendance are required" }, 400);
+      }
+
+      const { data, error } = await supabase.from("prayer_reports").insert({
+        minister_name: minister_name.slice(0, 255),
+        church: church.slice(0, 255),
+        prayer_date,
+        attendance: Math.floor(attendance),
+        notes: body?.notes ? String(body.notes).slice(0, 5000) : null,
+        contact_email: body?.contact_email ? String(body.contact_email).trim().toLowerCase().slice(0, 320) : null,
+        file_url: body?.file_url || null,
+        file_name: body?.file_name || null,
+        status: "pending",
+      }).select().single();
+
+      if (error) throw error;
+      return jsonResponse(data, 201);
+    }
+
     // --- POST /prayer-groups ---
     if (req.method === "POST" && resource === "prayer-groups") {
       const body = await req.json();
