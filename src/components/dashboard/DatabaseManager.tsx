@@ -108,7 +108,7 @@ export function DatabaseManager() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [savingAccount, setSavingAccount] = useState(false);
-  const [newAccount, setNewAccount] = useState({ email: "", full_name: "", password: "", role: "admin" });
+  const [newAccount, setNewAccount] = useState({ email: "", full_name: "", password: "", role: "admin", country: "" });
 
 
   // ---- Contacts (server paged) ----
@@ -327,7 +327,7 @@ export function DatabaseManager() {
       if ((data as any)?.error) throw new Error((data as any).error);
       toast.success((data as any)?.status === "upgraded" ? "Existing account upgraded" : "Account created");
       setAccountOpen(false);
-      setNewAccount({ email: "", full_name: "", password: "", role: "admin" });
+      setNewAccount({ email: "", full_name: "", password: "", role: "admin", country: "" });
       refresh();
     } catch (e: any) {
       toast.error(e.message || "Could not create account");
