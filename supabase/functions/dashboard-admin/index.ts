@@ -161,6 +161,23 @@ Deno.serve(async (req) => {
             total: purchases.data?.length ?? 0,
             recent: purchases.data?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
           },
+          announcements: {
+            total: announcements.data?.length ?? 0,
+            active: announcements.data?.filter((a: any) => a.is_active && !a.archived).length ?? 0,
+            archived: announcements.data?.filter((a: any) => a.archived).length ?? 0,
+          },
+          prayerPoints: {
+            total: prayerPoints.data?.length ?? 0,
+            active: prayerPoints.data?.filter((p: any) => p.is_active && !p.archived).length ?? 0,
+            archived: prayerPoints.data?.filter((p: any) => p.archived).length ?? 0,
+          },
+          reports: {
+            total: reports.data?.length ?? 0,
+            pending: reports.data?.filter((r: any) => r.status === "pending").length ?? 0,
+            reviewed: reports.data?.filter((r: any) => r.status === "reviewed").length ?? 0,
+            totalAttendance: reports.data?.reduce((s: number, r: any) => s + (r.attendance || 0), 0) ?? 0,
+            recent: reports.data?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
+          },
         };
         break;
       }
