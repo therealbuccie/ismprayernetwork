@@ -12,6 +12,8 @@ const ALLOWED_TABLES = [
   "contact_messages", "newsletter_subscribers", "prayer_requests", "prayer_groups",
   "purchase_orders", "purchases", "site_settings", "combo_packs", "combo_pack_items",
   "campaigns", "contacts",
+  "announcements", "prayer_reports", "prayer_points", "group_prayer_assignments",
+  "group_call_participations", "group_members",
 ];
 
 Deno.serve(async (req) => {
@@ -105,7 +107,8 @@ Deno.serve(async (req) => {
       case "dashboard_stats": {
         // Fetch all stats in one call
         const [books, categories, profiles, testimonies, programs, events, 
-               messages, subscribers, prayerRequests, prayerGroups, orders, purchases] = await Promise.all([
+               messages, subscribers, prayerRequests, prayerGroups, orders, purchases,
+               announcements, reports, prayerPoints] = await Promise.all([
           supabase.from("books").select("*", { count: "exact", head: true }),
           supabase.from("categories").select("*", { count: "exact", head: true }),
           supabase.from("profiles").select("*", { count: "exact", head: true }),
@@ -118,6 +121,9 @@ Deno.serve(async (req) => {
           supabase.from("prayer_groups").select("*", { count: "exact", head: true }),
           supabase.from("purchase_orders").select("*"),
           supabase.from("purchases").select("*, books(title)"),
+          supabase.from("announcements").select("id, is_active, archived"),
+          supabase.from("prayer_reports").select("id, status, attendance, created_at, minister_name, church, prayer_date"),
+          supabase.from("prayer_points").select("id, archived, is_active"),
         ]);
 
         result = {
@@ -154,6 +160,23 @@ Deno.serve(async (req) => {
           purchases: {
             total: purchases.data?.length ?? 0,
             recent: purchases.data?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
+          },
+          announcements: {
+            total: announcements.data?.length ?? 0,
+            active: announcements.data?.filter((a: any) => a.is_active && !a.archived).length ?? 0,
+            archived: announcements.data?.filter((a: any) => a.archived).length ?? 0,
+          },
+          prayerPoints: {
+            total: prayerPoints.data?.length ?? 0,
+            active: prayerPoints.data?.filter((p: any) => p.is_active && !p.archived).length ?? 0,
+            archived: prayerPoints.data?.filter((p: any) => p.archived).length ?? 0,
+          },
+          reports: {
+            total: reports.data?.length ?? 0,
+            pending: reports.data?.filter((r: any) => r.status === "pending").length ?? 0,
+            reviewed: reports.data?.filter((r: any) => r.status === "reviewed").length ?? 0,
+            totalAttendance: reports.data?.reduce((s: number, r: any) => s + (r.attendance || 0), 0) ?? 0,
+            recent: reports.data?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
           },
         };
         break;
