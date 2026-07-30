@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         // Fetch all stats in one call
         const [books, categories, profiles, testimonies, programs, events, 
                messages, subscribers, prayerRequests, prayerGroups, orders, purchases,
-               announcements, reports, prayerPoints] = await Promise.all([
+               announcements, reports, prayerPoints, contacts] = await Promise.all([
           supabase.from("books").select("*", { count: "exact", head: true }),
           supabase.from("categories").select("*", { count: "exact", head: true }),
           supabase.from("profiles").select("*", { count: "exact", head: true }),
@@ -124,6 +124,7 @@ Deno.serve(async (req) => {
           supabase.from("announcements").select("id, is_active, archived"),
           supabase.from("prayer_reports").select("id, status, attendance, created_at, minister_name, church, prayer_date"),
           supabase.from("prayer_points").select("id, archived, is_active"),
+          supabase.from("contacts").select("*", { count: "exact", head: true }),
         ]);
 
         result = {
@@ -135,6 +136,7 @@ Deno.serve(async (req) => {
             events: events.count ?? 0,
             subscribers: subscribers.count ?? 0,
             prayerGroups: prayerGroups.count ?? 0,
+            contacts: contacts.count ?? 0,
           },
           testimonies: {
             total: testimonies.data?.length ?? 0,

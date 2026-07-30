@@ -4,7 +4,8 @@ import { isPublicDashboard, dashboardAdminCall, adminQuery } from "@/hooks/useBo
 import {
   BookOpen, Tag, Users, Mail, MessageSquare, CalendarDays, Newspaper,
   HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
-  Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download
+  Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download, Database,
+  ClipboardCheck, Bell, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,9 +19,16 @@ interface DashboardStats {
   prayerRequests: { total: number; totalPrayers: number };
   orders: { total: number; pending: number; approved: number; rejected: number; totalRevenue: number; recent: any[] };
   purchases: { total: number; recent: any[] };
+  announcements?: { total: number; active: number; archived: number };
+  prayerPoints?: { total: number; active: number; archived: number };
+  reports?: { total: number; pending: number; reviewed: number; totalAttendance: number; recent: any[] };
 }
 
-export function DashboardHome() {
+interface DashboardHomeProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
   const isPublic = isPublicDashboard();
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
@@ -32,7 +40,8 @@ export function DashboardHome() {
 
       // Authenticated admin path
       const [books, categories, profiles, testimoniesRes, programs, events,
-             messages, subscribers, prayerRequests, prayerGroups, orders, purchases] = await Promise.all([
+             messages, subscribers, prayerRequests, prayerGroups, orders, purchases,
+             announcements, reports, prayerPoints, contacts] = await Promise.all([
         supabase.from("books").select("*", { count: "exact", head: true }),
         supabase.from("categories").select("*", { count: "exact", head: true }),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
@@ -45,6 +54,10 @@ export function DashboardHome() {
         supabase.from("prayer_groups").select("*", { count: "exact", head: true }),
         supabase.from("purchase_orders").select("*"),
         supabase.from("purchases").select("*, books(title)"),
+        supabase.from("announcements").select("id, is_active, archived"),
+        supabase.from("prayer_reports").select("id, status, attendance, created_at, minister_name, church, prayer_date"),
+        supabase.from("prayer_points").select("id, archived, is_active"),
+        supabase.from("contacts").select("*", { count: "exact", head: true }),
       ]);
 
       return {
@@ -56,6 +69,7 @@ export function DashboardHome() {
           events: events.count ?? 0,
           subscribers: subscribers.count ?? 0,
           prayerGroups: prayerGroups.count ?? 0,
+          contacts: contacts.count ?? 0,
         },
         testimonies: {
           total: testimoniesRes.data?.length ?? 0,
@@ -82,6 +96,23 @@ export function DashboardHome() {
           total: purchases.data?.length ?? 0,
           recent: purchases.data?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
         },
+        announcements: {
+          total: announcements.data?.length ?? 0,
+          active: announcements.data?.filter(a => a.is_active && !a.archived).length ?? 0,
+          archived: announcements.data?.filter(a => a.archived).length ?? 0,
+        },
+        prayerPoints: {
+          total: prayerPoints.data?.length ?? 0,
+          active: prayerPoints.data?.filter(p => p.is_active && !p.archived).length ?? 0,
+          archived: prayerPoints.data?.filter(p => p.archived).length ?? 0,
+        },
+        reports: {
+          total: reports.data?.length ?? 0,
+          pending: reports.data?.filter(r => r.status === "pending").length ?? 0,
+          reviewed: reports.data?.filter(r => r.status === "reviewed").length ?? 0,
+          totalAttendance: reports.data?.reduce((s, r) => s + (r.attendance || 0), 0) ?? 0,
+          recent: reports.data?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
+        },
       };
     },
   });
@@ -100,20 +131,25 @@ export function DashboardHome() {
   }
 
   const statCards = [
-    { label: "Total Users", value: stats.counts.users, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Total Books", value: stats.counts.books, icon: BookOpen, color: "text-accent", bg: "bg-accent/10" },
-    { label: "Revenue", value: `$${stats.orders.totalRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-    { label: "Orders", value: stats.orders.total, icon: ShoppingBag, color: "text-violet-500", bg: "bg-violet-500/10" },
-    { label: "Subscribers", value: stats.counts.subscribers, icon: Newspaper, color: "text-pink-500", bg: "bg-pink-500/10" },
-    { label: "Prayer Requests", value: stats.prayerRequests.total, icon: HandHeart, color: "text-orange-500", bg: "bg-orange-500/10" },
-    { label: "Testimonies", value: stats.testimonies.total, icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-500/10" },
-    { label: "Prayer Groups", value: stats.counts.prayerGroups, icon: UsersRound, color: "text-teal-500", bg: "bg-teal-500/10" },
+    { label: "Total Users", value: stats.counts.users, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", tab: "users" },
+    { label: "Database Records", value: (stats.counts.contacts ?? 0).toLocaleString(), icon: Database, color: "text-indigo-500", bg: "bg-indigo-500/10", tab: "database" },
+    { label: "Total Books", value: stats.counts.books, icon: BookOpen, color: "text-accent", bg: "bg-accent/10", tab: "books" },
+    { label: "Revenue", value: `$${stats.orders.totalRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", tab: "bookstore-analytics" },
+    { label: "Orders", value: stats.orders.total, icon: ShoppingBag, color: "text-violet-500", bg: "bg-violet-500/10", tab: "orders" },
+    { label: "Subscribers", value: stats.counts.subscribers, icon: Newspaper, color: "text-pink-500", bg: "bg-pink-500/10", tab: "newsletter" },
+    { label: "Prayer Requests", value: stats.prayerRequests.total, icon: HandHeart, color: "text-orange-500", bg: "bg-orange-500/10", tab: "prayer-requests" },
+    { label: "Testimonies", value: stats.testimonies.total, icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-500/10", tab: "testimonies" },
+    { label: "Prayer Groups", value: stats.counts.prayerGroups, icon: UsersRound, color: "text-teal-500", bg: "bg-teal-500/10", tab: "prayer-groups" },
+    { label: "Prayer Points", value: stats.prayerPoints?.total ?? 0, icon: Sparkles, color: "text-amber-500", bg: "bg-amber-500/10", tab: "prayer-points" },
+    { label: "Reports", value: stats.reports?.total ?? 0, icon: ClipboardCheck, color: "text-sky-500", bg: "bg-sky-500/10", tab: "reports" },
+    { label: "Announcements", value: stats.announcements?.total ?? 0, icon: Bell, color: "text-rose-500", bg: "bg-rose-500/10", tab: "announcements" },
   ];
 
   const pendingItems = [
-    stats.orders.pending > 0 && { label: "Pending Orders", count: stats.orders.pending, color: "bg-yellow-500/20 text-yellow-600" },
-    stats.testimonies.pending > 0 && { label: "Pending Testimonies", count: stats.testimonies.pending, color: "bg-orange-500/20 text-orange-600" },
-  ].filter(Boolean) as { label: string; count: number; color: string }[];
+    stats.orders.pending > 0 && { label: "Pending Orders", count: stats.orders.pending, color: "bg-yellow-500/20 text-yellow-600", tab: "orders" },
+    stats.testimonies.pending > 0 && { label: "Pending Testimonies", count: stats.testimonies.pending, color: "bg-orange-500/20 text-orange-600", tab: "testimonies" },
+    (stats.reports?.pending ?? 0) > 0 && { label: "Pending Reports", count: stats.reports!.pending, color: "bg-sky-500/20 text-sky-600", tab: "reports" },
+  ].filter(Boolean) as { label: string; count: number; color: string; tab: string }[];
 
   const orderPieData = [
     { name: "Approved", value: stats.orders.approved, color: "hsl(142, 71%, 45%)" },
@@ -140,6 +176,7 @@ export function DashboardHome() {
     "books", "categories", "profiles", "testimonies", "programs", "events",
     "contact_messages", "newsletter_subscribers", "prayer_requests", "prayer_groups",
     "purchase_orders", "purchases", "combo_packs", "campaigns", "prayer_points",
+    "contacts", "announcements", "prayer_reports",
   ];
 
   const exportAllAsCSV = async () => {
@@ -206,10 +243,15 @@ export function DashboardHome() {
       {pendingItems.length > 0 && (
         <div className="flex flex-wrap gap-3">
           {pendingItems.map(item => (
-            <div key={item.label} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${item.color}`}>
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => onNavigate?.(item.tab)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-80 ${item.color}`}
+            >
               <Clock size={14} />
               {item.count} {item.label}
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -217,18 +259,24 @@ export function DashboardHome() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {statCards.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card p-5 hover:shadow-md transition-shadow">
+          <button
+            key={s.label}
+            type="button"
+            onClick={() => onNavigate?.(s.tab)}
+            className="group text-left rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-primary/40 hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div className="flex items-center justify-between mb-3">
               <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
                 <s.icon className={`w-5 h-5 ${s.color}`} />
               </div>
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground/40" />
+              <ArrowUpRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
             </div>
             <p className="text-2xl font-bold text-foreground">{s.value}</p>
             <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
-          </div>
+          </button>
         ))}
       </div>
+
 
       {/* Middle Row - Orders Chart + Quick Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -300,6 +348,16 @@ export function DashboardHome() {
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Events</span>
               <span className="text-lg font-bold text-foreground">{stats.counts.events}</span>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Report Attendance</span>
+              <span className="text-lg font-bold text-foreground">{(stats.reports?.totalAttendance ?? 0).toLocaleString()}</span>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Archived Items</span>
+              <span className="text-lg font-bold text-foreground">{(stats.prayerPoints?.archived ?? 0) + (stats.announcements?.archived ?? 0)}</span>
             </div>
           </div>
         </div>
