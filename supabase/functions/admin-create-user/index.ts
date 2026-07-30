@@ -37,7 +37,9 @@ Deno.serve(async (req) => {
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
     const fullName = String(body.full_name || "").trim();
+    const country = String(body.country || "").trim();
     const role = String(body.role || "admin");
+
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: "Valid email required" }, 400);
     if (!ALLOWED_ROLES.includes(role)) return json({ error: "Invalid role" }, 400);
