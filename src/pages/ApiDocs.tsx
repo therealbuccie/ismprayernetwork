@@ -338,6 +338,18 @@ x-api-key: YOUR_API_KEY`} />
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-4 h-4 text-accent" />
+              <h3 className="font-semibold text-foreground">Contacts Database</h3>
+            </div>
+            <div className="space-y-2">
+              {endpoints.filter(e => e.path.startsWith("/contacts")).map((ep) => (
+                <EndpointCard key={ep.path + ep.method} {...ep} />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-4 h-4 text-accent" />
               <h3 className="font-semibold text-foreground">Prayer Groups</h3>
             </div>
             <div className="space-y-2">
