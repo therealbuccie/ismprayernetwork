@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { COUNTRIES } from "@/lib/countries";
+
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -29,6 +31,8 @@ const Auth = () => {
   const [ministryName, setMinistryName] = useState("");
   const [dobDay, setDobDay] = useState("");
   const [dobMonth, setDobMonth] = useState("");
+  const [country, setCountry] = useState("");
+
 
   // Admin fields
   const [adminEmail, setAdminEmail] = useState("");
