@@ -567,6 +567,52 @@ export function DatabaseManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* New upgraded account */}
+      <Dialog open={accountOpen} onOpenChange={(o) => { if (!savingAccount) setAccountOpen(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Upgraded Account</DialogTitle>
+            <DialogDescription>
+              Create an admin account, or enter an existing member's email to upgrade their role.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Email</Label>
+              <Input className="mt-1" type="email" value={newAccount.email}
+                onChange={(e) => setNewAccount(p => ({ ...p, email: e.target.value }))} placeholder="name@example.com" />
+              {profileByEmail.has(newAccount.email.trim().toLowerCase()) && (
+                <p className="text-[11px] text-accent mt-1">This member already has an account — their role will be upgraded.</p>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs">Full name</Label>
+              <Input className="mt-1" value={newAccount.full_name}
+                onChange={(e) => setNewAccount(p => ({ ...p, full_name: e.target.value }))} />
+            </div>
+            {!profileByEmail.has(newAccount.email.trim().toLowerCase()) && (
+              <div>
+                <Label className="text-xs">Temporary password</Label>
+                <Input className="mt-1" type="text" value={newAccount.password}
+                  onChange={(e) => setNewAccount(p => ({ ...p, password: e.target.value }))} placeholder="min. 8 characters" />
+              </div>
+            )}
+            <div>
+              <Label className="text-xs">Role</Label>
+              <Select value={newAccount.role} onValueChange={(v) => setNewAccount(p => ({ ...p, role: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{roleOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAccountOpen(false)} disabled={savingAccount}>Cancel</Button>
+            <Button onClick={createAccount} disabled={savingAccount}>{savingAccount ? "Saving..." : "Save Account"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
