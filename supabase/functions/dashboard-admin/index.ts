@@ -136,6 +136,7 @@ Deno.serve(async (req) => {
             events: events.count ?? 0,
             subscribers: subscribers.count ?? 0,
             prayerGroups: prayerGroups.count ?? 0,
+            contacts: contacts.count ?? 0,
           },
           testimonies: {
             total: testimonies.data?.length ?? 0,
