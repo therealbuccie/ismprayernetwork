@@ -28,7 +28,7 @@ const ComboPacksManager = lazy(() => import("@/components/dashboard/ComboPacksMa
 const MailDispatchManager = lazy(() => import("@/components/dashboard/MailDispatchManager").then(m => ({ default: m.MailDispatchManager })));
 const PrayerPointsManager = lazy(() => import("@/components/dashboard/PrayerPointsManager").then(m => ({ default: m.PrayerPointsManager })));
 
-export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch";
+export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "database" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch";
 
 function TabSkeleton() {
   return (
