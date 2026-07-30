@@ -391,6 +391,8 @@ export function DatabaseManager() {
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}><Plus size={14} /> Add Record</Button>
+        <Button size="sm" onClick={() => setAccountOpen(true)}><ShieldCheck size={14} /> New Upgraded Account</Button>
+
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
