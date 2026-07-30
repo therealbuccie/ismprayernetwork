@@ -485,6 +485,18 @@ export function DatabaseManager() {
         <StatCard icon={ShieldCheck} label="Upgraded accounts" value={upgraded.length} />
       </div>
 
+      {(meta?.countryList?.length ?? 0) > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {(meta?.countryList || []).slice(0, 12).map(([name, n]) => (
+            <button key={name}
+              onClick={() => { setCountryFilter(countryFilter.toLowerCase() === name.toLowerCase() ? "all" : name); setPage(0); }}
+              className={`px-3 py-1 rounded-full text-xs border transition-colors ${countryFilter.toLowerCase() === name.toLowerCase() ? "bg-accent text-accent-foreground border-accent" : "border-border bg-card hover:border-accent/50"}`}>
+              {name} <span className="opacity-70">{n.toLocaleString()}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2 items-center mb-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -492,17 +504,45 @@ export function DatabaseManager() {
             onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         </div>
         <Select value={view} onValueChange={(v) => { setView(v as ViewFilter); setPage(0); }}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All records</SelectItem>
             <SelectItem value="accounts">Platform accounts</SelectItem>
             <SelectItem value="upgraded">Upgraded (admins)</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={countryFilter} onValueChange={(v) => { setCountryFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-52"><SelectValue placeholder="Country" /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            <SelectItem value="all">All countries</SelectItem>
+            <SelectItem value="none">No country set{meta?.unknown ? ` (${meta.unknown})` : ""}</SelectItem>
+            {(meta?.countryList || []).map(([name, n]) => (
+              <SelectItem key={name} value={name}>{name} ({n.toLocaleString()})</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(0); }}>
+          <SelectTrigger className="w-52"><SelectValue placeholder="Sort" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="created_at.desc">Newest first</SelectItem>
+            <SelectItem value="created_at.asc">Oldest first</SelectItem>
+            <SelectItem value="first_name.asc">First name A–Z</SelectItem>
+            <SelectItem value="first_name.desc">First name Z–A</SelectItem>
+            <SelectItem value="last_name.asc">Last name A–Z</SelectItem>
+            <SelectItem value="last_name.desc">Last name Z–A</SelectItem>
+            <SelectItem value="email.asc">Email A–Z</SelectItem>
+            <SelectItem value="country.asc">Country A–Z</SelectItem>
+            <SelectItem value="country.desc">Country Z–A</SelectItem>
+          </SelectContent>
+        </Select>
+        {(countryFilter !== "all" || sortBy !== "created_at.desc" || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setCountryFilter("all"); setSortBy("created_at.desc"); setPage(0); }}>Clear</Button>
+        )}
         <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}><Plus size={14} /> Add Record</Button>
         <Button size="sm" onClick={() => setAccountOpen(true)}><ShieldCheck size={14} /> New Upgraded Account</Button>
 
       </div>
+
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
