@@ -8,7 +8,9 @@ export interface Profile {
   email: string | null;
   full_name: string | null;
   role: string;
+  country?: string | null;
   created_at: string;
+
 }
 
 interface AuthContextType {

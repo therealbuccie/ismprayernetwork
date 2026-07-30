@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { COUNTRIES } from "@/lib/countries";
+
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -29,6 +31,8 @@ const Auth = () => {
   const [ministryName, setMinistryName] = useState("");
   const [dobDay, setDobDay] = useState("");
   const [dobMonth, setDobMonth] = useState("");
+  const [country, setCountry] = useState("");
+
 
   // Admin fields
   const [adminEmail, setAdminEmail] = useState("");
@@ -97,6 +101,8 @@ const Auth = () => {
             ministry_name: ministryName,
             dob_day: dobDay ? parseInt(dobDay) : null,
             dob_month: dobMonth ? parseInt(dobMonth) : null,
+            country: country || null,
+
           },
         },
       });
@@ -192,7 +198,21 @@ const Auth = () => {
                           onChange={(e) => setMinistryName(e.target.value)}
                         />
                       </div>
+                      <div>
+                        <Label>Country</Label>
+                        <Select value={country} onValueChange={setCountry}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select your country" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-64">
+                            {COUNTRIES.map((c) => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="grid grid-cols-2 gap-3">
+
                         <div>
                           <Label>Birthday (Day)</Label>
                           <Select value={dobDay} onValueChange={setDobDay}>

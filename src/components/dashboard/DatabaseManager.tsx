@@ -13,6 +13,8 @@ import { Progress } from "@/components/ui/progress";
 import { Database, Users, Globe, ShieldCheck, Search, Upload, Download, Trash2, Plus, RefreshCw, FileSpreadsheet, Shield, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { COUNTRIES } from "@/lib/countries";
+
 
 const PAGE_SIZE = 50;
 
@@ -106,7 +108,7 @@ export function DatabaseManager() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [savingAccount, setSavingAccount] = useState(false);
-  const [newAccount, setNewAccount] = useState({ email: "", full_name: "", password: "", role: "admin" });
+  const [newAccount, setNewAccount] = useState({ email: "", full_name: "", password: "", role: "admin", country: "" });
 
 
   // ---- Contacts (server paged) ----
@@ -319,13 +321,13 @@ export function DatabaseManager() {
     setSavingAccount(true);
     try {
       const { data, error } = await supabase.functions.invoke("admin-create-user", {
-        body: { email, full_name: newAccount.full_name, password: newAccount.password, role: newAccount.role },
+        body: { email, full_name: newAccount.full_name, password: newAccount.password, role: newAccount.role, country: newAccount.country },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       toast.success((data as any)?.status === "upgraded" ? "Existing account upgraded" : "Account created");
       setAccountOpen(false);
-      setNewAccount({ email: "", full_name: "", password: "", role: "admin" });
+      setNewAccount({ email: "", full_name: "", password: "", role: "admin", country: "" });
       refresh();
     } catch (e: any) {
       toast.error(e.message || "Could not create account");
@@ -349,6 +351,16 @@ export function DatabaseManager() {
     toast.success("Role updated");
     queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
   };
+
+  const changeCountry = async (profileId: string, newCountry: string) => {
+    setUpdatingId(profileId);
+    const { error } = await supabase.from("profiles").update({ country: newCountry } as any).eq("id", profileId);
+    setUpdatingId(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Country updated");
+    refresh();
+  };
+
 
   const rows = contactData?.rows || [];
 
@@ -404,13 +416,14 @@ export function DatabaseManager() {
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Country</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Change Role</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {!pagedAccounts.length ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No accounts found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No accounts found.</TableCell></TableRow>
                 ) : pagedAccounts.map((p: any, i) => {
                   const isSelf = p.user_id === currentProfile?.user_id;
                   return (
@@ -418,6 +431,16 @@ export function DatabaseManager() {
                       <TableCell className="text-muted-foreground text-xs">{page * PAGE_SIZE + i + 1}</TableCell>
                       <TableCell className="font-medium">{p.full_name || "—"}</TableCell>
                       <TableCell className="text-xs font-mono">{p.email || "—"}</TableCell>
+                      <TableCell>
+                        <Select value={p.country || ""} onValueChange={(val) => changeCountry(p.id, val)} disabled={updatingId === p.id}>
+                          <SelectTrigger className="w-40 h-8 text-xs">
+                            <SelectValue placeholder="Set country" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-64">
+                            {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell><Badge className={roleBadgeColor[p.role] || "bg-muted"}>{p.role}</Badge></TableCell>
                       <TableCell>
                         {isSelf ? <span className="text-xs text-muted-foreground">Can't change own role</span> : (
@@ -430,6 +453,7 @@ export function DatabaseManager() {
                     </TableRow>
                   );
                 })}
+
               </TableBody>
             </Table>
           ) : (
@@ -591,6 +615,16 @@ export function DatabaseManager() {
               <Input className="mt-1" value={newAccount.full_name}
                 onChange={(e) => setNewAccount(p => ({ ...p, full_name: e.target.value }))} />
             </div>
+            <div>
+              <Label className="text-xs">Country</Label>
+              <Select value={newAccount.country} onValueChange={(v) => setNewAccount(p => ({ ...p, country: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select country" /></SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
             {!profileByEmail.has(newAccount.email.trim().toLowerCase()) && (
               <div>
                 <Label className="text-xs">Temporary password</Label>

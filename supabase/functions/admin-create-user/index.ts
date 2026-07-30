@@ -37,7 +37,9 @@ Deno.serve(async (req) => {
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
     const fullName = String(body.full_name || "").trim();
+    const country = String(body.country || "").trim();
     const role = String(body.role || "admin");
+
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: "Valid email required" }, 400);
     if (!ALLOWED_ROLES.includes(role)) return json({ error: "Invalid role" }, 400);
@@ -50,7 +52,10 @@ Deno.serve(async (req) => {
       .from("profiles").select("id, user_id").eq("email", email).maybeSingle();
 
     if (existing) {
-      const { error } = await admin.from("profiles").update({ role }).eq("id", existing.id);
+      const patch: Record<string, unknown> = { role };
+      if (country) patch.country = country;
+      if (fullName) patch.full_name = fullName;
+      const { error } = await admin.from("profiles").update(patch).eq("id", existing.id);
       if (error) throw error;
       return json({ status: "upgraded", email, role });
     }
@@ -61,13 +66,16 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: fullName },
+      user_metadata: { full_name: fullName, country },
     });
     if (createErr) return json({ error: createErr.message }, 400);
 
     const { error: roleErr } = await admin
-      .from("profiles").update({ role, full_name: fullName || null }).eq("user_id", created.user!.id);
+      .from("profiles")
+      .update({ role, full_name: fullName || null, country: country || null })
+      .eq("user_id", created.user!.id);
     if (roleErr) throw roleErr;
+
 
     return json({ status: "created", email, role });
   } catch (err) {
