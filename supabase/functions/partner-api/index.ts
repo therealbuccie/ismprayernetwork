@@ -79,6 +79,101 @@ Deno.serve(async (req) => {
       return jsonResponse({ categories: data });
     }
 
+    // --- GET /contacts?search=&group=&country=&limit=&offset= ---
+    if (req.method === "GET" && (resource === "contacts" || (isDetailRequest && secondLast === "contacts"))) {
+      if (isDetailRequest) {
+        const { data, error } = await supabase.from("contacts").select("*").eq("id", resource).maybeSingle();
+        if (error) throw error;
+        if (!data) return jsonResponse({ error: "Contact not found" }, 404);
+        return jsonResponse({ contact: data });
+      }
+
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 1000);
+      const offset = parseInt(url.searchParams.get("offset") || "0");
+      const search = (url.searchParams.get("search") || "").replace(/[%,()]/g, "").trim();
+      const group = url.searchParams.get("group");
+      const country = url.searchParams.get("country");
+
+      let q = supabase.from("contacts").select("*", { count: "exact" });
+      if (search) q = q.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+      if (group) q = q.eq("group_name", group);
+      if (country) q = q.eq("country", country);
+
+      const { data, error, count } = await q.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+      if (error) throw error;
+      return jsonResponse({ contacts: data, total: count ?? 0, limit, offset });
+    }
+
+    // --- GET /contacts-stats ---
+    if (req.method === "GET" && resource === "contacts-stats") {
+      const { data, error } = await supabase.from("contacts").select("group_name, country, source");
+      if (error) throw error;
+      const rows = data || [];
+      const tally = (key: string) => {
+        const m: Record<string, number> = {};
+        rows.forEach((r: any) => { const v = r[key] || "unknown"; m[v] = (m[v] || 0) + 1; });
+        return m;
+      };
+      return jsonResponse({
+        total: rows.length,
+        by_group: tally("group_name"),
+        by_country: tally("country"),
+        by_source: tally("source"),
+      });
+    }
+
+    // --- POST /contacts  (single object or { contacts: [...] } bulk) ---
+    if (req.method === "POST" && resource === "contacts") {
+      const body = await req.json();
+      const incoming = Array.isArray(body) ? body : Array.isArray(body?.contacts) ? body.contacts : [body];
+      const defaultGroup = body?.group_name && !Array.isArray(body) ? body.group_name : null;
+
+      const clean = incoming
+        .map((r: any) => ({
+          title: r.title || null,
+          first_name: String(r.first_name ?? "").trim(),
+          last_name: String(r.last_name ?? "").trim(),
+          email: r.email ? String(r.email).trim().toLowerCase() : null,
+          phone: r.phone ? String(r.phone).trim() : null,
+          country: r.country || null,
+          group_name: r.group_name || defaultGroup,
+          source: r.source || "api",
+        }))
+        .filter((r: any) => r.email || r.first_name || r.last_name);
+
+      if (!clean.length) return jsonResponse({ error: "No valid contacts provided" }, 400);
+
+      const emails = clean.map((r: any) => r.email).filter(Boolean);
+      let existing = new Set<string>();
+      if (emails.length) {
+        const { data: found } = await supabase.from("contacts").select("email").in("email", emails);
+        existing = new Set((found || []).map((f: any) => (f.email || "").toLowerCase()));
+      }
+      const seen = new Set<string>();
+      const toInsert = clean.filter((r: any) => {
+        if (!r.email) return true;
+        if (existing.has(r.email) || seen.has(r.email)) return false;
+        seen.add(r.email);
+        return true;
+      });
+
+      let inserted: any[] = [];
+      for (let i = 0; i < toInsert.length; i += 500) {
+        const { data, error } = await supabase.from("contacts").insert(toInsert.slice(i, i + 500)).select("id");
+        if (error) throw error;
+        inserted = inserted.concat(data || []);
+      }
+      return jsonResponse({ inserted: inserted.length, skipped: clean.length - toInsert.length, total_submitted: clean.length }, 201);
+    }
+
+    // --- DELETE /contacts/{id} ---
+    if (req.method === "DELETE" && isDetailRequest && secondLast === "contacts") {
+      const { error } = await supabase.from("contacts").delete().eq("id", resource);
+      if (error) throw error;
+      return jsonResponse({ success: true });
+    }
+
+
     // --- GET /analytics ---
     if (req.method === "GET" && resource === "analytics") {
       const [ordersRes, booksRes, purchasesRes] = await Promise.all([

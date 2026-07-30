@@ -8,6 +8,7 @@ const DashboardHome = lazy(() => import("@/components/dashboard/DashboardHome").
 const BooksManager = lazy(() => import("@/components/dashboard/BooksManager").then(m => ({ default: m.BooksManager })));
 const CategoriesManager = lazy(() => import("@/components/dashboard/CategoriesManager").then(m => ({ default: m.CategoriesManager })));
 const UsersManager = lazy(() => import("@/components/dashboard/UsersManager").then(m => ({ default: m.UsersManager })));
+const DatabaseManager = lazy(() => import("@/components/dashboard/DatabaseManager").then(m => ({ default: m.DatabaseManager })));
 const ContactMessagesManager = lazy(() => import("@/components/dashboard/ContactMessagesManager").then(m => ({ default: m.ContactMessagesManager })));
 const TestimoniesManager = lazy(() => import("@/components/dashboard/TestimoniesManager").then(m => ({ default: m.TestimoniesManager })));
 const EventsManager = lazy(() => import("@/components/dashboard/EventsManager").then(m => ({ default: m.EventsManager })));
@@ -28,7 +29,7 @@ const ComboPacksManager = lazy(() => import("@/components/dashboard/ComboPacksMa
 const MailDispatchManager = lazy(() => import("@/components/dashboard/MailDispatchManager").then(m => ({ default: m.MailDispatchManager })));
 const PrayerPointsManager = lazy(() => import("@/components/dashboard/PrayerPointsManager").then(m => ({ default: m.PrayerPointsManager })));
 
-export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch";
+export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "database" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch";
 
 function TabSkeleton() {
   return (
@@ -78,6 +79,7 @@ const Dashboard = () => {
             {activeTab === "books" && <BooksManager />}
             {activeTab === "categories" && <CategoriesManager />}
             {activeTab === "users" && <UsersManager />}
+            {activeTab === "database" && <DatabaseManager />}
             {activeTab === "messages" && <ContactMessagesManager />}
             {activeTab === "testimonies" && <TestimoniesManager />}
             {activeTab === "events" && <EventsManager />}

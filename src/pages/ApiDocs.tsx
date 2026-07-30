@@ -26,10 +26,12 @@ const CodeBlock = ({ code, language = "bash" }: { code: string; language?: strin
   );
 };
 
-const MethodBadge = ({ method }: { method: "GET" | "POST" }) => (
+const MethodBadge = ({ method }: { method: "GET" | "POST" | "DELETE" }) => (
   <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide ${
     method === "GET"
       ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+      : method === "DELETE"
+      ? "bg-red-500/15 text-red-400 border border-red-500/30"
       : "bg-blue-500/15 text-blue-400 border border-blue-500/30"
   }`}>
     {method}
@@ -37,7 +39,7 @@ const MethodBadge = ({ method }: { method: "GET" | "POST" }) => (
 );
 
 interface EndpointInfo {
-  method: "GET" | "POST";
+  method: "GET" | "POST" | "DELETE";
   path: string;
   description: string;
   params?: { name: string; type: string; required: boolean; description: string }[];
@@ -128,6 +130,48 @@ const endpoints: EndpointInfo[] = [
     method: "GET",
     path: "/categories",
     description: "List all book categories",
+  },
+  {
+    method: "GET",
+    path: "/contacts",
+    description: "List contact database records (paginated)",
+    params: [
+      { name: "search", type: "string", required: false, description: "Search first name, last name, email or phone" },
+      { name: "group", type: "string", required: false, description: "Filter by group / list name" },
+      { name: "country", type: "string", required: false, description: "Filter by country" },
+      { name: "limit", type: "number", required: false, description: "Max results (default 100, max 1000)" },
+      { name: "offset", type: "number", required: false, description: "Pagination offset (default 0)" },
+    ],
+  },
+  {
+    method: "GET",
+    path: "/contacts/:id",
+    description: "Get a single contact record",
+  },
+  {
+    method: "GET",
+    path: "/contacts-stats",
+    description: "Totals plus breakdowns by group, country and source",
+  },
+  {
+    method: "POST",
+    path: "/contacts",
+    description: "Create one contact or bulk-import many (duplicate emails skipped)",
+    body: [
+      { name: "contacts", type: "array", required: false, description: "Array of contact objects for bulk import" },
+      { name: "title", type: "string", required: false, description: "Salutation, e.g. Pastor" },
+      { name: "first_name", type: "string", required: true, description: "First name" },
+      { name: "last_name", type: "string", required: false, description: "Last name" },
+      { name: "email", type: "string", required: false, description: "Email address (unique)" },
+      { name: "phone", type: "string", required: false, description: "Phone number" },
+      { name: "country", type: "string", required: false, description: "Country" },
+      { name: "group_name", type: "string", required: false, description: "Group / list to assign records to" },
+    ],
+  },
+  {
+    method: "DELETE",
+    path: "/contacts/:id",
+    description: "Delete a contact record",
   },
   {
     method: "POST",
@@ -286,6 +330,18 @@ x-api-key: YOUR_API_KEY`} />
             </div>
             <div className="space-y-2">
               {endpoints.filter(e => e.path === "/categories").map((ep) => (
+                <EndpointCard key={ep.path + ep.method} {...ep} />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-4 h-4 text-accent" />
+              <h3 className="font-semibold text-foreground">Contacts Database</h3>
+            </div>
+            <div className="space-y-2">
+              {endpoints.filter(e => e.path.startsWith("/contacts")).map((ep) => (
                 <EndpointCard key={ep.path + ep.method} {...ep} />
               ))}
             </div>

@@ -285,6 +285,51 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          country: string | null
+          created_at: string
+          email: string | null
+          first_name: string
+          group_name: string | null
+          id: string
+          last_name: string
+          notes: string | null
+          phone: string | null
+          source: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          group_name?: string | null
+          id?: string
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          group_name?: string | null
+          id?: string
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
