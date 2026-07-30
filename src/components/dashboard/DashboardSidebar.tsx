@@ -5,7 +5,7 @@ import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   activeTab: DashboardTab;
@@ -84,9 +84,16 @@ export function DashboardSidebar({ activeTab, onTabChange, isSuperAdmin }: Props
   const activeGroupIdx = tabGroups.findIndex(g => g.tabs.some(t => t.id === activeTab));
   const [openGroups, setOpenGroups] = useState<Record<number, boolean>>(() => {
     const init: Record<number, boolean> = {};
-    tabGroups.forEach((_, i) => { init[i] = true; });
+    tabGroups.forEach((_, i) => { init[i] = i === activeGroupIdx; });
     return init;
   });
+
+  // Open the group containing the active tab (e.g. when navigating from stat cards)
+  useEffect(() => {
+    if (activeGroupIdx >= 0) {
+      setOpenGroups(prev => (prev[activeGroupIdx] ? prev : { ...prev, [activeGroupIdx]: true }));
+    }
+  }, [activeGroupIdx]);
 
   const toggleGroup = (idx: number) => {
     setOpenGroups(prev => ({ ...prev, [idx]: !prev[idx] }));
