@@ -131,20 +131,25 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
   }
 
   const statCards = [
-    { label: "Total Users", value: stats.counts.users, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Total Books", value: stats.counts.books, icon: BookOpen, color: "text-accent", bg: "bg-accent/10" },
-    { label: "Revenue", value: `$${stats.orders.totalRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-    { label: "Orders", value: stats.orders.total, icon: ShoppingBag, color: "text-violet-500", bg: "bg-violet-500/10" },
-    { label: "Subscribers", value: stats.counts.subscribers, icon: Newspaper, color: "text-pink-500", bg: "bg-pink-500/10" },
-    { label: "Prayer Requests", value: stats.prayerRequests.total, icon: HandHeart, color: "text-orange-500", bg: "bg-orange-500/10" },
-    { label: "Testimonies", value: stats.testimonies.total, icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-500/10" },
-    { label: "Prayer Groups", value: stats.counts.prayerGroups, icon: UsersRound, color: "text-teal-500", bg: "bg-teal-500/10" },
+    { label: "Total Users", value: stats.counts.users, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", tab: "users" },
+    { label: "Database Records", value: (stats.counts.contacts ?? 0).toLocaleString(), icon: Database, color: "text-indigo-500", bg: "bg-indigo-500/10", tab: "database" },
+    { label: "Total Books", value: stats.counts.books, icon: BookOpen, color: "text-accent", bg: "bg-accent/10", tab: "books" },
+    { label: "Revenue", value: `$${stats.orders.totalRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", tab: "bookstore-analytics" },
+    { label: "Orders", value: stats.orders.total, icon: ShoppingBag, color: "text-violet-500", bg: "bg-violet-500/10", tab: "orders" },
+    { label: "Subscribers", value: stats.counts.subscribers, icon: Newspaper, color: "text-pink-500", bg: "bg-pink-500/10", tab: "newsletter" },
+    { label: "Prayer Requests", value: stats.prayerRequests.total, icon: HandHeart, color: "text-orange-500", bg: "bg-orange-500/10", tab: "prayer-requests" },
+    { label: "Testimonies", value: stats.testimonies.total, icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-500/10", tab: "testimonies" },
+    { label: "Prayer Groups", value: stats.counts.prayerGroups, icon: UsersRound, color: "text-teal-500", bg: "bg-teal-500/10", tab: "prayer-groups" },
+    { label: "Prayer Points", value: stats.prayerPoints?.total ?? 0, icon: Sparkles, color: "text-amber-500", bg: "bg-amber-500/10", tab: "prayer-points" },
+    { label: "Reports", value: stats.reports?.total ?? 0, icon: ClipboardCheck, color: "text-sky-500", bg: "bg-sky-500/10", tab: "reports" },
+    { label: "Announcements", value: stats.announcements?.total ?? 0, icon: Bell, color: "text-rose-500", bg: "bg-rose-500/10", tab: "announcements" },
   ];
 
   const pendingItems = [
-    stats.orders.pending > 0 && { label: "Pending Orders", count: stats.orders.pending, color: "bg-yellow-500/20 text-yellow-600" },
-    stats.testimonies.pending > 0 && { label: "Pending Testimonies", count: stats.testimonies.pending, color: "bg-orange-500/20 text-orange-600" },
-  ].filter(Boolean) as { label: string; count: number; color: string }[];
+    stats.orders.pending > 0 && { label: "Pending Orders", count: stats.orders.pending, color: "bg-yellow-500/20 text-yellow-600", tab: "orders" },
+    stats.testimonies.pending > 0 && { label: "Pending Testimonies", count: stats.testimonies.pending, color: "bg-orange-500/20 text-orange-600", tab: "testimonies" },
+    (stats.reports?.pending ?? 0) > 0 && { label: "Pending Reports", count: stats.reports!.pending, color: "bg-sky-500/20 text-sky-600", tab: "reports" },
+  ].filter(Boolean) as { label: string; count: number; color: string; tab: string }[];
 
   const orderPieData = [
     { name: "Approved", value: stats.orders.approved, color: "hsl(142, 71%, 45%)" },
