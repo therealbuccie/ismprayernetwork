@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv, Banknote, ChevronDown, BarChart3, PackageOpen, Send, Database } from "lucide-react";
+import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv, Banknote, ChevronDown, BarChart3, PackageOpen, Send, Database, ClipboardCheck, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
@@ -52,6 +52,7 @@ const tabGroups: TabGroup[] = [
       { id: "prayer-requests", label: "Prayer Requests", icon: HandHeart },
       { id: "prayer-groups", label: "Prayer Groups", icon: UsersRound },
       { id: "prayer-points", label: "Prayer Points", icon: BookOpen },
+      { id: "reports", label: "Reports", icon: ClipboardCheck },
     ],
   },
   {
@@ -60,6 +61,7 @@ const tabGroups: TabGroup[] = [
       { id: "messages", label: "Messages", icon: Mail },
       { id: "newsletter", label: "Newsletter", icon: Newspaper },
       { id: "campaigns", label: "Campaigns", icon: Megaphone },
+      { id: "announcements", label: "Announcements", icon: Bell },
       { id: "mail-dispatch", label: "Mail Dispatch", icon: Send },
     ],
   },

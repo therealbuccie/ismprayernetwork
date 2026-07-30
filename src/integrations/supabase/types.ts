@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          archived: boolean
+          body: string
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          published_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          body: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          published_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          body?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          published_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       birthday_wishes: {
         Row: {
           author_name: string
@@ -647,6 +689,7 @@ export type Database = {
       }
       prayer_points: {
         Row: {
+          archived: boolean
           body: string
           category: string
           created_at: string
@@ -658,6 +701,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived?: boolean
           body?: string
           category: string
           created_at?: string
@@ -669,6 +713,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived?: boolean
           body?: string
           category?: string
           created_at?: string
@@ -678,6 +723,57 @@ export type Database = {
           sort_order?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      prayer_reports: {
+        Row: {
+          admin_note: string | null
+          attendance: number
+          church: string
+          contact_email: string | null
+          created_at: string
+          file_name: string | null
+          file_url: string | null
+          id: string
+          minister_name: string
+          notes: string | null
+          prayer_date: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          attendance?: number
+          church: string
+          contact_email?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          minister_name: string
+          notes?: string | null
+          prayer_date: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          attendance?: number
+          church?: string
+          contact_email?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          minister_name?: string
+          notes?: string | null
+          prayer_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
