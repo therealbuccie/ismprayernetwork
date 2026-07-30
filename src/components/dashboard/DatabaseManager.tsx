@@ -1,0 +1,508 @@
+import { useState, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth, Profile } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Database, Users, Globe, Layers, Search, Upload, Download, Trash2, Plus, RefreshCw, FileSpreadsheet, Shield, ShieldCheck, User as UserIcon } from "lucide-react";
+import { toast } from "sonner";
+import * as XLSX from "xlsx";
+
+const PAGE_SIZE = 50;
+
+type Contact = {
+  id: string;
+  title: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  group_name: string | null;
+  source: string;
+  created_at: string;
+};
+
+const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "country", "group_name"] as const;
+
+const HEADER_ALIASES: Record<string, string> = {
+  title: "title", salutation: "title", prefix: "title",
+  first_name: "first_name", firstname: "first_name", "first name": "first_name", given_name: "first_name",
+  last_name: "last_name", lastname: "last_name", "last name": "last_name", surname: "last_name", family_name: "last_name",
+  email: "email", "email address": "email", mail: "email",
+  phone: "phone", "phone number": "phone", mobile: "phone", telephone: "phone", number: "phone",
+  country: "country", nation: "country",
+  group_name: "group_name", group: "group_name", "group name": "group_name", zone: "group_name",
+};
+
+function normalizeRow(raw: Record<string, any>) {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const key = HEADER_ALIASES[String(k).trim().toLowerCase()];
+    if (!key) continue;
+    out[key] = v === null || v === undefined ? "" : String(v).trim();
+  }
+  return out;
+}
+
+function toCSV(rows: Record<string, any>[], cols: string[]) {
+  const esc = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  return [cols.join(","), ...rows.map(r => cols.map(c => esc(r[c])).join(","))].join("\n");
+}
+
+function download(name: string, content: BlobPart, type = "text/csv;charset=utf-8;") {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+}
+
+const roleOptions = [
+  { value: "customer", label: "Customer", icon: UserIcon },
+  { value: "admin", label: "Admin", icon: Shield },
+  { value: "super-admin", label: "Super Admin", icon: ShieldCheck },
+];
+
+const roleBadgeColor: Record<string, string> = {
+  "super-admin": "bg-accent text-accent-foreground",
+  admin: "bg-primary text-primary-foreground",
+  customer: "bg-muted text-muted-foreground",
+};
+
+function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
+      <div className="h-10 w-10 rounded-lg bg-accent/15 flex items-center justify-center text-accent shrink-0">
+        <Icon size={18} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xl font-bold leading-tight">{value}</p>
+        <p className="text-xs text-muted-foreground truncate">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+export function DatabaseManager() {
+  const { profile: currentProfile } = useAuth();
+  const queryClient = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const [search, setSearch] = useState("");
+  const [groupFilter, setGroupFilter] = useState("all");
+  const [page, setPage] = useState(0);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [uploadGroup, setUploadGroup] = useState("");
+  const [preview, setPreview] = useState<Record<string, string>[] | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newContact, setNewContact] = useState<Record<string, string>>({});
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // ---- Contacts ----
+  const { data: contactData, isLoading, isFetching } = useQuery({
+    queryKey: ["db-contacts", search, groupFilter, page],
+    queryFn: async () => {
+      let q = supabase.from("contacts").select("*", { count: "exact" });
+      const term = search.trim().replace(/[%,()]/g, "");
+      if (term) q = q.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,country.ilike.%${term}%`);
+      if (groupFilter !== "all") q = q.eq("group_name", groupFilter);
+      const { data, error, count } = await q.order("created_at", { ascending: false }).range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      if (error) throw error;
+      return { rows: (data || []) as Contact[], count: count || 0 };
+    },
+  });
+
+  const { data: meta } = useQuery({
+    queryKey: ["db-contacts-meta"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("contacts").select("group_name, country");
+      if (error) throw error;
+      const groups = Array.from(new Set(data.map((d: any) => d.group_name).filter(Boolean))).sort();
+      const countries = Array.from(new Set(data.map((d: any) => d.country).filter(Boolean)));
+      return { groups: groups as string[], countries: countries.length, total: data.length };
+    },
+  });
+
+  const { data: profiles } = useQuery({
+    queryKey: ["admin-profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Profile[];
+    },
+  });
+
+  const totalPages = Math.max(1, Math.ceil((contactData?.count || 0) / PAGE_SIZE));
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["db-contacts"] });
+    queryClient.invalidateQueries({ queryKey: ["db-contacts-meta"] });
+  };
+
+  // ---- Bulk upload ----
+  const handleFile = async (file: File) => {
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      let json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+      let rows = json.map(normalizeRow).filter(r => Object.keys(r).length);
+
+      // Fallback: headerless file — assume standard column order
+      if (!rows.length) {
+        const arr = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: "" });
+        rows = arr.map((r) => {
+          const offset = r.length >= 7 ? 1 : 0; // skip leading index column
+          return {
+            title: String(r[offset] ?? "").trim(),
+            first_name: String(r[offset + 1] ?? "").trim(),
+            last_name: String(r[offset + 2] ?? "").trim(),
+            email: String(r[offset + 3] ?? "").trim(),
+            phone: String(r[offset + 4] ?? "").trim(),
+            country: String(r[offset + 5] ?? "").trim(),
+          };
+        }).filter(r => r.email || r.first_name || r.last_name);
+      }
+
+      if (!rows.length) { toast.error("No readable rows found in that file"); return; }
+      setPreview(rows);
+      toast.success(`${rows.length} rows detected`);
+    } catch (e: any) {
+      toast.error("Could not read file: " + e.message);
+    }
+  };
+
+  const runImport = async () => {
+    if (!preview) return;
+    setUploading(true); setProgress(0);
+    try {
+      const cleaned = preview.map(r => ({
+        title: r.title || null,
+        first_name: r.first_name || "",
+        last_name: r.last_name || "",
+        email: (r.email || "").replace(/\s/g, "").toLowerCase() || null,
+        phone: r.phone || null,
+        country: r.country || null,
+        group_name: uploadGroup.trim() || r.group_name || null,
+        source: "bulk_upload",
+      })).filter(r => r.email || r.first_name || r.last_name);
+
+      const seen = new Set<string>();
+      const unique = cleaned.filter(r => {
+        if (!r.email) return true;
+        if (seen.has(r.email)) return false;
+        seen.add(r.email); return true;
+      });
+
+      const CHUNK = 500;
+      let inserted = 0;
+      for (let i = 0; i < unique.length; i += CHUNK) {
+        const chunk = unique.slice(i, i + CHUNK);
+        const withEmail = chunk.filter(r => r.email);
+        const withoutEmail = chunk.filter(r => !r.email);
+        if (withEmail.length) {
+          const { error } = await supabase.from("contacts").upsert(withEmail, { onConflict: "email", ignoreDuplicates: false });
+          if (error) throw error;
+        }
+        if (withoutEmail.length) {
+          const { error } = await supabase.from("contacts").insert(withoutEmail);
+          if (error) throw error;
+        }
+        inserted += chunk.length;
+        setProgress(Math.round((inserted / unique.length) * 100));
+      }
+      toast.success(`Imported ${unique.length} records`);
+      setPreview(null); setUploadOpen(false); setUploadGroup("");
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setUploading(false); setProgress(0);
+    }
+  };
+
+  const downloadSample = (type: "csv" | "xlsx") => {
+    const sample = [
+      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "2348012345678", country: "Nigeria", group_name: "LEKKI GROUP 2" },
+      { title: "Sister", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "2348098765432", country: "Ghana", group_name: "LEKKI GROUP 2" },
+    ];
+    if (type === "csv") {
+      download("contacts-sample.csv", toCSV(sample, [...COLUMNS]));
+    } else {
+      const ws = XLSX.utils.json_to_sheet(sample, { header: [...COLUMNS] });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Contacts");
+      const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      download("contacts-sample.xlsx", out, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    }
+  };
+
+  const exportAll = async () => {
+    toast.info("Preparing export...");
+    const all: any[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase.from("contacts").select("*").range(from, from + 999).order("created_at", { ascending: false });
+      if (error) { toast.error(error.message); return; }
+      all.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    download(`contacts-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(all, [...COLUMNS, "source", "created_at"]));
+    toast.success(`Exported ${all.length} records`);
+  };
+
+  const addContact = async () => {
+    if (!newContact.first_name && !newContact.email) { toast.error("Name or email required"); return; }
+    const { error } = await supabase.from("contacts").insert({
+      title: newContact.title || null,
+      first_name: newContact.first_name || "",
+      last_name: newContact.last_name || "",
+      email: newContact.email?.toLowerCase() || null,
+      phone: newContact.phone || null,
+      country: newContact.country || null,
+      group_name: newContact.group_name || null,
+      source: "manual",
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Record added");
+    setAddOpen(false); setNewContact({}); refresh();
+  };
+
+  const removeContact = async (id: string) => {
+    const { error } = await supabase.from("contacts").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Record deleted"); refresh();
+  };
+
+  const changeRole = async (profileId: string, newRole: string) => {
+    setUpdatingId(profileId);
+    const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", profileId);
+    setUpdatingId(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Role updated");
+    queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+  };
+
+  const rows = contactData?.rows || [];
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <Database className="w-7 h-7 text-accent" />
+          <div>
+            <h1 className="text-3xl font-bold">Database</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Central records store — contacts, members and platform accounts</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={refresh}><RefreshCw size={14} className={isFetching ? "animate-spin" : ""} /> Refresh</Button>
+          <Button variant="outline" size="sm" onClick={exportAll}><Download size={14} /> Export CSV</Button>
+          <Button size="sm" onClick={() => setUploadOpen(true)}><Upload size={14} /> Bulk Upload</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <StatCard icon={Database} label="Total records" value={(meta?.total ?? 0).toLocaleString()} />
+        <StatCard icon={Layers} label="Groups / lists" value={meta?.groups.length ?? 0} />
+        <StatCard icon={Globe} label="Countries" value={meta?.countries ?? 0} />
+        <StatCard icon={Users} label="Platform accounts" value={profiles?.length ?? 0} />
+      </div>
+
+      <Tabs defaultValue="contacts">
+        <TabsList>
+          <TabsTrigger value="contacts">Contacts Table</TabsTrigger>
+          <TabsTrigger value="users">Platform Users & Roles</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="contacts" className="mt-4 space-y-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input className="pl-9" placeholder="Search name, email, phone, country..." value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
+            </div>
+            <Select value={groupFilter} onValueChange={(v) => { setGroupFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-56"><SelectValue placeholder="All groups" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All groups</SelectItem>
+                {meta?.groups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}><Plus size={14} /> Add Record</Button>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead className="w-10">#</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>First Name</TableHead>
+                    <TableHead>Last Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Country</TableHead>
+                    <TableHead>Group</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">Loading records...</TableCell></TableRow>
+                  ) : !rows.length ? (
+                    <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">No records found.</TableCell></TableRow>
+                  ) : rows.map((c, i) => (
+                    <TableRow key={c.id} className="font-mono text-xs">
+                      <TableCell className="text-muted-foreground">{page * PAGE_SIZE + i + 1}</TableCell>
+                      <TableCell>{c.title || "—"}</TableCell>
+                      <TableCell className="font-medium font-sans">{c.first_name || "—"}</TableCell>
+                      <TableCell className="font-medium font-sans">{c.last_name || "—"}</TableCell>
+                      <TableCell className="max-w-[220px] truncate">{c.email || "—"}</TableCell>
+                      <TableCell>{c.phone || "—"}</TableCell>
+                      <TableCell>{c.country || "—"}</TableCell>
+                      <TableCell>{c.group_name ? <Badge variant="secondary" className="font-sans">{c.group_name}</Badge> : "—"}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeContact(c.id)}>
+                          <Trash2 size={13} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border text-sm">
+              <span className="text-muted-foreground">
+                {(contactData?.count || 0).toLocaleString()} rows · page {page + 1} of {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</Button>
+                <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-4">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <Table>
+              <TableHeader><TableRow className="bg-muted/40"><TableHead>Email</TableHead><TableHead>Name</TableHead><TableHead>Current Role</TableHead><TableHead>Change Role</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {profiles?.map((p: any) => {
+                  const isSelf = p.user_id === currentProfile?.user_id;
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.email}</TableCell>
+                      <TableCell>{p.full_name || "—"}</TableCell>
+                      <TableCell><Badge className={roleBadgeColor[p.role] || "bg-muted"}>{p.role}</Badge></TableCell>
+                      <TableCell>
+                        {isSelf ? <span className="text-xs text-muted-foreground">Can't change own role</span> : (
+                          <Select value={p.role} onValueChange={(val) => changeRole(p.id, val)} disabled={updatingId === p.id}>
+                            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                            <SelectContent>{roleOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                          </Select>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Bulk upload */}
+      <Dialog open={uploadOpen} onOpenChange={(o) => { if (!uploading) { setUploadOpen(o); if (!o) setPreview(null); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Records</DialogTitle>
+            <DialogDescription>Upload a CSV or Excel file. Existing emails are updated instead of duplicated.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => downloadSample("csv")}><FileSpreadsheet size={14} /> Sample CSV</Button>
+              <Button variant="outline" size="sm" onClick={() => downloadSample("xlsx")}><FileSpreadsheet size={14} /> Sample XLSX</Button>
+            </div>
+
+            <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+              Accepted columns: <span className="font-mono">{COLUMNS.join(", ")}</span>. Headerless files in that order also work.
+            </div>
+
+            <div>
+              <Label className="text-xs">Assign all rows to a group / list (optional)</Label>
+              <Input className="mt-1" placeholder="e.g. LEKKI GROUP 2" value={uploadGroup} onChange={(e) => setUploadGroup(e.target.value)} />
+            </div>
+
+            <div
+              className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-accent transition-colors"
+              onClick={() => fileRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
+            >
+              <Upload className="mx-auto mb-2 text-muted-foreground" size={22} />
+              <p className="text-sm">Click or drop a .csv / .xlsx file here</p>
+              <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+            </div>
+
+            {preview && (
+              <div className="rounded-lg border border-border overflow-hidden">
+                <div className="px-3 py-2 text-xs bg-muted/40 border-b border-border">{preview.length} rows ready · showing first 5</div>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader><TableRow>{COLUMNS.map(c => <TableHead key={c} className="text-[11px]">{c}</TableHead>)}</TableRow></TableHeader>
+                    <TableBody>
+                      {preview.slice(0, 5).map((r, i) => (
+                        <TableRow key={i} className="text-xs font-mono">
+                          {COLUMNS.map(c => <TableCell key={c} className="max-w-[140px] truncate">{r[c] || "—"}</TableCell>)}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
+            {uploading && <Progress value={progress} />}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPreview(null); setUploadOpen(false); }} disabled={uploading}>Cancel</Button>
+            <Button onClick={runImport} disabled={!preview || uploading}>{uploading ? `Importing ${progress}%` : "Import Records"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add single record */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Record</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            {COLUMNS.map(c => (
+              <div key={c} className={c === "email" ? "col-span-2" : ""}>
+                <Label className="text-xs capitalize">{c.replace("_", " ")}</Label>
+                <Input className="mt-1" value={newContact[c] || ""} onChange={(e) => setNewContact(p => ({ ...p, [c]: e.target.value }))} />
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button onClick={addContact}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
