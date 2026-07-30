@@ -242,10 +242,15 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
       {pendingItems.length > 0 && (
         <div className="flex flex-wrap gap-3">
           {pendingItems.map(item => (
-            <div key={item.label} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${item.color}`}>
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => onNavigate?.(item.tab)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-80 ${item.color}`}
+            >
               <Clock size={14} />
               {item.count} {item.label}
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -253,18 +258,24 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {statCards.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card p-5 hover:shadow-md transition-shadow">
+          <button
+            key={s.label}
+            type="button"
+            onClick={() => onNavigate?.(s.tab)}
+            className="group text-left rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-primary/40 hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div className="flex items-center justify-between mb-3">
               <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
                 <s.icon className={`w-5 h-5 ${s.color}`} />
               </div>
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground/40" />
+              <ArrowUpRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
             </div>
             <p className="text-2xl font-bold text-foreground">{s.value}</p>
             <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
-          </div>
+          </button>
         ))}
       </div>
+
 
       {/* Middle Row - Orders Chart + Quick Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
