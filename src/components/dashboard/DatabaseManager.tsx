@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, Profile } from "@/hooks/useAuth";
@@ -8,10 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Database, Users, Globe, Layers, Search, Upload, Download, Trash2, Plus, RefreshCw, FileSpreadsheet, Shield, ShieldCheck, User as UserIcon } from "lucide-react";
+import { Database, Users, Globe, ShieldCheck, Search, Upload, Download, Trash2, Plus, RefreshCw, FileSpreadsheet, Shield, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -25,12 +24,11 @@ type Contact = {
   email: string | null;
   phone: string | null;
   country: string | null;
-  group_name: string | null;
   source: string;
   created_at: string;
 };
 
-const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "country", "group_name"] as const;
+const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "country"] as const;
 
 const HEADER_ALIASES: Record<string, string> = {
   title: "title", salutation: "title", prefix: "title",
@@ -39,7 +37,6 @@ const HEADER_ALIASES: Record<string, string> = {
   email: "email", "email address": "email", mail: "email",
   phone: "phone", "phone number": "phone", mobile: "phone", telephone: "phone", number: "phone",
   country: "country", nation: "country",
-  group_name: "group_name", group: "group_name", "group name": "group_name", zone: "group_name",
 };
 
 function normalizeRow(raw: Record<string, any>) {
@@ -90,45 +87,50 @@ function StatCard({ icon: Icon, label, value }: { icon: any; label: string; valu
   );
 }
 
+type ViewFilter = "all" | "accounts" | "upgraded";
+
 export function DatabaseManager() {
   const { profile: currentProfile } = useAuth();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [search, setSearch] = useState("");
-  const [groupFilter, setGroupFilter] = useState("all");
+  const [view, setView] = useState<ViewFilter>("all");
   const [page, setPage] = useState(0);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [uploadGroup, setUploadGroup] = useState("");
   const [preview, setPreview] = useState<Record<string, string>[] | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [newContact, setNewContact] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  // ---- Contacts ----
+  // ---- Contacts (server paged) ----
   const { data: contactData, isLoading, isFetching } = useQuery({
-    queryKey: ["db-contacts", search, groupFilter, page],
+    queryKey: ["db-contacts", search, page],
     queryFn: async () => {
       let q = supabase.from("contacts").select("*", { count: "exact" });
       const term = search.trim().replace(/[%,()]/g, "");
       if (term) q = q.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,country.ilike.%${term}%`);
-      if (groupFilter !== "all") q = q.eq("group_name", groupFilter);
       const { data, error, count } = await q.order("created_at", { ascending: false }).range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (error) throw error;
       return { rows: (data || []) as Contact[], count: count || 0 };
     },
   });
 
+  // ---- Aggregate stats (head counts — not limited to 1000) ----
   const { data: meta } = useQuery({
     queryKey: ["db-contacts-meta"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("contacts").select("group_name, country");
-      if (error) throw error;
-      const groups = Array.from(new Set(data.map((d: any) => d.group_name).filter(Boolean))).sort();
-      const countries = Array.from(new Set(data.map((d: any) => d.country).filter(Boolean)));
-      return { groups: groups as string[], countries: countries.length, total: data.length };
+      const { count } = await supabase.from("contacts").select("*", { count: "exact", head: true });
+      const countries = new Set<string>();
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase.from("contacts").select("country").range(from, from + 999);
+        if (error) throw error;
+        (data || []).forEach((d: any) => d.country && countries.add(String(d.country).trim().toLowerCase()));
+        if (!data || data.length < 1000) break;
+      }
+      return { total: count || 0, countries: countries.size };
     },
   });
 
@@ -141,11 +143,34 @@ export function DatabaseManager() {
     },
   });
 
-  const totalPages = Math.max(1, Math.ceil((contactData?.count || 0) / PAGE_SIZE));
+  const profileByEmail = useMemo(() => {
+    const m = new Map<string, Profile>();
+    (profiles || []).forEach(p => { if (p.email) m.set(p.email.toLowerCase(), p); });
+    return m;
+  }, [profiles]);
+
+  const upgraded = (profiles || []).filter(p => p.role === "admin" || p.role === "super-admin");
+
+  // Account rows (client filtered) for the "accounts" / "upgraded" views
+  const accountRows = useMemo(() => {
+    const base = view === "upgraded" ? upgraded : (profiles || []);
+    const term = search.trim().toLowerCase();
+    if (!term) return base;
+    return base.filter(p =>
+      (p.email || "").toLowerCase().includes(term) ||
+      (p.full_name || "").toLowerCase().includes(term)
+    );
+  }, [profiles, view, search]);
+
+  const isAccountView = view !== "all";
+  const totalRows = isAccountView ? accountRows.length : (contactData?.count || 0);
+  const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
+  const pagedAccounts = accountRows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["db-contacts"] });
     queryClient.invalidateQueries({ queryKey: ["db-contacts-meta"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
   };
 
   // ---- Bulk upload ----
@@ -154,14 +179,13 @@ export function DatabaseManager() {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      let json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+      const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
       let rows = json.map(normalizeRow).filter(r => Object.keys(r).length);
 
-      // Fallback: headerless file — assume standard column order
       if (!rows.length) {
         const arr = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: "" });
         rows = arr.map((r) => {
-          const offset = r.length >= 7 ? 1 : 0; // skip leading index column
+          const offset = r.length >= 7 ? 1 : 0;
           return {
             title: String(r[offset] ?? "").trim(),
             first_name: String(r[offset + 1] ?? "").trim(),
@@ -192,7 +216,6 @@ export function DatabaseManager() {
         email: (r.email || "").replace(/\s/g, "").toLowerCase() || null,
         phone: r.phone || null,
         country: r.country || null,
-        group_name: uploadGroup.trim() || r.group_name || null,
         source: "bulk_upload",
       })).filter(r => r.email || r.first_name || r.last_name);
 
@@ -225,8 +248,8 @@ export function DatabaseManager() {
         setProgress(Math.round((processed / unique.length) * 100));
       }
       if (skipped) toast.info(`${skipped} existing email(s) skipped`);
-      toast.success(`Imported ${unique.length} records`);
-      setPreview(null); setUploadOpen(false); setUploadGroup("");
+      toast.success(`Imported ${unique.length - skipped} records`);
+      setPreview(null); setUploadOpen(false);
       refresh();
     } catch (e: any) {
       toast.error(e.message);
@@ -237,8 +260,8 @@ export function DatabaseManager() {
 
   const downloadSample = (type: "csv" | "xlsx") => {
     const sample = [
-      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "2348012345678", country: "Nigeria", group_name: "LEKKI GROUP 2" },
-      { title: "Sister", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "2348098765432", country: "Ghana", group_name: "LEKKI GROUP 2" },
+      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "2348012345678", country: "Nigeria" },
+      { title: "Sister", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "2348098765432", country: "Ghana" },
     ];
     if (type === "csv") {
       download("contacts-sample.csv", toCSV(sample, [...COLUMNS]));
@@ -255,12 +278,16 @@ export function DatabaseManager() {
     toast.info("Preparing export...");
     const all: any[] = [];
     for (let from = 0; ; from += 1000) {
-      const { data, error } = await supabase.from("contacts").select("*").range(from, from + 999).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("contacts").select("*").order("created_at", { ascending: false }).range(from, from + 999);
       if (error) { toast.error(error.message); return; }
       all.push(...(data || []));
       if (!data || data.length < 1000) break;
     }
-    download(`contacts-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(all, [...COLUMNS, "source", "created_at"]));
+    const rowsOut = all.map(c => ({
+      ...c,
+      role: profileByEmail.get((c.email || "").toLowerCase())?.role || "",
+    }));
+    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "role", "source", "created_at"]));
     toast.success(`Exported ${all.length} records`);
   };
 
@@ -273,7 +300,6 @@ export function DatabaseManager() {
       email: newContact.email?.toLowerCase() || null,
       phone: newContact.phone || null,
       country: newContact.country || null,
-      group_name: newContact.group_name || null,
       source: "manual",
     });
     if (error) { toast.error(error.message); return; }
@@ -305,7 +331,7 @@ export function DatabaseManager() {
           <Database className="w-7 h-7 text-accent" />
           <div>
             <h1 className="text-3xl font-bold">Database</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Central records store — contacts, members and platform accounts</p>
+            <p className="text-sm text-muted-foreground mt-0.5">One central records store — every contact and platform account together</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -317,98 +343,51 @@ export function DatabaseManager() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard icon={Database} label="Total records" value={(meta?.total ?? 0).toLocaleString()} />
-        <StatCard icon={Layers} label="Groups / lists" value={meta?.groups.length ?? 0} />
         <StatCard icon={Globe} label="Countries" value={meta?.countries ?? 0} />
-        <StatCard icon={Users} label="Platform accounts" value={profiles?.length ?? 0} />
+        <StatCard icon={Users} label="Platform accounts" value={(profiles?.length ?? 0).toLocaleString()} />
+        <StatCard icon={ShieldCheck} label="Upgraded accounts" value={upgraded.length} />
       </div>
 
-      <Tabs defaultValue="contacts">
-        <TabsList>
-          <TabsTrigger value="contacts">Contacts Table</TabsTrigger>
-          <TabsTrigger value="users">Platform Users & Roles</TabsTrigger>
-        </TabsList>
+      <div className="flex flex-wrap gap-2 items-center mb-3">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Search name, email, phone, country..." value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
+        </div>
+        <Select value={view} onValueChange={(v) => { setView(v as ViewFilter); setPage(0); }}>
+          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All records</SelectItem>
+            <SelectItem value="accounts">Platform accounts</SelectItem>
+            <SelectItem value="upgraded">Upgraded (admins)</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}><Plus size={14} /> Add Record</Button>
+      </div>
 
-        <TabsContent value="contacts" className="mt-4 space-y-3">
-          <div className="flex flex-wrap gap-2 items-center">
-            <div className="relative flex-1 min-w-[220px]">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Search name, email, phone, country..." value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
-            </div>
-            <Select value={groupFilter} onValueChange={(v) => { setGroupFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-56"><SelectValue placeholder="All groups" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All groups</SelectItem>
-                {meta?.groups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}><Plus size={14} /> Add Record</Button>
-          </div>
-
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40">
-                    <TableHead className="w-10">#</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>First Name</TableHead>
-                    <TableHead>Last Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Country</TableHead>
-                    <TableHead>Group</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">Loading records...</TableCell></TableRow>
-                  ) : !rows.length ? (
-                    <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">No records found.</TableCell></TableRow>
-                  ) : rows.map((c, i) => (
-                    <TableRow key={c.id} className="font-mono text-xs">
-                      <TableCell className="text-muted-foreground">{page * PAGE_SIZE + i + 1}</TableCell>
-                      <TableCell>{c.title || "—"}</TableCell>
-                      <TableCell className="font-medium font-sans">{c.first_name || "—"}</TableCell>
-                      <TableCell className="font-medium font-sans">{c.last_name || "—"}</TableCell>
-                      <TableCell className="max-w-[220px] truncate">{c.email || "—"}</TableCell>
-                      <TableCell>{c.phone || "—"}</TableCell>
-                      <TableCell>{c.country || "—"}</TableCell>
-                      <TableCell>{c.group_name ? <Badge variant="secondary" className="font-sans">{c.group_name}</Badge> : "—"}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeContact(c.id)}>
-                          <Trash2 size={13} />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border text-sm">
-              <span className="text-muted-foreground">
-                {(contactData?.count || 0).toLocaleString()} rows · page {page + 1} of {totalPages}
-              </span>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</Button>
-                <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="users" className="mt-4">
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          {isAccountView ? (
             <Table>
-              <TableHeader><TableRow className="bg-muted/40"><TableHead>Email</TableHead><TableHead>Name</TableHead><TableHead>Current Role</TableHead><TableHead>Change Role</TableHead></TableRow></TableHeader>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="w-10">#</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Change Role</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
-                {profiles?.map((p: any) => {
+                {!pagedAccounts.length ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No accounts found.</TableCell></TableRow>
+                ) : pagedAccounts.map((p: any, i) => {
                   const isSelf = p.user_id === currentProfile?.user_id;
                   return (
                     <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.email}</TableCell>
-                      <TableCell>{p.full_name || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">{page * PAGE_SIZE + i + 1}</TableCell>
+                      <TableCell className="font-medium">{p.full_name || "—"}</TableCell>
+                      <TableCell className="text-xs font-mono">{p.email || "—"}</TableCell>
                       <TableCell><Badge className={roleBadgeColor[p.role] || "bg-muted"}>{p.role}</Badge></TableCell>
                       <TableCell>
                         {isSelf ? <span className="text-xs text-muted-foreground">Can't change own role</span> : (
@@ -423,16 +402,71 @@ export function DatabaseManager() {
                 })}
               </TableBody>
             </Table>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="w-10">#</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>First Name</TableHead>
+                  <TableHead>Last Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Access</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">Loading records...</TableCell></TableRow>
+                ) : !rows.length ? (
+                  <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">No records found.</TableCell></TableRow>
+                ) : rows.map((c, i) => {
+                  const linked = profileByEmail.get((c.email || "").toLowerCase());
+                  return (
+                    <TableRow key={c.id} className="font-mono text-xs">
+                      <TableCell className="text-muted-foreground">{page * PAGE_SIZE + i + 1}</TableCell>
+                      <TableCell>{c.title || "—"}</TableCell>
+                      <TableCell className="font-medium font-sans">{c.first_name || "—"}</TableCell>
+                      <TableCell className="font-medium font-sans">{c.last_name || "—"}</TableCell>
+                      <TableCell className="max-w-[220px] truncate">{c.email || "—"}</TableCell>
+                      <TableCell>{c.phone || "—"}</TableCell>
+                      <TableCell>{c.country || "—"}</TableCell>
+                      <TableCell>
+                        {linked
+                          ? <Badge className={`font-sans ${roleBadgeColor[linked.role] || "bg-muted"}`}>{linked.role}</Badge>
+                          : <span className="text-muted-foreground">contact</span>}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeContact(c.id)}>
+                          <Trash2 size={13} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border text-sm">
+          <span className="text-muted-foreground">
+            {totalRows.toLocaleString()} rows · page {page + 1} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       {/* Bulk upload */}
       <Dialog open={uploadOpen} onOpenChange={(o) => { if (!uploading) { setUploadOpen(o); if (!o) setPreview(null); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Bulk Upload Records</DialogTitle>
-            <DialogDescription>Upload a CSV or Excel file. Existing emails are updated instead of duplicated.</DialogDescription>
+            <DialogDescription>Upload a CSV or Excel file. Everything lands in the same database; existing emails are skipped.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -443,11 +477,6 @@ export function DatabaseManager() {
 
             <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
               Accepted columns: <span className="font-mono">{COLUMNS.join(", ")}</span>. Headerless files in that order also work.
-            </div>
-
-            <div>
-              <Label className="text-xs">Assign all rows to a group / list (optional)</Label>
-              <Input className="mt-1" placeholder="e.g. LEKKI GROUP 2" value={uploadGroup} onChange={(e) => setUploadGroup(e.target.value)} />
             </div>
 
             <div
