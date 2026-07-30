@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookOpen, Plus, Pencil, Trash2, GripVertical, Copy, Send, Search } from "lucide-react";
+import { BookOpen, Plus, Pencil, Trash2, GripVertical, Copy, Send, Search, Archive, ArchiveRestore } from "lucide-react";
 import { toast } from "sonner";
 
 interface PrayerPoint {
@@ -19,6 +19,7 @@ interface PrayerPoint {
   body: string;
   sort_order: number;
   is_active: boolean;
+  archived?: boolean;
 }
 
 const emptyForm = { category: "", title: "", scripture: "", body: "", sort_order: 0, is_active: true };
@@ -34,6 +35,7 @@ export function PrayerPointsManager() {
   const [sendingPoint, setSendingPoint] = useState<PrayerPoint | null>(null);
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
   const [groupSearch, setGroupSearch] = useState("");
+  const [showArchive, setShowArchive] = useState(false);
 
   const { data: points = [], isLoading } = useQuery({
     queryKey: ["prayer-points-admin"],
@@ -138,6 +140,20 @@ export function PrayerPointsManager() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
+      const { error } = await supabase.from("prayer_points").update({ archived }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      queryClient.invalidateQueries({ queryKey: ["prayer-points-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["prayer-points"] });
+      queryClient.invalidateQueries({ queryKey: ["archived-prayer-points"] });
+      toast.success(v.archived ? "Moved to archive" : "Restored from archive");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!sendingPoint || selectedGroups.size === 0) throw new Error("Pick at least one group");
@@ -196,7 +212,8 @@ export function PrayerPointsManager() {
     saveMutation.mutate(editing ? { ...form, id: editing.id } : form);
   };
 
-  const categories = [...new Set(points.map(p => p.category))];
+  const visiblePoints = points.filter(p => (showArchive ? p.archived : !p.archived));
+  const categories = [...new Set(visiblePoints.map(p => p.category))];
 
   const filteredGroups = useMemo(() => {
     const q = groupSearch.trim().toLowerCase();
@@ -227,6 +244,10 @@ export function PrayerPointsManager() {
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <BookOpen className="w-7 h-7 text-accent" /> Prayer Points
         </h1>
+        <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => setShowArchive(v => !v)} className="gap-1">
+          <Archive size={14} /> {showArchive ? "Active points" : "Archive"}
+        </Button>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreate} size="sm">
@@ -300,12 +321,13 @@ export function PrayerPointsManager() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Loading...</div>
-      ) : points.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">No prayer points yet. Add one above.</div>
+      ) : visiblePoints.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">{showArchive ? "Archive is empty." : "No prayer points yet. Add one above."}</div>
       ) : (
         <div className="space-y-6">
           {categories.map(cat => (
@@ -314,7 +336,7 @@ export function PrayerPointsManager() {
                 <h3 className="font-semibold text-sm">{cat}</h3>
               </div>
               <div className="divide-y divide-border">
-                {points.filter(p => p.category === cat).map(point => (
+                {visiblePoints.filter(p => p.category === cat).map(point => (
                   <div key={point.id} className={`px-4 py-3 flex items-start gap-3 ${!point.is_active ? "opacity-50" : ""}`}>
                     <GripVertical size={16} className="text-muted-foreground mt-1 shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -329,6 +351,13 @@ export function PrayerPointsManager() {
                       />
                       <Button variant="ghost" size="icon" className="h-8 w-8" title="Send to groups" onClick={() => openSend(point)}>
                         <Send size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost" size="icon" className="h-8 w-8"
+                        title={point.archived ? "Restore" : "Archive"}
+                        onClick={() => archiveMutation.mutate({ id: point.id, archived: !point.archived })}
+                      >
+                        {point.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" title="Duplicate" onClick={() => duplicateMutation.mutate(point)}>
                         <Copy size={14} />

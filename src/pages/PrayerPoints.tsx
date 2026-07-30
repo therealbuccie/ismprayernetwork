@@ -24,6 +24,7 @@ const PrayerPoints = () => {
         .from("prayer_points")
         .select("*")
         .eq("is_active", true)
+        .eq("archived", false)
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return data as PrayerPoint[];
