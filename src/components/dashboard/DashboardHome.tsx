@@ -4,7 +4,8 @@ import { isPublicDashboard, dashboardAdminCall, adminQuery } from "@/hooks/useBo
 import {
   BookOpen, Tag, Users, Mail, MessageSquare, CalendarDays, Newspaper,
   HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
-  Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download
+  Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download, Database,
+  ClipboardCheck, Bell, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,6 +19,13 @@ interface DashboardStats {
   prayerRequests: { total: number; totalPrayers: number };
   orders: { total: number; pending: number; approved: number; rejected: number; totalRevenue: number; recent: any[] };
   purchases: { total: number; recent: any[] };
+  announcements?: { total: number; active: number; archived: number };
+  prayerPoints?: { total: number; active: number; archived: number };
+  reports?: { total: number; pending: number; reviewed: number; totalAttendance: number; recent: any[] };
+}
+
+interface DashboardHomeProps {
+  onNavigate?: (tab: string) => void;
 }
 
 export function DashboardHome() {
