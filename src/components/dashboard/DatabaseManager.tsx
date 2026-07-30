@@ -404,13 +404,14 @@ export function DatabaseManager() {
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Country</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Change Role</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {!pagedAccounts.length ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No accounts found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No accounts found.</TableCell></TableRow>
                 ) : pagedAccounts.map((p: any, i) => {
                   const isSelf = p.user_id === currentProfile?.user_id;
                   return (
@@ -418,6 +419,16 @@ export function DatabaseManager() {
                       <TableCell className="text-muted-foreground text-xs">{page * PAGE_SIZE + i + 1}</TableCell>
                       <TableCell className="font-medium">{p.full_name || "—"}</TableCell>
                       <TableCell className="text-xs font-mono">{p.email || "—"}</TableCell>
+                      <TableCell>
+                        <Select value={p.country || ""} onValueChange={(val) => changeCountry(p.id, val)} disabled={updatingId === p.id}>
+                          <SelectTrigger className="w-40 h-8 text-xs">
+                            <SelectValue placeholder="Set country" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-64">
+                            {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell><Badge className={roleBadgeColor[p.role] || "bg-muted"}>{p.role}</Badge></TableCell>
                       <TableCell>
                         {isSelf ? <span className="text-xs text-muted-foreground">Can't change own role</span> : (
@@ -430,6 +441,7 @@ export function DatabaseManager() {
                     </TableRow>
                   );
                 })}
+
               </TableBody>
             </Table>
           ) : (
