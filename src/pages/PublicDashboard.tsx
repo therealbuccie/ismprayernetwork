@@ -25,6 +25,10 @@ const PaymentSettingsManager = lazy(() => import("@/components/dashboard/Payment
 const BookstoreAnalytics = lazy(() => import("@/components/dashboard/BookstoreAnalytics").then(m => ({ default: m.BookstoreAnalytics })));
 const ComboPacksManager = lazy(() => import("@/components/dashboard/ComboPacksManager").then(m => ({ default: m.ComboPacksManager })));
 const MailDispatchManager = lazy(() => import("@/components/dashboard/MailDispatchManager").then(m => ({ default: m.MailDispatchManager })));
+const DatabaseManager = lazy(() => import("@/components/dashboard/DatabaseManager").then(m => ({ default: m.DatabaseManager })));
+const PrayerPointsManager = lazy(() => import("@/components/dashboard/PrayerPointsManager").then(m => ({ default: m.PrayerPointsManager })));
+const ReportsManager = lazy(() => import("@/components/dashboard/ReportsManager").then(m => ({ default: m.ReportsManager })));
+const AnnouncementsManager = lazy(() => import("@/components/dashboard/AnnouncementsManager").then(m => ({ default: m.AnnouncementsManager })));
 
 function TabSkeleton() {
   return (
@@ -61,10 +65,14 @@ const PublicDashboard = () => {
       <main className="flex-1 overflow-auto">
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
           <Suspense fallback={<TabSkeleton />}>
-            {activeTab === "home" && <DashboardHome />}
+            {activeTab === "home" && <DashboardHome onNavigate={(t) => setActiveTab(t as DashboardTab)} />}
             {activeTab === "books" && <BooksManager />}
             {activeTab === "categories" && <CategoriesManager />}
             {activeTab === "users" && <UsersManager />}
+            {activeTab === "database" && <DatabaseManager />}
+            {activeTab === "prayer-points" && <PrayerPointsManager />}
+            {activeTab === "reports" && <ReportsManager />}
+            {activeTab === "announcements" && <AnnouncementsManager />}
             {activeTab === "messages" && <ContactMessagesManager />}
             {activeTab === "testimonies" && <TestimoniesManager />}
             {activeTab === "events" && <EventsManager />}
