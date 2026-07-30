@@ -160,6 +160,8 @@ export function DatabaseManager() {
 
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewFilter>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("created_at.desc");
   const [page, setPage] = useState(0);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -175,12 +177,17 @@ export function DatabaseManager() {
 
   // ---- Contacts (server paged) ----
   const { data: contactData, isLoading, isFetching } = useQuery({
-    queryKey: ["db-contacts", search, page],
+    queryKey: ["db-contacts", search, page, countryFilter, sortBy],
     queryFn: async () => {
       let q = supabase.from("contacts").select("*", { count: "exact" });
       const term = search.trim().replace(/[%,()]/g, "");
       if (term) q = q.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,country.ilike.%${term}%`);
-      const { data, error, count } = await q.order("created_at", { ascending: false }).range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      if (countryFilter === "none") q = q.is("country", null);
+      else if (countryFilter !== "all") q = q.ilike("country", countryFilter);
+      const [col, dir] = sortBy.split(".");
+      const { data, error, count } = await q
+        .order(col, { ascending: dir === "asc", nullsFirst: false })
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (error) throw error;
       return { rows: (data || []) as Contact[], count: count || 0 };
     },
@@ -191,16 +198,24 @@ export function DatabaseManager() {
     queryKey: ["db-contacts-meta"],
     queryFn: async () => {
       const { count } = await supabase.from("contacts").select("*", { count: "exact", head: true });
-      const countries = new Set<string>();
+      const tally = new Map<string, number>();
+      let unknown = 0;
       for (let from = 0; ; from += 1000) {
         const { data, error } = await supabase.from("contacts").select("country").range(from, from + 999);
         if (error) throw error;
-        (data || []).forEach((d: any) => d.country && countries.add(String(d.country).trim().toLowerCase()));
+        (data || []).forEach((d: any) => {
+          const raw = String(d.country || "").trim();
+          if (!raw) { unknown++; return; }
+          const key = raw.replace(/\b\w/g, c => c.toUpperCase());
+          tally.set(key, (tally.get(key) || 0) + 1);
+        });
         if (!data || data.length < 1000) break;
       }
-      return { total: count || 0, countries: countries.size };
+      const list = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+      return { total: count || 0, countries: tally.size, countryList: list, unknown };
     },
   });
+
 
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
