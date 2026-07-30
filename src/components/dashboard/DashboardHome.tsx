@@ -348,6 +348,16 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
               <span className="text-sm text-muted-foreground">Events</span>
               <span className="text-lg font-bold text-foreground">{stats.counts.events}</span>
             </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Report Attendance</span>
+              <span className="text-lg font-bold text-foreground">{(stats.reports?.totalAttendance ?? 0).toLocaleString()}</span>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Archived Items</span>
+              <span className="text-lg font-bold text-foreground">{(stats.prayerPoints?.archived ?? 0) + (stats.announcements?.archived ?? 0)}</span>
+            </div>
           </div>
         </div>
 
