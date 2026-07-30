@@ -107,7 +107,8 @@ Deno.serve(async (req) => {
       case "dashboard_stats": {
         // Fetch all stats in one call
         const [books, categories, profiles, testimonies, programs, events, 
-               messages, subscribers, prayerRequests, prayerGroups, orders, purchases] = await Promise.all([
+               messages, subscribers, prayerRequests, prayerGroups, orders, purchases,
+               announcements, reports, prayerPoints] = await Promise.all([
           supabase.from("books").select("*", { count: "exact", head: true }),
           supabase.from("categories").select("*", { count: "exact", head: true }),
           supabase.from("profiles").select("*", { count: "exact", head: true }),
@@ -120,6 +121,9 @@ Deno.serve(async (req) => {
           supabase.from("prayer_groups").select("*", { count: "exact", head: true }),
           supabase.from("purchase_orders").select("*"),
           supabase.from("purchases").select("*, books(title)"),
+          supabase.from("announcements").select("id, is_active, archived"),
+          supabase.from("prayer_reports").select("id, status, attendance, created_at, minister_name, church, prayer_date"),
+          supabase.from("prayer_points").select("id, archived, is_active"),
         ]);
 
         result = {
