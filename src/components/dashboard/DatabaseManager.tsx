@@ -321,7 +321,7 @@ export function DatabaseManager() {
     setSavingAccount(true);
     try {
       const { data, error } = await supabase.functions.invoke("admin-create-user", {
-        body: { email, full_name: newAccount.full_name, password: newAccount.password, role: newAccount.role },
+        body: { email, full_name: newAccount.full_name, password: newAccount.password, role: newAccount.role, country: newAccount.country },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
