@@ -234,16 +234,29 @@ export function DatabaseManager() {
 
   const upgraded = (profiles || []).filter(p => p.role === "admin" || p.role === "super-admin");
 
-  // Account rows (client filtered) for the "accounts" / "upgraded" views
+  // Account rows (client filtered/sorted) for the "accounts" / "upgraded" views
   const accountRows = useMemo(() => {
-    const base = view === "upgraded" ? upgraded : (profiles || []);
+    let base = view === "upgraded" ? upgraded : (profiles || []);
     const term = search.trim().toLowerCase();
-    if (!term) return base;
-    return base.filter(p =>
+    if (term) base = base.filter(p =>
       (p.email || "").toLowerCase().includes(term) ||
-      (p.full_name || "").toLowerCase().includes(term)
+      (p.full_name || "").toLowerCase().includes(term) ||
+      (p.country || "").toLowerCase().includes(term)
     );
-  }, [profiles, view, search]);
+    if (countryFilter === "none") base = base.filter(p => !p.country);
+    else if (countryFilter !== "all") base = base.filter(p => (p.country || "").toLowerCase() === countryFilter.toLowerCase());
+    const [col, dir] = sortBy.split(".");
+    const asc = dir === "asc" ? 1 : -1;
+    const key = (p: Profile) => {
+      if (col === "first_name") return (p.full_name || p.email || "").toLowerCase();
+      if (col === "last_name") return (p.full_name || "").split(" ").slice(-1)[0]?.toLowerCase() || "";
+      if (col === "country") return (p.country || "").toLowerCase();
+      if (col === "email") return (p.email || "").toLowerCase();
+      return p.created_at || "";
+    };
+    return [...base].sort((a, b) => (key(a) > key(b) ? asc : key(a) < key(b) ? -asc : 0));
+  }, [profiles, view, search, countryFilter, sortBy]);
+
 
   const isAccountView = view !== "all";
   const totalRows = isAccountView ? accountRows.length : (contactData?.count || 0);
