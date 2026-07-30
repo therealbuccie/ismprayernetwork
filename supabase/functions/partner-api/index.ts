@@ -439,7 +439,7 @@ Deno.serve(async (req) => {
       return jsonResponse(data, 201);
     }
 
-    return jsonResponse({ error: "Not found. Available endpoints: GET /books, GET /books/:id, GET /categories, GET /analytics, POST /prayer-groups, POST /orders" }, 404);
+    return jsonResponse({ error: "Not found. Available endpoints: GET /books, GET /books/:id, GET /categories, GET /contacts, GET /contacts-stats, POST /contacts, DELETE /contacts/:id, GET /announcements, GET /announcements/:id, GET /prayer-points, GET /reports, GET /reports/:id, GET /reports-stats, POST /reports, GET /analytics, POST /prayer-groups, POST /orders" }, 404);
 
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
