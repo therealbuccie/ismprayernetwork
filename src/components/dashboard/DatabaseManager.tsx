@@ -543,12 +543,13 @@ export function DatabaseManager() {
                   return (
                     <TableRow key={c.id} className="font-mono text-xs">
                       <TableCell className="text-muted-foreground">{page * PAGE_SIZE + i + 1}</TableCell>
-                      <TableCell>{c.title || "—"}</TableCell>
-                      <TableCell className="font-medium font-sans">{c.first_name || "—"}</TableCell>
-                      <TableCell className="font-medium font-sans">{c.last_name || "—"}</TableCell>
-                      <TableCell className="max-w-[220px] truncate">{c.email || "—"}</TableCell>
-                      <TableCell>{c.phone || "—"}</TableCell>
-                      <TableCell>{c.country || "—"}</TableCell>
+                      <EditableCell value={c.title} onSave={v => saveField(c.id, "title", v)} />
+                      <EditableCell value={c.first_name} onSave={v => saveField(c.id, "first_name", v)} className="font-medium font-sans" />
+                      <EditableCell value={c.last_name} onSave={v => saveField(c.id, "last_name", v)} className="font-medium font-sans" />
+                      <EditableCell value={c.email} onSave={v => saveField(c.id, "email", v.toLowerCase())} className="max-w-[220px] truncate" />
+                      <EditableCell value={c.phone} onSave={v => saveField(c.id, "phone", v)} />
+                      <EditableCell value={c.country} onSave={v => saveField(c.id, "country", v)} options={COUNTRIES} />
+
                       <TableCell>
                         {linked
                           ? <Badge className={`font-sans ${roleBadgeColor[linked.role] || "bg-muted"}`}>{linked.role}</Badge>
