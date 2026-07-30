@@ -817,6 +817,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          country: string | null
           created_at: string
           dob_day: number | null
           dob_month: number | null
@@ -828,6 +829,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          country?: string | null
           created_at?: string
           dob_day?: number | null
           dob_month?: number | null
@@ -839,6 +841,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          country?: string | null
           created_at?: string
           dob_day?: number | null
           dob_month?: number | null
