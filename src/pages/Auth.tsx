@@ -192,7 +192,21 @@ const Auth = () => {
                           onChange={(e) => setMinistryName(e.target.value)}
                         />
                       </div>
+                      <div>
+                        <Label>Country</Label>
+                        <Select value={country} onValueChange={setCountry}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select your country" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-64">
+                            {COUNTRIES.map((c) => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="grid grid-cols-2 gap-3">
+
                         <div>
                           <Label>Birthday (Day)</Label>
                           <Select value={dobDay} onValueChange={setDobDay}>
