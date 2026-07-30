@@ -79,6 +79,7 @@ const Dashboard = () => {
             {activeTab === "books" && <BooksManager />}
             {activeTab === "categories" && <CategoriesManager />}
             {activeTab === "users" && <UsersManager />}
+            {activeTab === "database" && <DatabaseManager />}
             {activeTab === "messages" && <ContactMessagesManager />}
             {activeTab === "testimonies" && <TestimoniesManager />}
             {activeTab === "events" && <EventsManager />}
