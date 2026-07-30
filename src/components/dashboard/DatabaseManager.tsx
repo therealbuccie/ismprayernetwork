@@ -104,6 +104,10 @@ export function DatabaseManager() {
   const [addOpen, setAddOpen] = useState(false);
   const [newContact, setNewContact] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [newAccount, setNewAccount] = useState({ email: "", full_name: "", password: "", role: "admin" });
+
 
   // ---- Contacts (server paged) ----
   const { data: contactData, isLoading, isFetching } = useQuery({
@@ -307,6 +311,30 @@ export function DatabaseManager() {
     setAddOpen(false); setNewContact({}); refresh();
   };
 
+  const createAccount = async () => {
+    const email = newAccount.email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast.error("Enter a valid email"); return; }
+    const exists = profileByEmail.has(email);
+    if (!exists && newAccount.password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    setSavingAccount(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-create-user", {
+        body: { email, full_name: newAccount.full_name, password: newAccount.password, role: newAccount.role },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success((data as any)?.status === "upgraded" ? "Existing account upgraded" : "Account created");
+      setAccountOpen(false);
+      setNewAccount({ email: "", full_name: "", password: "", role: "admin" });
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message || "Could not create account");
+    } finally {
+      setSavingAccount(false);
+    }
+  };
+
+
   const removeContact = async (id: string) => {
     const { error } = await supabase.from("contacts").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
@@ -363,6 +391,8 @@ export function DatabaseManager() {
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}><Plus size={14} /> Add Record</Button>
+        <Button size="sm" onClick={() => setAccountOpen(true)}><ShieldCheck size={14} /> New Upgraded Account</Button>
+
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -537,6 +567,52 @@ export function DatabaseManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* New upgraded account */}
+      <Dialog open={accountOpen} onOpenChange={(o) => { if (!savingAccount) setAccountOpen(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Upgraded Account</DialogTitle>
+            <DialogDescription>
+              Create an admin account, or enter an existing member's email to upgrade their role.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Email</Label>
+              <Input className="mt-1" type="email" value={newAccount.email}
+                onChange={(e) => setNewAccount(p => ({ ...p, email: e.target.value }))} placeholder="name@example.com" />
+              {profileByEmail.has(newAccount.email.trim().toLowerCase()) && (
+                <p className="text-[11px] text-accent mt-1">This member already has an account — their role will be upgraded.</p>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs">Full name</Label>
+              <Input className="mt-1" value={newAccount.full_name}
+                onChange={(e) => setNewAccount(p => ({ ...p, full_name: e.target.value }))} />
+            </div>
+            {!profileByEmail.has(newAccount.email.trim().toLowerCase()) && (
+              <div>
+                <Label className="text-xs">Temporary password</Label>
+                <Input className="mt-1" type="text" value={newAccount.password}
+                  onChange={(e) => setNewAccount(p => ({ ...p, password: e.target.value }))} placeholder="min. 8 characters" />
+              </div>
+            )}
+            <div>
+              <Label className="text-xs">Role</Label>
+              <Select value={newAccount.role} onValueChange={(v) => setNewAccount(p => ({ ...p, role: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{roleOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAccountOpen(false)} disabled={savingAccount}>Cancel</Button>
+            <Button onClick={createAccount} disabled={savingAccount}>{savingAccount ? "Saving..." : "Save Account"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
