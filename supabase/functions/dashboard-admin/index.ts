@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         // Fetch all stats in one call
         const [books, categories, profiles, testimonies, programs, events, 
                messages, subscribers, prayerRequests, prayerGroups, orders, purchases,
-               announcements, reports, prayerPoints] = await Promise.all([
+               announcements, reports, prayerPoints, contacts] = await Promise.all([
           supabase.from("books").select("*", { count: "exact", head: true }),
           supabase.from("categories").select("*", { count: "exact", head: true }),
           supabase.from("profiles").select("*", { count: "exact", head: true }),
