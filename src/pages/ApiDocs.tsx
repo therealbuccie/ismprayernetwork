@@ -130,6 +130,48 @@ const endpoints: EndpointInfo[] = [
     description: "List all book categories",
   },
   {
+    method: "GET",
+    path: "/contacts",
+    description: "List contact database records (paginated)",
+    params: [
+      { name: "search", type: "string", required: false, description: "Search first name, last name, email or phone" },
+      { name: "group", type: "string", required: false, description: "Filter by group / list name" },
+      { name: "country", type: "string", required: false, description: "Filter by country" },
+      { name: "limit", type: "number", required: false, description: "Max results (default 100, max 1000)" },
+      { name: "offset", type: "number", required: false, description: "Pagination offset (default 0)" },
+    ],
+  },
+  {
+    method: "GET",
+    path: "/contacts/:id",
+    description: "Get a single contact record",
+  },
+  {
+    method: "GET",
+    path: "/contacts-stats",
+    description: "Totals plus breakdowns by group, country and source",
+  },
+  {
+    method: "POST",
+    path: "/contacts",
+    description: "Create one contact or bulk-import many (duplicate emails skipped)",
+    body: [
+      { name: "contacts", type: "array", required: false, description: "Array of contact objects for bulk import" },
+      { name: "title", type: "string", required: false, description: "Salutation, e.g. Pastor" },
+      { name: "first_name", type: "string", required: true, description: "First name" },
+      { name: "last_name", type: "string", required: false, description: "Last name" },
+      { name: "email", type: "string", required: false, description: "Email address (unique)" },
+      { name: "phone", type: "string", required: false, description: "Phone number" },
+      { name: "country", type: "string", required: false, description: "Country" },
+      { name: "group_name", type: "string", required: false, description: "Group / list to assign records to" },
+    ],
+  },
+  {
+    method: "DELETE",
+    path: "/contacts/:id",
+    description: "Delete a contact record",
+  },
+  {
     method: "POST",
     path: "/prayer-groups",
     description: "Create a public prayer group",
