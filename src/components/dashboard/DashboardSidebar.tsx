@@ -69,7 +69,7 @@ const tabGroups: TabGroup[] = [
       { id: "live-tv", label: "Live TV", icon: Tv },
       { id: "payment-settings", label: "Payment Settings", icon: Banknote },
       { id: "settings", label: "General Settings", icon: Settings },
-      { id: "users", label: "Users & Roles", icon: Users, superAdminOnly: true },
+      { id: "database", label: "Database", icon: Database, superAdminOnly: true },
     ],
   },
 ];
