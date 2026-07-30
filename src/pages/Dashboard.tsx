@@ -77,7 +77,7 @@ const Dashboard = () => {
       <main className="flex-1 overflow-auto">
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
           <Suspense fallback={<TabSkeleton />}>
-            {activeTab === "home" && <DashboardHome />}
+            {activeTab === "home" && <DashboardHome onNavigate={(t) => setActiveTab(t as DashboardTab)} />}
             {activeTab === "books" && <BooksManager />}
             {activeTab === "categories" && <CategoriesManager />}
             {activeTab === "users" && <UsersManager />}

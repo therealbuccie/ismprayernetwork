@@ -176,6 +176,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
     "books", "categories", "profiles", "testimonies", "programs", "events",
     "contact_messages", "newsletter_subscribers", "prayer_requests", "prayer_groups",
     "purchase_orders", "purchases", "combo_packs", "campaigns", "prayer_points",
+    "contacts", "announcements", "prayer_reports",
   ];
 
   const exportAllAsCSV = async () => {
