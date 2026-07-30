@@ -352,6 +352,16 @@ export function DatabaseManager() {
     queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
   };
 
+  const changeCountry = async (profileId: string, newCountry: string) => {
+    setUpdatingId(profileId);
+    const { error } = await supabase.from("profiles").update({ country: newCountry } as any).eq("id", profileId);
+    setUpdatingId(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Country updated");
+    refresh();
+  };
+
+
   const rows = contactData?.rows || [];
 
   return (
