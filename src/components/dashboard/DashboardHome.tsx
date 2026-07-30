@@ -28,7 +28,7 @@ interface DashboardHomeProps {
   onNavigate?: (tab: string) => void;
 }
 
-export function DashboardHome() {
+export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
   const isPublic = isPublicDashboard();
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
@@ -40,7 +40,8 @@ export function DashboardHome() {
 
       // Authenticated admin path
       const [books, categories, profiles, testimoniesRes, programs, events,
-             messages, subscribers, prayerRequests, prayerGroups, orders, purchases] = await Promise.all([
+             messages, subscribers, prayerRequests, prayerGroups, orders, purchases,
+             announcements, reports, prayerPoints, contacts] = await Promise.all([
         supabase.from("books").select("*", { count: "exact", head: true }),
         supabase.from("categories").select("*", { count: "exact", head: true }),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
@@ -53,6 +54,10 @@ export function DashboardHome() {
         supabase.from("prayer_groups").select("*", { count: "exact", head: true }),
         supabase.from("purchase_orders").select("*"),
         supabase.from("purchases").select("*, books(title)"),
+        supabase.from("announcements").select("id, is_active, archived"),
+        supabase.from("prayer_reports").select("id, status, attendance, created_at, minister_name, church, prayer_date"),
+        supabase.from("prayer_points").select("id, archived, is_active"),
+        supabase.from("contacts").select("*", { count: "exact", head: true }),
       ]);
 
       return {
@@ -64,6 +69,7 @@ export function DashboardHome() {
           events: events.count ?? 0,
           subscribers: subscribers.count ?? 0,
           prayerGroups: prayerGroups.count ?? 0,
+          contacts: contacts.count ?? 0,
         },
         testimonies: {
           total: testimoniesRes.data?.length ?? 0,
@@ -89,6 +95,23 @@ export function DashboardHome() {
         purchases: {
           total: purchases.data?.length ?? 0,
           recent: purchases.data?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
+        },
+        announcements: {
+          total: announcements.data?.length ?? 0,
+          active: announcements.data?.filter(a => a.is_active && !a.archived).length ?? 0,
+          archived: announcements.data?.filter(a => a.archived).length ?? 0,
+        },
+        prayerPoints: {
+          total: prayerPoints.data?.length ?? 0,
+          active: prayerPoints.data?.filter(p => p.is_active && !p.archived).length ?? 0,
+          archived: prayerPoints.data?.filter(p => p.archived).length ?? 0,
+        },
+        reports: {
+          total: reports.data?.length ?? 0,
+          pending: reports.data?.filter(r => r.status === "pending").length ?? 0,
+          reviewed: reports.data?.filter(r => r.status === "reviewed").length ?? 0,
+          totalAttendance: reports.data?.reduce((s, r) => s + (r.attendance || 0), 0) ?? 0,
+          recent: reports.data?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [],
         },
       };
     },
