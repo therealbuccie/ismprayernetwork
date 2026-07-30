@@ -399,6 +399,13 @@ export function DatabaseManager() {
   };
 
 
+  const saveField = async (id: string, field: string, value: string) => {
+    const { error } = await supabase.from("contacts").update({ [field]: value || null }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved");
+    refresh();
+  };
+
   const removeContact = async (id: string) => {
     const { error } = await supabase.from("contacts").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
