@@ -91,6 +91,68 @@ function StatCard({ icon: Icon, label, value }: { icon: any; label: string; valu
 
 type ViewFilter = "all" | "accounts" | "upgraded";
 
+/** phpMyAdmin-style inline editable cell: click to edit, Enter/blur saves, Esc cancels. */
+function EditableCell({
+  value,
+  onSave,
+  options,
+  className = "",
+}: {
+  value: string | null | undefined;
+  onSave: (next: string) => Promise<void>;
+  options?: readonly string[];
+  className?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+  const [saving, setSaving] = useState(false);
+  const listId = useMemo(() => `dl-${Math.random().toString(36).slice(2)}`, []);
+
+  const commit = async () => {
+    setEditing(false);
+    const next = draft.trim();
+    if (next === (value ?? "")) return;
+    setSaving(true);
+    await onSave(next);
+    setSaving(false);
+  };
+
+  if (editing) {
+    return (
+      <TableCell className={className}>
+        <input
+          autoFocus
+          value={draft}
+          list={options ? listId : undefined}
+          onChange={e => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={e => {
+            if (e.key === "Enter") { e.preventDefault(); commit(); }
+            if (e.key === "Escape") { setDraft(value ?? ""); setEditing(false); }
+          }}
+          className="w-full min-w-[90px] rounded border border-accent bg-background px-1.5 py-1 text-xs outline-none"
+        />
+        {options && (
+          <datalist id={listId}>
+            {options.map(o => <option key={o} value={o} />)}
+          </datalist>
+        )}
+      </TableCell>
+    );
+  }
+
+  return (
+    <TableCell
+      className={`cursor-text hover:bg-accent/10 transition-colors ${saving ? "opacity-50" : ""} ${className}`}
+      title="Click to edit"
+      onClick={() => { setDraft(value ?? ""); setEditing(true); }}
+    >
+      {value || <span className="text-muted-foreground">—</span>}
+    </TableCell>
+  );
+}
+
+
 export function DatabaseManager() {
   const { profile: currentProfile } = useAuth();
   const queryClient = useQueryClient();
@@ -337,6 +399,13 @@ export function DatabaseManager() {
   };
 
 
+  const saveField = async (id: string, field: string, value: string) => {
+    const { error } = await supabase.from("contacts").update({ [field]: value || null }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved");
+    refresh();
+  };
+
   const removeContact = async (id: string) => {
     const { error } = await supabase.from("contacts").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
@@ -481,12 +550,13 @@ export function DatabaseManager() {
                   return (
                     <TableRow key={c.id} className="font-mono text-xs">
                       <TableCell className="text-muted-foreground">{page * PAGE_SIZE + i + 1}</TableCell>
-                      <TableCell>{c.title || "—"}</TableCell>
-                      <TableCell className="font-medium font-sans">{c.first_name || "—"}</TableCell>
-                      <TableCell className="font-medium font-sans">{c.last_name || "—"}</TableCell>
-                      <TableCell className="max-w-[220px] truncate">{c.email || "—"}</TableCell>
-                      <TableCell>{c.phone || "—"}</TableCell>
-                      <TableCell>{c.country || "—"}</TableCell>
+                      <EditableCell value={c.title} onSave={v => saveField(c.id, "title", v)} />
+                      <EditableCell value={c.first_name} onSave={v => saveField(c.id, "first_name", v)} className="font-medium font-sans" />
+                      <EditableCell value={c.last_name} onSave={v => saveField(c.id, "last_name", v)} className="font-medium font-sans" />
+                      <EditableCell value={c.email} onSave={v => saveField(c.id, "email", v.toLowerCase())} className="max-w-[220px] truncate" />
+                      <EditableCell value={c.phone} onSave={v => saveField(c.id, "phone", v)} />
+                      <EditableCell value={c.country} onSave={v => saveField(c.id, "country", v)} options={COUNTRIES} />
+
                       <TableCell>
                         {linked
                           ? <Badge className={`font-sans ${roleBadgeColor[linked.role] || "bg-muted"}`}>{linked.role}</Badge>
