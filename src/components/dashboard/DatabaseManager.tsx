@@ -160,6 +160,8 @@ export function DatabaseManager() {
 
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewFilter>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("created_at.desc");
   const [page, setPage] = useState(0);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -175,12 +177,17 @@ export function DatabaseManager() {
 
   // ---- Contacts (server paged) ----
   const { data: contactData, isLoading, isFetching } = useQuery({
-    queryKey: ["db-contacts", search, page],
+    queryKey: ["db-contacts", search, page, countryFilter, sortBy],
     queryFn: async () => {
       let q = supabase.from("contacts").select("*", { count: "exact" });
       const term = search.trim().replace(/[%,()]/g, "");
       if (term) q = q.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,country.ilike.%${term}%`);
-      const { data, error, count } = await q.order("created_at", { ascending: false }).range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      if (countryFilter === "none") q = q.is("country", null);
+      else if (countryFilter !== "all") q = q.ilike("country", countryFilter);
+      const [col, dir] = sortBy.split(".");
+      const { data, error, count } = await q
+        .order(col, { ascending: dir === "asc", nullsFirst: false })
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (error) throw error;
       return { rows: (data || []) as Contact[], count: count || 0 };
     },
@@ -191,16 +198,24 @@ export function DatabaseManager() {
     queryKey: ["db-contacts-meta"],
     queryFn: async () => {
       const { count } = await supabase.from("contacts").select("*", { count: "exact", head: true });
-      const countries = new Set<string>();
+      const tally = new Map<string, number>();
+      let unknown = 0;
       for (let from = 0; ; from += 1000) {
         const { data, error } = await supabase.from("contacts").select("country").range(from, from + 999);
         if (error) throw error;
-        (data || []).forEach((d: any) => d.country && countries.add(String(d.country).trim().toLowerCase()));
+        (data || []).forEach((d: any) => {
+          const raw = String(d.country || "").trim();
+          if (!raw) { unknown++; return; }
+          const key = raw.replace(/\b\w/g, c => c.toUpperCase());
+          tally.set(key, (tally.get(key) || 0) + 1);
+        });
         if (!data || data.length < 1000) break;
       }
-      return { total: count || 0, countries: countries.size };
+      const list = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+      return { total: count || 0, countries: tally.size, countryList: list, unknown };
     },
   });
+
 
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
@@ -219,16 +234,29 @@ export function DatabaseManager() {
 
   const upgraded = (profiles || []).filter(p => p.role === "admin" || p.role === "super-admin");
 
-  // Account rows (client filtered) for the "accounts" / "upgraded" views
+  // Account rows (client filtered/sorted) for the "accounts" / "upgraded" views
   const accountRows = useMemo(() => {
-    const base = view === "upgraded" ? upgraded : (profiles || []);
+    let base = view === "upgraded" ? upgraded : (profiles || []);
     const term = search.trim().toLowerCase();
-    if (!term) return base;
-    return base.filter(p =>
+    if (term) base = base.filter(p =>
       (p.email || "").toLowerCase().includes(term) ||
-      (p.full_name || "").toLowerCase().includes(term)
+      (p.full_name || "").toLowerCase().includes(term) ||
+      (p.country || "").toLowerCase().includes(term)
     );
-  }, [profiles, view, search]);
+    if (countryFilter === "none") base = base.filter(p => !p.country);
+    else if (countryFilter !== "all") base = base.filter(p => (p.country || "").toLowerCase() === countryFilter.toLowerCase());
+    const [col, dir] = sortBy.split(".");
+    const asc = dir === "asc" ? 1 : -1;
+    const key = (p: Profile) => {
+      if (col === "first_name") return (p.full_name || p.email || "").toLowerCase();
+      if (col === "last_name") return (p.full_name || "").split(" ").slice(-1)[0]?.toLowerCase() || "";
+      if (col === "country") return (p.country || "").toLowerCase();
+      if (col === "email") return (p.email || "").toLowerCase();
+      return p.created_at || "";
+    };
+    return [...base].sort((a, b) => (key(a) > key(b) ? asc : key(a) < key(b) ? -asc : 0));
+  }, [profiles, view, search, countryFilter, sortBy]);
+
 
   const isAccountView = view !== "all";
   const totalRows = isAccountView ? accountRows.length : (contactData?.count || 0);
@@ -457,6 +485,18 @@ export function DatabaseManager() {
         <StatCard icon={ShieldCheck} label="Upgraded accounts" value={upgraded.length} />
       </div>
 
+      {(meta?.countryList?.length ?? 0) > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {(meta?.countryList || []).slice(0, 12).map(([name, n]) => (
+            <button key={name}
+              onClick={() => { setCountryFilter(countryFilter.toLowerCase() === name.toLowerCase() ? "all" : name); setPage(0); }}
+              className={`px-3 py-1 rounded-full text-xs border transition-colors ${countryFilter.toLowerCase() === name.toLowerCase() ? "bg-accent text-accent-foreground border-accent" : "border-border bg-card hover:border-accent/50"}`}>
+              {name} <span className="opacity-70">{n.toLocaleString()}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2 items-center mb-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -464,17 +504,45 @@ export function DatabaseManager() {
             onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         </div>
         <Select value={view} onValueChange={(v) => { setView(v as ViewFilter); setPage(0); }}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All records</SelectItem>
             <SelectItem value="accounts">Platform accounts</SelectItem>
             <SelectItem value="upgraded">Upgraded (admins)</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={countryFilter} onValueChange={(v) => { setCountryFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-52"><SelectValue placeholder="Country" /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            <SelectItem value="all">All countries</SelectItem>
+            <SelectItem value="none">No country set{meta?.unknown ? ` (${meta.unknown})` : ""}</SelectItem>
+            {(meta?.countryList || []).map(([name, n]) => (
+              <SelectItem key={name} value={name}>{name} ({n.toLocaleString()})</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(0); }}>
+          <SelectTrigger className="w-52"><SelectValue placeholder="Sort" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="created_at.desc">Newest first</SelectItem>
+            <SelectItem value="created_at.asc">Oldest first</SelectItem>
+            <SelectItem value="first_name.asc">First name A–Z</SelectItem>
+            <SelectItem value="first_name.desc">First name Z–A</SelectItem>
+            <SelectItem value="last_name.asc">Last name A–Z</SelectItem>
+            <SelectItem value="last_name.desc">Last name Z–A</SelectItem>
+            <SelectItem value="email.asc">Email A–Z</SelectItem>
+            <SelectItem value="country.asc">Country A–Z</SelectItem>
+            <SelectItem value="country.desc">Country Z–A</SelectItem>
+          </SelectContent>
+        </Select>
+        {(countryFilter !== "all" || sortBy !== "created_at.desc" || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setCountryFilter("all"); setSortBy("created_at.desc"); setPage(0); }}>Clear</Button>
+        )}
         <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}><Plus size={14} /> Add Record</Button>
         <Button size="sm" onClick={() => setAccountOpen(true)}><ShieldCheck size={14} /> New Upgraded Account</Button>
 
       </div>
+
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
