@@ -101,6 +101,8 @@ const Auth = () => {
             ministry_name: ministryName,
             dob_day: dobDay ? parseInt(dobDay) : null,
             dob_month: dobMonth ? parseInt(dobMonth) : null,
+            country: country || null,
+
           },
         },
       });
