@@ -311,6 +311,30 @@ export function DatabaseManager() {
     setAddOpen(false); setNewContact({}); refresh();
   };
 
+  const createAccount = async () => {
+    const email = newAccount.email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast.error("Enter a valid email"); return; }
+    const exists = profileByEmail.has(email);
+    if (!exists && newAccount.password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    setSavingAccount(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-create-user", {
+        body: { email, full_name: newAccount.full_name, password: newAccount.password, role: newAccount.role },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success((data as any)?.status === "upgraded" ? "Existing account upgraded" : "Account created");
+      setAccountOpen(false);
+      setNewAccount({ email: "", full_name: "", password: "", role: "admin" });
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message || "Could not create account");
+    } finally {
+      setSavingAccount(false);
+    }
+  };
+
+
   const removeContact = async (id: string) => {
     const { error } = await supabase.from("contacts").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
