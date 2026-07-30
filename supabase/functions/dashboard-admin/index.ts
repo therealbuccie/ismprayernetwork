@@ -124,6 +124,7 @@ Deno.serve(async (req) => {
           supabase.from("announcements").select("id, is_active, archived"),
           supabase.from("prayer_reports").select("id, status, attendance, created_at, minister_name, church, prayer_date"),
           supabase.from("prayer_points").select("id, archived, is_active"),
+          supabase.from("contacts").select("*", { count: "exact", head: true }),
         ]);
 
         result = {
