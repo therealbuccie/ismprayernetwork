@@ -104,6 +104,10 @@ export function DatabaseManager() {
   const [addOpen, setAddOpen] = useState(false);
   const [newContact, setNewContact] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [newAccount, setNewAccount] = useState({ email: "", full_name: "", password: "", role: "admin" });
+
 
   // ---- Contacts (server paged) ----
   const { data: contactData, isLoading, isFetching } = useQuery({
