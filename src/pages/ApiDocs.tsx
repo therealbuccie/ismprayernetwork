@@ -26,10 +26,12 @@ const CodeBlock = ({ code, language = "bash" }: { code: string; language?: strin
   );
 };
 
-const MethodBadge = ({ method }: { method: "GET" | "POST" }) => (
+const MethodBadge = ({ method }: { method: "GET" | "POST" | "DELETE" }) => (
   <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide ${
     method === "GET"
       ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+      : method === "DELETE"
+      ? "bg-red-500/15 text-red-400 border border-red-500/30"
       : "bg-blue-500/15 text-blue-400 border border-blue-500/30"
   }`}>
     {method}
@@ -37,7 +39,7 @@ const MethodBadge = ({ method }: { method: "GET" | "POST" }) => (
 );
 
 interface EndpointInfo {
-  method: "GET" | "POST";
+  method: "GET" | "POST" | "DELETE";
   path: string;
   description: string;
   params?: { name: string; type: string; required: boolean; description: string }[];
