@@ -8,6 +8,7 @@ const DashboardHome = lazy(() => import("@/components/dashboard/DashboardHome").
 const BooksManager = lazy(() => import("@/components/dashboard/BooksManager").then(m => ({ default: m.BooksManager })));
 const CategoriesManager = lazy(() => import("@/components/dashboard/CategoriesManager").then(m => ({ default: m.CategoriesManager })));
 const UsersManager = lazy(() => import("@/components/dashboard/UsersManager").then(m => ({ default: m.UsersManager })));
+const DatabaseManager = lazy(() => import("@/components/dashboard/DatabaseManager").then(m => ({ default: m.DatabaseManager })));
 const ContactMessagesManager = lazy(() => import("@/components/dashboard/ContactMessagesManager").then(m => ({ default: m.ContactMessagesManager })));
 const TestimoniesManager = lazy(() => import("@/components/dashboard/TestimoniesManager").then(m => ({ default: m.TestimoniesManager })));
 const EventsManager = lazy(() => import("@/components/dashboard/EventsManager").then(m => ({ default: m.EventsManager })));
