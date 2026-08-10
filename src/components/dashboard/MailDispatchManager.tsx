@@ -64,12 +64,25 @@ export function MailDispatchManager() {
   const [lastMessageIds, setLastMessageIds] = useState<string[]>([]);
   const [pollingActive, setPollingActive] = useState(false);
   const [drilldownStatus, setDrilldownStatus] = useState<string | null>(null);
+  const [programId, setProgramId] = useState<string>("auto");
 
   const { data: subscribers = [], isLoading: loadingSubs, refetch: refetchSubs } = useQuery({
     queryKey: ["dispatch-subscribers"],
     queryFn: async () => {
       const res = await dispatchCall(getPin(), "get_subscribers");
       return (res.subscribers || []) as Subscriber[];
+    },
+  });
+
+  const { data: programs = [] } = useQuery({
+    queryKey: ["dispatch-programs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("programs")
+        .select("id, title, event_date, registration_url")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
   });
 
