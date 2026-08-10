@@ -1,0 +1,30 @@
+# ISM Ministers' Prayer Network
+
+> A global prayer network for pastors, ministers and evangelists — live prayer groups, prayer requests, weekly prayer points, live services and ministry resources.
+
+ISM Ministers' Prayer Network unites ministers across 195+ nations in consistent intercession, offering live video prayer rooms, weekly prayer bulletins, ministry programmes, a bookstore for ministers, and partnership opportunities.
+
+## Pages
+
+- [Home](/): Overview of the prayer network, featured books and programmes.
+- [About](/about): Mission, vision and story of the network.
+- [Prayer Requests](/prayer-requests): Submit a prayer request and join the prayer wall.
+- [Prayer Groups](/groups): Join a live prayer group of ministers.
+- [Prayer Room](/prayer-room): Live round-the-clock prayer sessions.
+- [Prayer Points](/prayer-points): Weekly prayer points, confession and song of the week.
+- [Testimonies](/testimonies): Testimonies of answered prayer.
+- [Live TV](/live-tv): Live services and broadcasts.
+- [Online Radio](/radio): Continuous worship, teaching and prayer audio.
+- [Bookstore](/bookstore): Books and digital resources for ministers.
+- [Events](/events): Upcoming conferences and gatherings.
+- [Programs](/programs): Master classes, schools and ministry programmes.
+- [Global Prayer Map](/global-prayer-map): Prayer coverage across nations.
+- [Our Impact](/our-impact): Results and reach of the network.
+- [Partner](/partner): Support the ministry as a partner.
+- [Contact](/contact): Reach the ISM team.
+
+## Optional
+
+- [Archives](/archives): Past prayer points and announcements.
+- [Submit a Report](/report): Ministry reporting form for ministers.
+- [API Docs](/api-docs): Partner API documentation.
