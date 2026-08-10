@@ -5,7 +5,7 @@ import {
   BookOpen, Tag, Users, Mail, MessageSquare, CalendarDays, Newspaper,
   HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
   Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download, Database,
-  ClipboardCheck, Bell, Sparkles
+  ClipboardCheck, Bell, Sparkles, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
