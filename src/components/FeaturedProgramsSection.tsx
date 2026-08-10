@@ -216,6 +216,14 @@ const FeaturedProgramsSection = () => {
                         {prog.description}
                       </p>
                     )}
+                    {prog.registration_url && (
+                      <a href={prog.registration_url} target="_blank" rel="noopener noreferrer" className="mt-4">
+                        <Button size="sm" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground">
+                          Register Now <ArrowRight size={14} />
+                        </Button>
+                      </a>
+                    )}
+
                   </div>
                 </div>
               </motion.div>
