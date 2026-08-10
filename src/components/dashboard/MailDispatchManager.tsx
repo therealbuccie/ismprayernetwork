@@ -285,6 +285,23 @@ export function MailDispatchManager() {
                   maxLength={200}
                 />
               </div>
+              <div>
+                <Label>Link to Program (participation tracking)</Label>
+                <Select value={programId} onValueChange={setProgramId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Auto-detect from links in the email" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Auto-detect from links</SelectItem>
+                    {programs.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Opens and registration-link clicks are recorded in the Program Tracker.
+                </p>
+              </div>
               <RichEmailComposer
                 value={body}
                 onChange={setBody}
