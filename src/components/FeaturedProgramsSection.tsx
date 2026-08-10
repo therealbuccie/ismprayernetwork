@@ -56,11 +56,10 @@ const FeaturedProgramsSection = () => {
         .from("programs")
         .select("*")
         .eq("is_upcoming", true)
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
+        .order("event_date", { ascending: true, nullsFirst: false });
       if (error) throw error;
-      return data;
+      const now = new Date().toISOString();
+      return (data ?? []).filter((p: any) => !p.event_date || p.event_date >= now).slice(0, 4);
     },
   });
 
@@ -68,6 +67,7 @@ const FeaturedProgramsSection = () => {
 
   const hero = programs[0];
   const rest = programs.slice(1);
+
 
   return (
     <section className="py-20 relative overflow-hidden">
