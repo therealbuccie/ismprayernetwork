@@ -46,6 +46,21 @@ serve(async (req) => {
       });
     }
 
+    if (action === "get_contacts") {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("email, first_name, last_name, country, source, group_name")
+        .not("email", "is", null)
+        .order("created_at", { ascending: false })
+        .range(0, 19999);
+      if (error) throw error;
+      return new Response(JSON.stringify({ contacts: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     if (action === "get_dispatch_status") {
       const { message_ids } = body;
       if (!message_ids?.length) {

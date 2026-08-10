@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste, CheckCircle, XCircle, Clock } from "lucide-react";
 import { RichEmailComposer } from "./RichEmailComposer";
+import { DispatchContactCategories } from "./DispatchContactCategories";
+
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -443,7 +445,16 @@ export function MailDispatchManager() {
             </CardContent>
           </Card>
 
+          {/* Uploaded database, categorised */}
+          <DispatchContactCategories
+            selectedEmails={manualEmails}
+            onAddEmails={(emails) =>
+              setManualEmails((prev) => [...new Set([...prev, ...emails])])
+            }
+          />
+
           {/* Send summary */}
+
           <Card>
             <CardContent className="pt-6 space-y-3">
               <div className="text-sm space-y-1">
