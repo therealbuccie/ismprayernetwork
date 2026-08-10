@@ -200,6 +200,7 @@ export function MailDispatchManager() {
         subject: subject.trim(),
         html_body: htmlBody,
         sender_name: senderName.trim(),
+        program_id: programId === "auto" ? null : programId,
       });
 
       const queued = result.queued ?? result.sent;
