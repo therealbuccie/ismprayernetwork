@@ -216,12 +216,44 @@ serve(async (req) => {
             if (tokenInsertError) throw tokenInsertError;
           }
 
+          // Per-recipient tracking: pixel + click-through links
+          let personalizedHtml = html_body;
+          if (dispatchId && program) {
+            try {
+              const info = contactInfo.get(email) || { full_name: null, country: null };
+              const { data: engagement, error: engagementError } = await supabase
+                .from("program_engagements")
+                .upsert(
+                  {
+                    dispatch_id: dispatchId,
+                    program_id: program.id,
+                    email,
+                    full_name: info.full_name,
+                    country: info.country,
+                    sent_at: new Date().toISOString(),
+                  },
+                  { onConflict: "dispatch_id,email" }
+                )
+                .select("id")
+                .single();
+              if (engagementError) throw engagementError;
+
+              if (program.registration_url) {
+                const clickUrl = `${trackerBase}?e=${engagement.id}&t=click&u=${encodeURIComponent(program.registration_url)}`;
+                personalizedHtml = personalizedHtml.split(program.registration_url).join(clickUrl);
+              }
+              personalizedHtml += `<img src="${trackerBase}?e=${engagement.id}&t=open" width="1" height="1" alt="" style="display:none" />`;
+            } catch (err) {
+              console.error("Tracking injection failed for", email, err);
+            }
+          }
+
           const payload = {
             to: email,
             from: `${fromName} <${fromEmail}>`,
             sender_domain: senderDomain,
             subject,
-            html: html_body,
+            html: personalizedHtml,
             text: textBody || subject,
             purpose: "transactional",
             label: "mail-dispatch",
