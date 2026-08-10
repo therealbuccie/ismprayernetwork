@@ -118,10 +118,76 @@ serve(async (req) => {
       );
       const results: { email: string; status: string; error?: string; message_id?: string }[] = [];
 
+      // ---- Program participation tracking setup ----
+      const trackerBase = `${SUPABASE_URL}/functions/v1/track-email`;
+      let program: { id: string; title: string; registration_url: string | null } | null = null;
+      let matchMode = "manual";
+
+      try {
+        if (program_id) {
+          const { data } = await supabase
+            .from("programs")
+            .select("id, title, registration_url")
+            .eq("id", program_id)
+            .maybeSingle();
+          if (data) program = data as any;
+        } else {
+          const { data: allPrograms } = await supabase
+            .from("programs")
+            .select("id, title, registration_url")
+            .not("registration_url", "is", null);
+          const found = (allPrograms || []).find(
+            (p: any) => p.registration_url && html_body.includes(p.registration_url)
+          );
+          if (found) {
+            program = found as any;
+            matchMode = "auto";
+          }
+        }
+      } catch (err) {
+        console.error("Program lookup failed:", err);
+      }
+
+      let dispatchId: string | null = null;
+      const contactInfo = new Map<string, { full_name: string | null; country: string | null }>();
+
+      if (program) {
+        try {
+          const { data: dispatchRow, error: dispatchError } = await supabase
+            .from("program_dispatches")
+            .insert({
+              program_id: program.id,
+              program_title: program.title,
+              subject,
+              recipient_count: uniqueRecipients.length,
+              match_mode: matchMode,
+            })
+            .select("id")
+            .single();
+          if (dispatchError) throw dispatchError;
+          dispatchId = dispatchRow.id;
+
+          const { data: contacts } = await supabase
+            .from("contacts")
+            .select("email, first_name, last_name, country")
+            .in("email", uniqueRecipients as string[]);
+          for (const c of contacts || []) {
+            if (!c.email) continue;
+            contactInfo.set(String(c.email).toLowerCase(), {
+              full_name: [c.first_name, c.last_name].filter(Boolean).join(" ") || null,
+              country: c.country || null,
+            });
+          }
+        } catch (err) {
+          console.error("Failed to create program dispatch:", err);
+        }
+      }
+
       for (const email of uniqueRecipients) {
         const messageId = `mail-dispatch-${crypto.randomUUID()}`;
 
         try {
+
           const textBody = html_body
             .replace(/<br\s*\/?>/gi, "\n")
             .replace(/<[^>]+>/g, " ")
