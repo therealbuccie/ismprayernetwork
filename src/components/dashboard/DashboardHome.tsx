@@ -158,6 +158,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
     { label: "Prayer Points", value: stats.prayerPoints?.total ?? 0, icon: Sparkles, color: "text-amber-500", bg: "bg-amber-500/10", tab: "prayer-points" },
     { label: "Reports", value: stats.reports?.total ?? 0, icon: ClipboardCheck, color: "text-sky-500", bg: "bg-sky-500/10", tab: "reports" },
     { label: "Announcements", value: stats.announcements?.total ?? 0, icon: Bell, color: "text-rose-500", bg: "bg-rose-500/10", tab: "announcements" },
+    { label: "Program Participation", value: participationCount, icon: Activity, color: "text-lime-500", bg: "bg-lime-500/10", tab: "program-tracker" },
   ];
 
   const pendingItems = [
