@@ -443,7 +443,16 @@ export function MailDispatchManager() {
             </CardContent>
           </Card>
 
+          {/* Uploaded database, categorised */}
+          <DispatchContactCategories
+            selectedEmails={manualEmails}
+            onAddEmails={(emails) =>
+              setManualEmails((prev) => [...new Set([...prev, ...emails])])
+            }
+          />
+
           {/* Send summary */}
+
           <Card>
             <CardContent className="pt-6 space-y-3">
               <div className="text-sm space-y-1">
