@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste, CheckCircle, XCircle, Clock } from "lucide-react";
 import { RichEmailComposer } from "./RichEmailComposer";
@@ -63,12 +64,25 @@ export function MailDispatchManager() {
   const [lastMessageIds, setLastMessageIds] = useState<string[]>([]);
   const [pollingActive, setPollingActive] = useState(false);
   const [drilldownStatus, setDrilldownStatus] = useState<string | null>(null);
+  const [programId, setProgramId] = useState<string>("auto");
 
   const { data: subscribers = [], isLoading: loadingSubs, refetch: refetchSubs } = useQuery({
     queryKey: ["dispatch-subscribers"],
     queryFn: async () => {
       const res = await dispatchCall(getPin(), "get_subscribers");
       return (res.subscribers || []) as Subscriber[];
+    },
+  });
+
+  const { data: programs = [] } = useQuery({
+    queryKey: ["dispatch-programs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("programs")
+        .select("id, title, event_date, registration_url")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -186,6 +200,7 @@ export function MailDispatchManager() {
         subject: subject.trim(),
         html_body: htmlBody,
         sender_name: senderName.trim(),
+        program_id: programId === "auto" ? null : programId,
       });
 
       const queued = result.queued ?? result.sent;
@@ -284,6 +299,23 @@ export function MailDispatchManager() {
                   className="mt-1"
                   maxLength={200}
                 />
+              </div>
+              <div>
+                <Label>Link to Program (participation tracking)</Label>
+                <Select value={programId} onValueChange={setProgramId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Auto-detect from links in the email" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Auto-detect from links</SelectItem>
+                    {programs.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Opens and registration-link clicks are recorded in the Program Tracker.
+                </p>
               </div>
               <RichEmailComposer
                 value={body}

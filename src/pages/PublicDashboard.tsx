@@ -30,6 +30,7 @@ const WeeklyPrayerManager = lazy(() => import("@/components/dashboard/WeeklyPray
 const PrayerPointsManager = lazy(() => import("@/components/dashboard/PrayerPointsManager").then(m => ({ default: m.PrayerPointsManager })));
 const ReportsManager = lazy(() => import("@/components/dashboard/ReportsManager").then(m => ({ default: m.ReportsManager })));
 const AnnouncementsManager = lazy(() => import("@/components/dashboard/AnnouncementsManager").then(m => ({ default: m.AnnouncementsManager })));
+const ProgramTrackerManager = lazy(() => import("@/components/dashboard/ProgramTrackerManager").then(m => ({ default: m.ProgramTrackerManager })));
 
 function TabSkeleton() {
   return (
@@ -91,6 +92,7 @@ const PublicDashboard = () => {
             {activeTab === "combo-packs" && <ComboPacksManager />}
             {activeTab === "bookstore-analytics" && <BookstoreAnalytics />}
             {activeTab === "mail-dispatch" && <MailDispatchManager />}
+            {activeTab === "program-tracker" && <ProgramTrackerManager />}
           </Suspense>
         </div>
       </main>

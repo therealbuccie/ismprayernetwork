@@ -1013,6 +1013,113 @@ export type Database = {
         }
         Relationships: []
       }
+      program_dispatches: {
+        Row: {
+          created_at: string
+          id: string
+          match_mode: string
+          program_id: string | null
+          program_title: string | null
+          recipient_count: number
+          sent_at: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_mode?: string
+          program_id?: string | null
+          program_title?: string | null
+          recipient_count?: number
+          sent_at?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_mode?: string
+          program_id?: string | null
+          program_title?: string | null
+          recipient_count?: number
+          sent_at?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_dispatches_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_engagements: {
+        Row: {
+          click_count: number
+          clicked_at: string | null
+          country: string | null
+          created_at: string
+          dispatch_id: string
+          email: string
+          full_name: string | null
+          id: string
+          open_count: number
+          opened_at: string | null
+          program_id: string | null
+          sent_at: string
+          updated_at: string
+        }
+        Insert: {
+          click_count?: number
+          clicked_at?: string | null
+          country?: string | null
+          created_at?: string
+          dispatch_id: string
+          email: string
+          full_name?: string | null
+          id?: string
+          open_count?: number
+          opened_at?: string | null
+          program_id?: string | null
+          sent_at?: string
+          updated_at?: string
+        }
+        Update: {
+          click_count?: number
+          clicked_at?: string | null
+          country?: string | null
+          created_at?: string
+          dispatch_id?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          open_count?: number
+          opened_at?: string | null
+          program_id?: string | null
+          sent_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_engagements_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "program_dispatches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_engagements_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       programs: {
         Row: {
           created_at: string

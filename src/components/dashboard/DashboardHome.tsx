@@ -5,7 +5,7 @@ import {
   BookOpen, Tag, Users, Mail, MessageSquare, CalendarDays, Newspaper,
   HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
   Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download, Database,
-  ClipboardCheck, Bell, Sparkles
+  ClipboardCheck, Bell, Sparkles, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -30,6 +30,21 @@ interface DashboardHomeProps {
 
 export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
   const isPublic = isPublicDashboard();
+
+  const { data: participationCount = 0 } = useQuery({
+    queryKey: ["dashboard-program-participation"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("program_engagements")
+        .select("email, opened_at, clicked_at")
+        .or("opened_at.not.is.null,clicked_at.not.is.null")
+        .limit(20000);
+      if (error) return 0;
+      return new Set((data || []).map((r: any) => r.email)).size;
+    },
+  });
+
+
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
@@ -143,6 +158,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
     { label: "Prayer Points", value: stats.prayerPoints?.total ?? 0, icon: Sparkles, color: "text-amber-500", bg: "bg-amber-500/10", tab: "prayer-points" },
     { label: "Reports", value: stats.reports?.total ?? 0, icon: ClipboardCheck, color: "text-sky-500", bg: "bg-sky-500/10", tab: "reports" },
     { label: "Announcements", value: stats.announcements?.total ?? 0, icon: Bell, color: "text-rose-500", bg: "bg-rose-500/10", tab: "announcements" },
+    { label: "Program Participation", value: participationCount, icon: Activity, color: "text-lime-500", bg: "bg-lime-500/10", tab: "program-tracker" },
   ];
 
   const pendingItems = [

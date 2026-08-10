@@ -23,7 +23,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { pin, action, recipients, subject, html_body, sender_name } = body;
+    const { pin, action, recipients, subject, html_body, sender_name, program_id } = body;
 
     // PIN validation
     if (!pin || pin !== ADMIN_PIN) {
@@ -118,10 +118,76 @@ serve(async (req) => {
       );
       const results: { email: string; status: string; error?: string; message_id?: string }[] = [];
 
+      // ---- Program participation tracking setup ----
+      const trackerBase = `${SUPABASE_URL}/functions/v1/track-email`;
+      let program: { id: string; title: string; registration_url: string | null } | null = null;
+      let matchMode = "manual";
+
+      try {
+        if (program_id) {
+          const { data } = await supabase
+            .from("programs")
+            .select("id, title, registration_url")
+            .eq("id", program_id)
+            .maybeSingle();
+          if (data) program = data as any;
+        } else {
+          const { data: allPrograms } = await supabase
+            .from("programs")
+            .select("id, title, registration_url")
+            .not("registration_url", "is", null);
+          const found = (allPrograms || []).find(
+            (p: any) => p.registration_url && html_body.includes(p.registration_url)
+          );
+          if (found) {
+            program = found as any;
+            matchMode = "auto";
+          }
+        }
+      } catch (err) {
+        console.error("Program lookup failed:", err);
+      }
+
+      let dispatchId: string | null = null;
+      const contactInfo = new Map<string, { full_name: string | null; country: string | null }>();
+
+      if (program) {
+        try {
+          const { data: dispatchRow, error: dispatchError } = await supabase
+            .from("program_dispatches")
+            .insert({
+              program_id: program.id,
+              program_title: program.title,
+              subject,
+              recipient_count: uniqueRecipients.length,
+              match_mode: matchMode,
+            })
+            .select("id")
+            .single();
+          if (dispatchError) throw dispatchError;
+          dispatchId = dispatchRow.id;
+
+          const { data: contacts } = await supabase
+            .from("contacts")
+            .select("email, first_name, last_name, country")
+            .in("email", uniqueRecipients as string[]);
+          for (const c of contacts || []) {
+            if (!c.email) continue;
+            contactInfo.set(String(c.email).toLowerCase(), {
+              full_name: [c.first_name, c.last_name].filter(Boolean).join(" ") || null,
+              country: c.country || null,
+            });
+          }
+        } catch (err) {
+          console.error("Failed to create program dispatch:", err);
+        }
+      }
+
       for (const email of uniqueRecipients) {
         const messageId = `mail-dispatch-${crypto.randomUUID()}`;
 
         try {
+
           const textBody = html_body
             .replace(/<br\s*\/?>/gi, "\n")
             .replace(/<[^>]+>/g, " ")
@@ -150,12 +216,44 @@ serve(async (req) => {
             if (tokenInsertError) throw tokenInsertError;
           }
 
+          // Per-recipient tracking: pixel + click-through links
+          let personalizedHtml = html_body;
+          if (dispatchId && program) {
+            try {
+              const info = contactInfo.get(email) || { full_name: null, country: null };
+              const { data: engagement, error: engagementError } = await supabase
+                .from("program_engagements")
+                .upsert(
+                  {
+                    dispatch_id: dispatchId,
+                    program_id: program.id,
+                    email,
+                    full_name: info.full_name,
+                    country: info.country,
+                    sent_at: new Date().toISOString(),
+                  },
+                  { onConflict: "dispatch_id,email" }
+                )
+                .select("id")
+                .single();
+              if (engagementError) throw engagementError;
+
+              if (program.registration_url) {
+                const clickUrl = `${trackerBase}?e=${engagement.id}&t=click&u=${encodeURIComponent(program.registration_url)}`;
+                personalizedHtml = personalizedHtml.split(program.registration_url).join(clickUrl);
+              }
+              personalizedHtml += `<img src="${trackerBase}?e=${engagement.id}&t=open" width="1" height="1" alt="" style="display:none" />`;
+            } catch (err) {
+              console.error("Tracking injection failed for", email, err);
+            }
+          }
+
           const payload = {
             to: email,
             from: `${fromName} <${fromEmail}>`,
             sender_domain: senderDomain,
             subject,
-            html: html_body,
+            html: personalizedHtml,
             text: textBody || subject,
             purpose: "transactional",
             label: "mail-dispatch",

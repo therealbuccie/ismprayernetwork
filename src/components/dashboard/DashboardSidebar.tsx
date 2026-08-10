@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv, Banknote, ChevronDown, BarChart3, PackageOpen, Send, Database, ClipboardCheck, Bell } from "lucide-react";
+import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv, Banknote, ChevronDown, BarChart3, PackageOpen, Send, Database, ClipboardCheck, Bell, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
@@ -64,6 +64,7 @@ const tabGroups: TabGroup[] = [
       { id: "campaigns", label: "Campaigns", icon: Megaphone },
       { id: "announcements", label: "Announcements", icon: Bell },
       { id: "mail-dispatch", label: "Mail Dispatch", icon: Send },
+      { id: "program-tracker", label: "Program Tracker", icon: Activity },
     ],
   },
   {
