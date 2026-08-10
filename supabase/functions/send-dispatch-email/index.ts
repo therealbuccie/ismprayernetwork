@@ -23,7 +23,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { pin, action, recipients, subject, html_body, sender_name } = body;
+    const { pin, action, recipients, subject, html_body, sender_name, program_id } = body;
 
     // PIN validation
     if (!pin || pin !== ADMIN_PIN) {
