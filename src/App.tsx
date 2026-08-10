@@ -62,7 +62,6 @@ const App = () => (
           <RouteSeo />
           <FloatingTranslate />
           <Routes>
-          <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/prayer-requests" element={<PrayerRequests />} />
