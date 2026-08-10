@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste, CheckCircle, XCircle, Clock } from "lucide-react";
 import { RichEmailComposer } from "./RichEmailComposer";
+import { DispatchContactCategories } from "./DispatchContactCategories";
+
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
