@@ -127,6 +127,8 @@ export default function RouteSeo() {
     };
   const url = `${SITE}${path}`;
 
+  const schema = pageSchema(path, url);
+
   return (
     <Helmet>
       <title>{meta.title}</title>
@@ -139,6 +141,44 @@ export default function RouteSeo() {
       <meta property="og:type" content="website" />
       <meta name="twitter:title" content={meta.title} />
       <meta name="twitter:description" content={meta.description} />
+      {schema && <script type="application/ld+json">{JSON.stringify(schema)}</script>}
     </Helmet>
   );
 }
+
+function pageSchema(path: string, url: string) {
+  if (path === "/bookstore") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "ISM Bookstore",
+      url,
+      about: "Books, combo packs and digital resources for ministers",
+      isPartOf: { "@type": "WebSite", name: BRAND, url: SITE },
+    };
+  }
+  if (path === "/events" || path === "/programs") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: path === "/events" ? "ISM Events" : "ISM Programs",
+      url,
+      about:
+        path === "/events"
+          ? "Upcoming conferences and gatherings for ministers"
+          : "Ministry programmes, master classes and schools for ministers",
+      isPartOf: { "@type": "WebSite", name: BRAND, url: SITE },
+    };
+  }
+  if (path === "/contact") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      name: "Contact ISM Ministers' Prayer Network",
+      url,
+      isPartOf: { "@type": "WebSite", name: BRAND, url: SITE },
+    };
+  }
+  return null;
+}
+
