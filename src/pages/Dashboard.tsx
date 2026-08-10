@@ -29,9 +29,10 @@ const ComboPacksManager = lazy(() => import("@/components/dashboard/ComboPacksMa
 const MailDispatchManager = lazy(() => import("@/components/dashboard/MailDispatchManager").then(m => ({ default: m.MailDispatchManager })));
 const ReportsManager = lazy(() => import("@/components/dashboard/ReportsManager").then(m => ({ default: m.ReportsManager })));
 const AnnouncementsManager = lazy(() => import("@/components/dashboard/AnnouncementsManager").then(m => ({ default: m.AnnouncementsManager })));
+const WeeklyPrayerManager = lazy(() => import("@/components/dashboard/WeeklyPrayerManager").then(m => ({ default: m.WeeklyPrayerManager })));
 const PrayerPointsManager = lazy(() => import("@/components/dashboard/PrayerPointsManager").then(m => ({ default: m.PrayerPointsManager })));
 
-export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "database" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch" | "reports" | "announcements";
+export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "database" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "weekly-prayer" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch" | "reports" | "announcements";
 
 function TabSkeleton() {
   return (
@@ -90,6 +91,7 @@ const Dashboard = () => {
             {activeTab === "prayer-requests" && <PrayerRequestsManager />}
             {activeTab === "prayer-groups" && <PrayerGroupsManager />}
             {activeTab === "prayer-points" && <PrayerPointsManager />}
+            {activeTab === "weekly-prayer" && <WeeklyPrayerManager />}
             {activeTab === "purchases" && <PurchasesManager />}
             {activeTab === "orders" && <OrdersManager />}
             {activeTab === "combo-packs" && <ComboPacksManager />}

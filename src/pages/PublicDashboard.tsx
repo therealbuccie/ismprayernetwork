@@ -26,6 +26,7 @@ const BookstoreAnalytics = lazy(() => import("@/components/dashboard/BookstoreAn
 const ComboPacksManager = lazy(() => import("@/components/dashboard/ComboPacksManager").then(m => ({ default: m.ComboPacksManager })));
 const MailDispatchManager = lazy(() => import("@/components/dashboard/MailDispatchManager").then(m => ({ default: m.MailDispatchManager })));
 const DatabaseManager = lazy(() => import("@/components/dashboard/DatabaseManager").then(m => ({ default: m.DatabaseManager })));
+const WeeklyPrayerManager = lazy(() => import("@/components/dashboard/WeeklyPrayerManager").then(m => ({ default: m.WeeklyPrayerManager })));
 const PrayerPointsManager = lazy(() => import("@/components/dashboard/PrayerPointsManager").then(m => ({ default: m.PrayerPointsManager })));
 const ReportsManager = lazy(() => import("@/components/dashboard/ReportsManager").then(m => ({ default: m.ReportsManager })));
 const AnnouncementsManager = lazy(() => import("@/components/dashboard/AnnouncementsManager").then(m => ({ default: m.AnnouncementsManager })));
@@ -71,6 +72,7 @@ const PublicDashboard = () => {
             {activeTab === "users" && <UsersManager />}
             {activeTab === "database" && <DatabaseManager />}
             {activeTab === "prayer-points" && <PrayerPointsManager />}
+            {activeTab === "weekly-prayer" && <WeeklyPrayerManager />}
             {activeTab === "reports" && <ReportsManager />}
             {activeTab === "announcements" && <AnnouncementsManager />}
             {activeTab === "messages" && <ContactMessagesManager />}

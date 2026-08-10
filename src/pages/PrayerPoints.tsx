@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WeeklyPrayerBulletin } from "@/components/WeeklyPrayerBulletin";
 
 interface PrayerPoint {
   id: string;
@@ -76,7 +77,9 @@ const PrayerPoints = () => {
         </div>
       </div>
 
-      <div className="flex-1 container mx-auto px-4 py-10 max-w-3xl">
+      <div className="flex-1 container mx-auto px-4 py-10 max-w-6xl">
+        <WeeklyPrayerBulletin />
+        <div className="max-w-3xl mx-auto">
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
@@ -129,6 +132,7 @@ const PrayerPoints = () => {
           ))}
         </div>
         )}
+        </div>
       </div>
 
       <Footer />

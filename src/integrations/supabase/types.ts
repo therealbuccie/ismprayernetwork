@@ -911,6 +911,69 @@ export type Database = {
         }
         Relationships: []
       }
+      prayer_weeks: {
+        Row: {
+          affirmations: string | null
+          archived: boolean
+          conclusion: string | null
+          confession_scripture: string | null
+          confession_topic: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          intro: string | null
+          is_active: boolean
+          points: Json
+          song_artist: string | null
+          song_lyrics: string | null
+          song_title: string | null
+          song_url: string | null
+          title: string
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          affirmations?: string | null
+          archived?: boolean
+          conclusion?: string | null
+          confession_scripture?: string | null
+          confession_topic?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intro?: string | null
+          is_active?: boolean
+          points?: Json
+          song_artist?: string | null
+          song_lyrics?: string | null
+          song_title?: string | null
+          song_url?: string | null
+          title: string
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          affirmations?: string | null
+          archived?: boolean
+          conclusion?: string | null
+          confession_scripture?: string | null
+          confession_topic?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intro?: string | null
+          is_active?: boolean
+          points?: Json
+          song_artist?: string | null
+          song_lyrics?: string | null
+          song_title?: string | null
+          song_url?: string | null
+          title?: string
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
