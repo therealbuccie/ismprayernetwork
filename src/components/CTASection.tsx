@@ -38,14 +38,14 @@ const CTASection = () => (
             Your intercession can transform nations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            <Link to="/auth">
+            <Link to="/groups">
               <HeroButton variant="gold" size="lg" className="text-accent-foreground">
                 Start Praying Today
               </HeroButton>
             </Link>
-            <Link to="/contact">
+            <Link to="/join">
               <HeroButton variant="outline" size="lg" className="text-foreground border-border hover:bg-muted">
-                Learn More
+                Join the Network
               </HeroButton>
             </Link>
           </div>
