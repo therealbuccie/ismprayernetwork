@@ -704,9 +704,10 @@ export function DatabaseManager() {
                       <EditableCell value={c.last_name} onSave={v => saveField(c.id, "last_name", v)} className="font-medium font-sans" />
                       <EditableCell value={c.email} onSave={v => saveField(c.id, "email", v.toLowerCase())} className="max-w-[220px] truncate" />
                       <EditableCell value={c.phone || linked?.phone} onSave={v => saveField(c.id, "phone", v)} />
-                      <TableCell className="font-sans">{linked?.ministry_name || <span className="text-muted-foreground">—</span>}</TableCell>
-                      <TableCell className="font-sans">{linked?.ministerial_role || <span className="text-muted-foreground">—</span>}</TableCell>
-                      <TableCell className="font-sans">{linked?.city || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-sans">{(c as any).group_name || linked?.ministry_name || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-sans">{(c as any).ministerial_role || linked?.ministerial_role || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-sans">{(c as any).city || linked?.city || <span className="text-muted-foreground">—</span>}</TableCell>
+
                       <EditableCell value={c.country || linked?.country} onSave={v => saveField(c.id, "country", v)} options={COUNTRIES} />
                       <TableCell className="font-sans text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : "—"}</TableCell>
 
