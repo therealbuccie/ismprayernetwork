@@ -7,6 +7,7 @@ import { Volume2, VolumeX } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const HeroSection = () => {
+  const { user } = useAuth();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
