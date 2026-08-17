@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { COUNTRIES } from "@/lib/countries";
+import { citiesForCountry, OTHER_CITY } from "@/lib/cities";
 import { HeartHandshake, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 
@@ -25,7 +26,9 @@ const TITLES = ["Pastor", "Reverend", "Evangelist", "Minister", "Apostle", "Prop
 const ROLES = [
   "Senior Pastor",
   "Associate Pastor",
+  "Church Founder",
   "Church Planter",
+  "Church Worker",
   "Evangelist",
   "Missionary",
   "Youth Minister",
@@ -60,7 +63,9 @@ const Join = () => {
   const [ministryName, setMinistryName] = useState("");
   const [ministerialRole, setMinisterialRole] = useState("");
   const [city, setCity] = useState("");
+  const [citySelect, setCitySelect] = useState("");
   const [country, setCountry] = useState("");
+  const cityOptions = citiesForCountry(country);
   const [dobDay, setDobDay] = useState("");
   const [dobMonth, setDobMonth] = useState("");
   const [notes, setNotes] = useState("");
@@ -216,12 +221,43 @@ const Join = () => {
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input id="city" className="mt-1" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your city" />
+                      <Label>City</Label>
+                      {cityOptions.length > 0 ? (
+                        <>
+                          <Select
+                            value={citySelect}
+                            onValueChange={(v) => {
+                              setCitySelect(v);
+                              setCity(v === OTHER_CITY ? "" : v);
+                            }}
+                            disabled={!country}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder={country ? "Select your city" : "Select a country first"} />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-64">
+                              {cityOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              <SelectItem value={OTHER_CITY}>Other (type manually)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {citySelect === OTHER_CITY && (
+                            <Input className="mt-2" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Enter your city" />
+                          )}
+                        </>
+                      ) : (
+                        <Input id="city" className="mt-1" value={city} onChange={(e) => setCity(e.target.value)} placeholder={country ? "Your city" : "Select a country first"} disabled={!country} />
+                      )}
                     </div>
                     <div>
                       <Label>Country *</Label>
-                      <Select value={country} onValueChange={setCountry}>
+                      <Select
+                        value={country}
+                        onValueChange={(v) => {
+                          setCountry(v);
+                          setCity("");
+                          setCitySelect("");
+                        }}
+                      >
                         <SelectTrigger className="mt-1"><SelectValue placeholder="Select your country" /></SelectTrigger>
                         <SelectContent className="max-h-64">
                           {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
