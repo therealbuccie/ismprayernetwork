@@ -221,34 +221,6 @@ const Join = () => {
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <Label>City</Label>
-                      {cityOptions.length > 0 ? (
-                        <>
-                          <Select
-                            value={citySelect}
-                            onValueChange={(v) => {
-                              setCitySelect(v);
-                              setCity(v === OTHER_CITY ? "" : v);
-                            }}
-                            disabled={!country}
-                          >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder={country ? "Select your city" : "Select a country first"} />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-64">
-                              {cityOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                              <SelectItem value={OTHER_CITY}>Other (type manually)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {citySelect === OTHER_CITY && (
-                            <Input className="mt-2" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Enter your city" />
-                          )}
-                        </>
-                      ) : (
-                        <Input id="city" className="mt-1" value={city} onChange={(e) => setCity(e.target.value)} placeholder={country ? "Your city" : "Select a country first"} disabled={!country} />
-                      )}
-                    </div>
-                    <div>
                       <Label>Country *</Label>
                       <Select
                         value={country}
@@ -263,6 +235,28 @@ const Join = () => {
                           {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div>
+                      <Label>City</Label>
+                      <Select
+                        value={citySelect}
+                        onValueChange={(v) => {
+                          setCitySelect(v);
+                          setCity(v === OTHER_CITY ? "" : v);
+                        }}
+                        disabled={!country}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder={country ? "Select your city" : "Select a country first"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-64">
+                          {cityOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          <SelectItem value={OTHER_CITY}>Other (type manually)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {citySelect === OTHER_CITY && (
+                        <Input className="mt-2" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Enter your city" />
+                      )}
                     </div>
                   </div>
 
