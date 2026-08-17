@@ -30,19 +30,33 @@ type Contact = {
   created_at: string;
 };
 
-const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "country", "group_name", "notes"] as const;
+const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "group_name", "ministerial_role", "city", "country", "dob_day", "dob_month"] as const;
+
+const TITLES = ["Pastor", "Reverend", "Evangelist", "Minister", "Apostle", "Prophet", "Bishop", "Deacon", "Deaconess", "Brother", "Sister"];
+
+const MINISTERIAL_ROLES = [
+  "Senior Pastor", "Associate Pastor", "Church Founder", "Church Planter", "Church Worker",
+  "Evangelist", "Missionary", "Youth Minister", "Worship Minister", "Cell / Home Group Leader",
+  "Chaplain", "Ministry Partner", "Other",
+];
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const HEADER_ALIASES: Record<string, string> = {
-  title: "title", salutation: "title", prefix: "title", "ministerial role": "title", ministerial_role: "title",
+  title: "title", salutation: "title", prefix: "title",
   first_name: "first_name", firstname: "first_name", "first name": "first_name", given_name: "first_name",
   last_name: "last_name", lastname: "last_name", "last name": "last_name", surname: "last_name", family_name: "last_name",
   email: "email", "email address": "email", mail: "email",
   phone: "phone", "phone number": "phone", mobile: "phone", telephone: "phone", number: "phone", whatsapp: "phone",
   country: "country", nation: "country",
+  city: "city", town: "city",
+  ministerial_role: "ministerial_role", "ministerial role": "ministerial_role", role: "ministerial_role",
   group_name: "group_name", "group name": "group_name", ministry: "group_name", ministry_name: "group_name",
   "ministry name": "group_name", church: "group_name", "church name": "group_name", organisation: "group_name", organization: "group_name",
-  notes: "notes", note: "notes", remark: "notes", remarks: "notes", comment: "notes",
+  dob_day: "dob_day", "birthday day": "dob_day", "birthday (day)": "dob_day", day: "dob_day",
+  dob_month: "dob_month", "birthday month": "dob_month", "birthday (month)": "dob_month", month: "dob_month",
 };
+
 
 function normalizeRow(raw: Record<string, any>) {
   const out: Record<string, string> = {};
