@@ -396,7 +396,7 @@ export function DatabaseManager() {
         role: p?.role || "",
       };
     });
-    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "ministry_name", "ministerial_role", "city", "role", "source", "created_at"]));
+    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "ministry_name", "ministerial_role", "city", "role", "created_at"]));
     toast.success(`Exported ${all.length} records`);
   };
 
@@ -638,7 +638,7 @@ export function DatabaseManager() {
                   <TableHead>Ministerial Role</TableHead>
                   <TableHead>City</TableHead>
                   <TableHead>Country</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead>Added</TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead>Access</TableHead>
                   <TableHead className="w-12"></TableHead>
@@ -646,9 +646,9 @@ export function DatabaseManager() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow><TableCell colSpan={14} className="text-center py-10 text-muted-foreground">Loading records...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={13} className="text-center py-10 text-muted-foreground">Loading records...</TableCell></TableRow>
                 ) : !rows.length ? (
-                  <TableRow><TableCell colSpan={14} className="text-center py-10 text-muted-foreground">No records found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={13} className="text-center py-10 text-muted-foreground">No records found.</TableCell></TableRow>
                 ) : rows.map((c, i) => {
                   const linked = profileByEmail.get((c.email || "").toLowerCase()) as any;
                   return (
@@ -663,7 +663,6 @@ export function DatabaseManager() {
                       <TableCell className="font-sans">{linked?.ministerial_role || <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell className="font-sans">{linked?.city || <span className="text-muted-foreground">—</span>}</TableCell>
                       <EditableCell value={c.country || linked?.country} onSave={v => saveField(c.id, "country", v)} options={COUNTRIES} />
-                      <TableCell className="font-sans text-muted-foreground">{(c.source || "—").replace(/_/g, " ")}</TableCell>
                       <TableCell className="font-sans text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : "—"}</TableCell>
 
                       <TableCell>
