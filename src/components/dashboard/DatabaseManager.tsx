@@ -326,6 +326,13 @@ export function DatabaseManager() {
     if (!preview) return;
     setUploading(true); setProgress(0);
     try {
+      const monthNum = (v: string) => {
+        if (!v) return null;
+        const n = parseInt(v, 10);
+        if (!isNaN(n)) return n >= 1 && n <= 12 ? n : null;
+        const i = MONTHS.findIndex(m => m.toLowerCase().startsWith(v.trim().toLowerCase().slice(0, 3)));
+        return i >= 0 ? i + 1 : null;
+      };
       const cleaned = preview.map(r => ({
         title: r.title || null,
         first_name: r.first_name || "",
@@ -333,10 +340,14 @@ export function DatabaseManager() {
         email: (r.email || "").replace(/\s/g, "").toLowerCase() || null,
         phone: r.phone || null,
         country: r.country || null,
+        city: r.city || null,
         group_name: r.group_name || null,
-        notes: r.notes || null,
+        ministerial_role: r.ministerial_role || null,
+        dob_day: r.dob_day && !isNaN(parseInt(r.dob_day, 10)) ? parseInt(r.dob_day, 10) : null,
+        dob_month: monthNum(r.dob_month || ""),
         source: "bulk_upload",
       })).filter(r => r.email || r.first_name || r.last_name);
+
 
       const seen = new Set<string>();
       const unique = cleaned.filter(r => {
