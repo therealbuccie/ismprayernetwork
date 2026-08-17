@@ -625,27 +625,37 @@ export function DatabaseManager() {
                   <TableHead>Last Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Ministry</TableHead>
+                  <TableHead>Ministerial Role</TableHead>
+                  <TableHead>City</TableHead>
                   <TableHead>Country</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Added</TableHead>
                   <TableHead>Access</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">Loading records...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={14} className="text-center py-10 text-muted-foreground">Loading records...</TableCell></TableRow>
                 ) : !rows.length ? (
-                  <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">No records found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={14} className="text-center py-10 text-muted-foreground">No records found.</TableCell></TableRow>
                 ) : rows.map((c, i) => {
-                  const linked = profileByEmail.get((c.email || "").toLowerCase());
+                  const linked = profileByEmail.get((c.email || "").toLowerCase()) as any;
                   return (
                     <TableRow key={c.id} className="font-mono text-xs">
                       <TableCell className="text-muted-foreground">{page * PAGE_SIZE + i + 1}</TableCell>
-                      <EditableCell value={c.title} onSave={v => saveField(c.id, "title", v)} />
+                      <EditableCell value={c.title || linked?.title} onSave={v => saveField(c.id, "title", v)} />
                       <EditableCell value={c.first_name} onSave={v => saveField(c.id, "first_name", v)} className="font-medium font-sans" />
                       <EditableCell value={c.last_name} onSave={v => saveField(c.id, "last_name", v)} className="font-medium font-sans" />
                       <EditableCell value={c.email} onSave={v => saveField(c.id, "email", v.toLowerCase())} className="max-w-[220px] truncate" />
-                      <EditableCell value={c.phone} onSave={v => saveField(c.id, "phone", v)} />
-                      <EditableCell value={c.country} onSave={v => saveField(c.id, "country", v)} options={COUNTRIES} />
+                      <EditableCell value={c.phone || linked?.phone} onSave={v => saveField(c.id, "phone", v)} />
+                      <TableCell className="font-sans">{linked?.ministry_name || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-sans">{linked?.ministerial_role || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-sans">{linked?.city || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <EditableCell value={c.country || linked?.country} onSave={v => saveField(c.id, "country", v)} options={COUNTRIES} />
+                      <TableCell className="font-sans text-muted-foreground">{(c.source || "—").replace(/_/g, " ")}</TableCell>
+                      <TableCell className="font-sans text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : "—"}</TableCell>
 
                       <TableCell>
                         {linked
@@ -660,6 +670,7 @@ export function DatabaseManager() {
                     </TableRow>
                   );
                 })}
+
               </TableBody>
             </Table>
           )}
