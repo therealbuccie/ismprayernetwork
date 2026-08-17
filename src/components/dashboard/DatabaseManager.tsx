@@ -14,6 +14,8 @@ import { Database, Users, Globe, ShieldCheck, Search, Upload, Download, Trash2, 
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { COUNTRIES } from "@/lib/countries";
+import { citiesForCountry, OTHER_CITY } from "@/lib/cities";
+
 
 
 const PAGE_SIZE = 50;
@@ -30,19 +32,33 @@ type Contact = {
   created_at: string;
 };
 
-const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "country", "group_name", "notes"] as const;
+const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "group_name", "ministerial_role", "city", "country", "dob_day", "dob_month"] as const;
+
+const TITLES = ["Pastor", "Reverend", "Evangelist", "Minister", "Apostle", "Prophet", "Bishop", "Deacon", "Deaconess", "Brother", "Sister"];
+
+const MINISTERIAL_ROLES = [
+  "Senior Pastor", "Associate Pastor", "Church Founder", "Church Planter", "Church Worker",
+  "Evangelist", "Missionary", "Youth Minister", "Worship Minister", "Cell / Home Group Leader",
+  "Chaplain", "Ministry Partner", "Other",
+];
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const HEADER_ALIASES: Record<string, string> = {
-  title: "title", salutation: "title", prefix: "title", "ministerial role": "title", ministerial_role: "title",
+  title: "title", salutation: "title", prefix: "title",
   first_name: "first_name", firstname: "first_name", "first name": "first_name", given_name: "first_name",
   last_name: "last_name", lastname: "last_name", "last name": "last_name", surname: "last_name", family_name: "last_name",
   email: "email", "email address": "email", mail: "email",
   phone: "phone", "phone number": "phone", mobile: "phone", telephone: "phone", number: "phone", whatsapp: "phone",
   country: "country", nation: "country",
+  city: "city", town: "city",
+  ministerial_role: "ministerial_role", "ministerial role": "ministerial_role", role: "ministerial_role",
   group_name: "group_name", "group name": "group_name", ministry: "group_name", ministry_name: "group_name",
   "ministry name": "group_name", church: "group_name", "church name": "group_name", organisation: "group_name", organization: "group_name",
-  notes: "notes", note: "notes", remark: "notes", remarks: "notes", comment: "notes",
+  dob_day: "dob_day", "birthday day": "dob_day", "birthday (day)": "dob_day", day: "dob_day",
+  dob_month: "dob_month", "birthday month": "dob_month", "birthday (month)": "dob_month", month: "dob_month",
 };
+
 
 function normalizeRow(raw: Record<string, any>) {
   const out: Record<string, string> = {};
@@ -312,6 +328,13 @@ export function DatabaseManager() {
     if (!preview) return;
     setUploading(true); setProgress(0);
     try {
+      const monthNum = (v: string) => {
+        if (!v) return null;
+        const n = parseInt(v, 10);
+        if (!isNaN(n)) return n >= 1 && n <= 12 ? n : null;
+        const i = MONTHS.findIndex(m => m.toLowerCase().startsWith(v.trim().toLowerCase().slice(0, 3)));
+        return i >= 0 ? i + 1 : null;
+      };
       const cleaned = preview.map(r => ({
         title: r.title || null,
         first_name: r.first_name || "",
@@ -319,10 +342,14 @@ export function DatabaseManager() {
         email: (r.email || "").replace(/\s/g, "").toLowerCase() || null,
         phone: r.phone || null,
         country: r.country || null,
+        city: r.city || null,
         group_name: r.group_name || null,
-        notes: r.notes || null,
+        ministerial_role: r.ministerial_role || null,
+        dob_day: r.dob_day && !isNaN(parseInt(r.dob_day, 10)) ? parseInt(r.dob_day, 10) : null,
+        dob_month: monthNum(r.dob_month || ""),
         source: "bulk_upload",
       })).filter(r => r.email || r.first_name || r.last_name);
+
 
       const seen = new Set<string>();
       const unique = cleaned.filter(r => {
@@ -365,10 +392,11 @@ export function DatabaseManager() {
 
   const downloadSample = (type: "csv" | "xlsx") => {
     const sample = [
-      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "+2348012345678", country: "Nigeria", group_name: "Grace Life Ministry", notes: "Lagos" },
-      { title: "Evangelist", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "+233201234567", country: "Ghana", group_name: "Hope Chapel International", notes: "Accra" },
-      { title: "Minister", first_name: "Samuel", last_name: "Adeyemi", email: "samuel.adeyemi@example.com", phone: "+447700900123", country: "United Kingdom", group_name: "Living Word Assembly", notes: "London" },
+      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "+2348012345678", group_name: "Grace Life Ministry", ministerial_role: "Senior Pastor", city: "Lagos", country: "Nigeria", dob_day: 12, dob_month: "March" },
+      { title: "Evangelist", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "+233201234567", group_name: "Hope Chapel International", ministerial_role: "Evangelist", city: "Accra", country: "Ghana", dob_day: 4, dob_month: "July" },
+      { title: "Minister", first_name: "Samuel", last_name: "Adeyemi", email: "samuel.adeyemi@example.com", phone: "+447700900123", group_name: "Living Word Assembly", ministerial_role: "Church Founder", city: "London", country: "United Kingdom", dob_day: 27, dob_month: "November" },
     ];
+
     if (type === "csv") {
       download("contacts-sample.csv", toCSV(sample, [...COLUMNS]));
     } else {
@@ -396,30 +424,42 @@ export function DatabaseManager() {
         title: c.title || p?.title || "",
         phone: c.phone || p?.phone || "",
         country: c.country || p?.country || "",
-        ministry_name: p?.ministry_name || "",
-        ministerial_role: p?.ministerial_role || "",
-        city: p?.city || "",
+        group_name: (c as any).group_name || p?.ministry_name || "",
+        ministerial_role: (c as any).ministerial_role || p?.ministerial_role || "",
+        city: (c as any).city || p?.city || "",
         role: p?.role || "",
       };
     });
-    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "ministry_name", "ministerial_role", "city", "role", "created_at"]));
+    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "role", "created_at"]));
+
     toast.success(`Exported ${all.length} records`);
   };
 
   const addContact = async () => {
-    if (!newContact.first_name && !newContact.email) { toast.error("Name or email required"); return; }
+    const fullName = (newContact.full_name || "").trim();
+    if (!fullName || !newContact.email) { toast.error("Full name and email are required"); return; }
+    if (!newContact.group_name?.trim()) { toast.error("Ministry / Church name is required"); return; }
+    if (!newContact.country) { toast.error("Country is required"); return; }
+    const [first, ...rest] = fullName.split(/\s+/);
+    const city = newContact.city === OTHER_CITY ? (newContact.city_other || "") : (newContact.city || "");
     const { error } = await supabase.from("contacts").insert({
       title: newContact.title || null,
-      first_name: newContact.first_name || "",
-      last_name: newContact.last_name || "",
-      email: newContact.email?.toLowerCase() || null,
+      first_name: first || "",
+      last_name: rest.join(" "),
+      email: newContact.email.trim().toLowerCase(),
       phone: newContact.phone || null,
-      country: newContact.country || null,
+      group_name: newContact.group_name.trim(),
+      ministerial_role: newContact.ministerial_role || null,
+      city: city || null,
+      country: newContact.country,
+      dob_day: newContact.dob_day ? parseInt(newContact.dob_day, 10) : null,
+      dob_month: newContact.dob_month ? parseInt(newContact.dob_month, 10) : null,
       source: "manual",
     });
     if (error) { toast.error(error.message); return; }
     toast.success("Record added");
     setAddOpen(false); setNewContact({}); refresh();
+
   };
 
   const createAccount = async () => {
@@ -665,9 +705,10 @@ export function DatabaseManager() {
                       <EditableCell value={c.last_name} onSave={v => saveField(c.id, "last_name", v)} className="font-medium font-sans" />
                       <EditableCell value={c.email} onSave={v => saveField(c.id, "email", v.toLowerCase())} className="max-w-[220px] truncate" />
                       <EditableCell value={c.phone || linked?.phone} onSave={v => saveField(c.id, "phone", v)} />
-                      <TableCell className="font-sans">{linked?.ministry_name || <span className="text-muted-foreground">—</span>}</TableCell>
-                      <TableCell className="font-sans">{linked?.ministerial_role || <span className="text-muted-foreground">—</span>}</TableCell>
-                      <TableCell className="font-sans">{linked?.city || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-sans">{(c as any).group_name || linked?.ministry_name || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-sans">{(c as any).ministerial_role || linked?.ministerial_role || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-sans">{(c as any).city || linked?.city || <span className="text-muted-foreground">—</span>}</TableCell>
+
                       <EditableCell value={c.country || linked?.country} onSave={v => saveField(c.id, "country", v)} options={COUNTRIES} />
                       <TableCell className="font-sans text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : "—"}</TableCell>
 
@@ -760,16 +801,78 @@ export function DatabaseManager() {
 
       {/* Add single record */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Add Record</DialogTitle></DialogHeader>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Minister Record</DialogTitle>
+            <DialogDescription>Same details collected on the public sign-up form.</DialogDescription>
+          </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
-            {COLUMNS.map(c => (
-              <div key={c} className={c === "email" ? "col-span-2" : ""}>
-                <Label className="text-xs capitalize">{c.replace("_", " ")}</Label>
-                <Input className="mt-1" value={newContact[c] || ""} onChange={(e) => setNewContact(p => ({ ...p, [c]: e.target.value }))} />
-              </div>
-            ))}
+            <div>
+              <Label className="text-xs">Title</Label>
+              <Select value={newContact.title || ""} onValueChange={(v) => setNewContact(p => ({ ...p, title: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Title" /></SelectTrigger>
+                <SelectContent className="max-h-64">{TITLES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Full Name *</Label>
+              <Input className="mt-1" placeholder="Full name" value={newContact.full_name || ""} onChange={(e) => setNewContact(p => ({ ...p, full_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Email *</Label>
+              <Input className="mt-1" type="email" placeholder="you@example.com" value={newContact.email || ""} onChange={(e) => setNewContact(p => ({ ...p, email: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Phone / WhatsApp</Label>
+              <Input className="mt-1" placeholder="+234..." value={newContact.phone || ""} onChange={(e) => setNewContact(p => ({ ...p, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Ministry / Church Name *</Label>
+              <Input className="mt-1" placeholder="Ministry or church" value={newContact.group_name || ""} onChange={(e) => setNewContact(p => ({ ...p, group_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Ministerial Role</Label>
+              <Select value={newContact.ministerial_role || ""} onValueChange={(v) => setNewContact(p => ({ ...p, ministerial_role: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select role" /></SelectTrigger>
+                <SelectContent className="max-h-64">{MINISTERIAL_ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Country *</Label>
+              <Select value={newContact.country || ""} onValueChange={(v) => setNewContact(p => ({ ...p, country: v, city: "", city_other: "" }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select country" /></SelectTrigger>
+                <SelectContent className="max-h-64">{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">City</Label>
+              <Select value={newContact.city || ""} onValueChange={(v) => setNewContact(p => ({ ...p, city: v }))} disabled={!newContact.country}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder={newContact.country ? "Select city" : "Select a country first"} /></SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {citiesForCountry(newContact.country || "").map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  <SelectItem value={OTHER_CITY}>Other (type manually)</SelectItem>
+                </SelectContent>
+              </Select>
+              {newContact.city === OTHER_CITY && (
+                <Input className="mt-2" placeholder="Enter city" value={newContact.city_other || ""} onChange={(e) => setNewContact(p => ({ ...p, city_other: e.target.value }))} />
+              )}
+            </div>
+            <div>
+              <Label className="text-xs">Birthday (Day)</Label>
+              <Select value={newContact.dob_day || ""} onValueChange={(v) => setNewContact(p => ({ ...p, dob_day: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Day" /></SelectTrigger>
+                <SelectContent className="max-h-64">{Array.from({ length: 31 }, (_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Birthday (Month)</Label>
+              <Select value={newContact.dob_month || ""} onValueChange={(v) => setNewContact(p => ({ ...p, dob_month: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Month" /></SelectTrigger>
+                <SelectContent className="max-h-64">{MONTHS.map((m, i) => <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
             <Button onClick={addContact}>Save</Button>
