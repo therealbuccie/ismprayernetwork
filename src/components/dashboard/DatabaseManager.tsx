@@ -390,10 +390,11 @@ export function DatabaseManager() {
 
   const downloadSample = (type: "csv" | "xlsx") => {
     const sample = [
-      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "+2348012345678", country: "Nigeria", group_name: "Grace Life Ministry", notes: "Lagos" },
-      { title: "Evangelist", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "+233201234567", country: "Ghana", group_name: "Hope Chapel International", notes: "Accra" },
-      { title: "Minister", first_name: "Samuel", last_name: "Adeyemi", email: "samuel.adeyemi@example.com", phone: "+447700900123", country: "United Kingdom", group_name: "Living Word Assembly", notes: "London" },
+      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "+2348012345678", group_name: "Grace Life Ministry", ministerial_role: "Senior Pastor", city: "Lagos", country: "Nigeria", dob_day: 12, dob_month: "March" },
+      { title: "Evangelist", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "+233201234567", group_name: "Hope Chapel International", ministerial_role: "Evangelist", city: "Accra", country: "Ghana", dob_day: 4, dob_month: "July" },
+      { title: "Minister", first_name: "Samuel", last_name: "Adeyemi", email: "samuel.adeyemi@example.com", phone: "+447700900123", group_name: "Living Word Assembly", ministerial_role: "Church Founder", city: "London", country: "United Kingdom", dob_day: 27, dob_month: "November" },
     ];
+
     if (type === "csv") {
       download("contacts-sample.csv", toCSV(sample, [...COLUMNS]));
     } else {
