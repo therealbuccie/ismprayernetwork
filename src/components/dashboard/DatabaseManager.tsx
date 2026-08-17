@@ -424,13 +424,14 @@ export function DatabaseManager() {
         title: c.title || p?.title || "",
         phone: c.phone || p?.phone || "",
         country: c.country || p?.country || "",
-        ministry_name: p?.ministry_name || "",
-        ministerial_role: p?.ministerial_role || "",
-        city: p?.city || "",
+        group_name: (c as any).group_name || p?.ministry_name || "",
+        ministerial_role: (c as any).ministerial_role || p?.ministerial_role || "",
+        city: (c as any).city || p?.city || "",
         role: p?.role || "",
       };
     });
-    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "ministry_name", "ministerial_role", "city", "role", "created_at"]));
+    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "role", "created_at"]));
+
     toast.success(`Exported ${all.length} records`);
   };
 
