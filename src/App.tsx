@@ -10,6 +10,7 @@ import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Join from "./pages/Join";
 import PrayerRequests from "./pages/PrayerRequests";
 import PrayerGroups from "./pages/PrayerGroups";
 import JoinGroup from "./pages/JoinGroup";
@@ -64,6 +65,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/join" element={<Join />} />
+
             <Route path="/prayer-requests" element={<PrayerRequests />} />
             <Route path="/groups" element={<PrayerGroups />} />
             <Route path="/groups/:slug" element={<JoinGroup />} />

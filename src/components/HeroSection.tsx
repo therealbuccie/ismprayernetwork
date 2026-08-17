@@ -122,7 +122,7 @@ const HeroSection = () => {
             transition={{ delay: 1.3, duration: 0.6 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <Link to="/auth">
+            <Link to="/join">
               <HeroButton variant="gold" size="lg">
                 Join the Network
               </HeroButton>
