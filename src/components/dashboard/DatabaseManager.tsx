@@ -89,6 +89,10 @@ function StatCard({ icon: Icon, label, value }: { icon: any; label: string; valu
   );
 }
 
+const isProfileComplete = (p: any) =>
+  !!(p?.full_name?.trim() && p?.ministry_name?.trim() && p?.country?.trim() &&
+     p?.phone?.trim() && p?.title?.trim() && p?.ministerial_role?.trim());
+
 type ViewFilter = "all" | "accounts" | "upgraded";
 
 /** phpMyAdmin-style inline editable cell: click to edit, Enter/blur saves, Esc cancels. */
@@ -553,21 +557,31 @@ export function DatabaseManager() {
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Ministry</TableHead>
+                  <TableHead>Ministerial Role</TableHead>
+                  <TableHead>City</TableHead>
                   <TableHead>Country</TableHead>
+                  <TableHead>Signed up</TableHead>
+                  <TableHead>Profile</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Change Role</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {!pagedAccounts.length ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No accounts found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={12} className="text-center py-10 text-muted-foreground">No accounts found.</TableCell></TableRow>
                 ) : pagedAccounts.map((p: any, i) => {
                   const isSelf = p.user_id === currentProfile?.user_id;
                   return (
                     <TableRow key={p.id}>
                       <TableCell className="text-muted-foreground text-xs">{page * PAGE_SIZE + i + 1}</TableCell>
-                      <TableCell className="font-medium">{p.full_name || "—"}</TableCell>
+                      <TableCell className="font-medium">{[p.title, p.full_name].filter(Boolean).join(" ") || "—"}</TableCell>
                       <TableCell className="text-xs font-mono">{p.email || "—"}</TableCell>
+                      <TableCell className="text-xs font-mono">{p.phone || "—"}</TableCell>
+                      <TableCell className="text-xs">{p.ministry_name || "—"}</TableCell>
+                      <TableCell className="text-xs">{p.ministerial_role || "—"}</TableCell>
+                      <TableCell className="text-xs">{p.city || "—"}</TableCell>
                       <TableCell>
                         <Select value={p.country || ""} onValueChange={(val) => changeCountry(p.id, val)} disabled={updatingId === p.id}>
                           <SelectTrigger className="w-40 h-8 text-xs">
@@ -577,6 +591,14 @@ export function DatabaseManager() {
                             {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {p.created_at ? new Date(p.created_at).toLocaleDateString() : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {isProfileComplete(p)
+                          ? <Badge className="bg-emerald-600/20 text-emerald-400 border-emerald-600/30">Complete</Badge>
+                          : <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Incomplete</Badge>}
                       </TableCell>
                       <TableCell><Badge className={roleBadgeColor[p.role] || "bg-muted"}>{p.role}</Badge></TableCell>
                       <TableCell>
