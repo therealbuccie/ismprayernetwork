@@ -383,11 +383,20 @@ export function DatabaseManager() {
       all.push(...(data || []));
       if (!data || data.length < 1000) break;
     }
-    const rowsOut = all.map(c => ({
-      ...c,
-      role: profileByEmail.get((c.email || "").toLowerCase())?.role || "",
-    }));
-    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "role", "source", "created_at"]));
+    const rowsOut = all.map(c => {
+      const p: any = profileByEmail.get((c.email || "").toLowerCase());
+      return {
+        ...c,
+        title: c.title || p?.title || "",
+        phone: c.phone || p?.phone || "",
+        country: c.country || p?.country || "",
+        ministry_name: p?.ministry_name || "",
+        ministerial_role: p?.ministerial_role || "",
+        city: p?.city || "",
+        role: p?.role || "",
+      };
+    });
+    download(`database-export-${new Date().toISOString().split("T")[0]}.csv`, toCSV(rowsOut, [...COLUMNS, "ministry_name", "ministerial_role", "city", "role", "source", "created_at"]));
     toast.success(`Exported ${all.length} records`);
   };
 
