@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv, Banknote, ChevronDown, BarChart3, PackageOpen, Send, Database, ClipboardCheck, Bell, Activity } from "lucide-react";
+import { LayoutDashboard, BookOpen, Tag, Users, ArrowLeft, LogOut, Mail, MessageSquare, Flame, CalendarHeart, CalendarDays, Newspaper, HandHeart, UsersRound, ShoppingBag, ClipboardList, Settings, Megaphone, Tv, Banknote, ChevronDown, BarChart3, PackageOpen, Send, Database, ClipboardCheck, Bell, Activity, ScrollText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { DashboardTab } from "@/pages/Dashboard";
 import logo from "@/assets/logo.png";
@@ -74,6 +74,7 @@ const tabGroups: TabGroup[] = [
       { id: "payment-settings", label: "Payment Settings", icon: Banknote },
       { id: "settings", label: "General Settings", icon: Settings },
       { id: "database", label: "Database", icon: Database, superAdminOnly: true },
+      { id: "activity-log", label: "Activity Log", icon: ScrollText },
     ],
   },
 ];
