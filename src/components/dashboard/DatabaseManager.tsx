@@ -433,19 +433,30 @@ export function DatabaseManager() {
   };
 
   const addContact = async () => {
-    if (!newContact.first_name && !newContact.email) { toast.error("Name or email required"); return; }
+    const fullName = (newContact.full_name || "").trim();
+    if (!fullName || !newContact.email) { toast.error("Full name and email are required"); return; }
+    if (!newContact.group_name?.trim()) { toast.error("Ministry / Church name is required"); return; }
+    if (!newContact.country) { toast.error("Country is required"); return; }
+    const [first, ...rest] = fullName.split(/\s+/);
+    const city = newContact.city === OTHER_CITY ? (newContact.city_other || "") : (newContact.city || "");
     const { error } = await supabase.from("contacts").insert({
       title: newContact.title || null,
-      first_name: newContact.first_name || "",
-      last_name: newContact.last_name || "",
-      email: newContact.email?.toLowerCase() || null,
+      first_name: first || "",
+      last_name: rest.join(" "),
+      email: newContact.email.trim().toLowerCase(),
       phone: newContact.phone || null,
-      country: newContact.country || null,
+      group_name: newContact.group_name.trim(),
+      ministerial_role: newContact.ministerial_role || null,
+      city: city || null,
+      country: newContact.country,
+      dob_day: newContact.dob_day ? parseInt(newContact.dob_day, 10) : null,
+      dob_month: newContact.dob_month ? parseInt(newContact.dob_month, 10) : null,
       source: "manual",
     });
     if (error) { toast.error(error.message); return; }
     toast.success("Record added");
     setAddOpen(false); setNewContact({}); refresh();
+
   };
 
   const createAccount = async () => {
