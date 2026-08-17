@@ -799,16 +799,78 @@ export function DatabaseManager() {
 
       {/* Add single record */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Add Record</DialogTitle></DialogHeader>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Minister Record</DialogTitle>
+            <DialogDescription>Same details collected on the public sign-up form.</DialogDescription>
+          </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
-            {COLUMNS.map(c => (
-              <div key={c} className={c === "email" ? "col-span-2" : ""}>
-                <Label className="text-xs capitalize">{c.replace("_", " ")}</Label>
-                <Input className="mt-1" value={newContact[c] || ""} onChange={(e) => setNewContact(p => ({ ...p, [c]: e.target.value }))} />
-              </div>
-            ))}
+            <div>
+              <Label className="text-xs">Title</Label>
+              <Select value={newContact.title || ""} onValueChange={(v) => setNewContact(p => ({ ...p, title: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Title" /></SelectTrigger>
+                <SelectContent className="max-h-64">{TITLES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Full Name *</Label>
+              <Input className="mt-1" placeholder="Full name" value={newContact.full_name || ""} onChange={(e) => setNewContact(p => ({ ...p, full_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Email *</Label>
+              <Input className="mt-1" type="email" placeholder="you@example.com" value={newContact.email || ""} onChange={(e) => setNewContact(p => ({ ...p, email: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Phone / WhatsApp</Label>
+              <Input className="mt-1" placeholder="+234..." value={newContact.phone || ""} onChange={(e) => setNewContact(p => ({ ...p, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Ministry / Church Name *</Label>
+              <Input className="mt-1" placeholder="Ministry or church" value={newContact.group_name || ""} onChange={(e) => setNewContact(p => ({ ...p, group_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Ministerial Role</Label>
+              <Select value={newContact.ministerial_role || ""} onValueChange={(v) => setNewContact(p => ({ ...p, ministerial_role: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select role" /></SelectTrigger>
+                <SelectContent className="max-h-64">{MINISTERIAL_ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Country *</Label>
+              <Select value={newContact.country || ""} onValueChange={(v) => setNewContact(p => ({ ...p, country: v, city: "", city_other: "" }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select country" /></SelectTrigger>
+                <SelectContent className="max-h-64">{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">City</Label>
+              <Select value={newContact.city || ""} onValueChange={(v) => setNewContact(p => ({ ...p, city: v }))} disabled={!newContact.country}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder={newContact.country ? "Select city" : "Select a country first"} /></SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {citiesForCountry(newContact.country || "").map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  <SelectItem value={OTHER_CITY}>Other (type manually)</SelectItem>
+                </SelectContent>
+              </Select>
+              {newContact.city === OTHER_CITY && (
+                <Input className="mt-2" placeholder="Enter city" value={newContact.city_other || ""} onChange={(e) => setNewContact(p => ({ ...p, city_other: e.target.value }))} />
+              )}
+            </div>
+            <div>
+              <Label className="text-xs">Birthday (Day)</Label>
+              <Select value={newContact.dob_day || ""} onValueChange={(v) => setNewContact(p => ({ ...p, dob_day: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Day" /></SelectTrigger>
+                <SelectContent className="max-h-64">{Array.from({ length: 31 }, (_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Birthday (Month)</Label>
+              <Select value={newContact.dob_month || ""} onValueChange={(v) => setNewContact(p => ({ ...p, dob_month: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Month" /></SelectTrigger>
+                <SelectContent className="max-h-64">{MONTHS.map((m, i) => <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
             <Button onClick={addContact}>Save</Button>
