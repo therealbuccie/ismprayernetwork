@@ -31,9 +31,10 @@ const ReportsManager = lazy(() => import("@/components/dashboard/ReportsManager"
 const AnnouncementsManager = lazy(() => import("@/components/dashboard/AnnouncementsManager").then(m => ({ default: m.AnnouncementsManager })));
 const WeeklyPrayerManager = lazy(() => import("@/components/dashboard/WeeklyPrayerManager").then(m => ({ default: m.WeeklyPrayerManager })));
 const PrayerPointsManager = lazy(() => import("@/components/dashboard/PrayerPointsManager").then(m => ({ default: m.PrayerPointsManager })));
+const ActivityLogManager = lazy(() => import("@/components/dashboard/ActivityLogManager").then(m => ({ default: m.ActivityLogManager })));
 const ProgramTrackerManager = lazy(() => import("@/components/dashboard/ProgramTrackerManager").then(m => ({ default: m.ProgramTrackerManager })));
 
-export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "database" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "weekly-prayer" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch" | "reports" | "announcements" | "program-tracker";
+export type DashboardTab = "home" | "books" | "categories" | "purchases" | "orders" | "combo-packs" | "bookstore-analytics" | "settings" | "database" | "users" | "messages" | "testimonies" | "events" | "programs" | "newsletter" | "prayer-requests" | "prayer-groups" | "prayer-points" | "weekly-prayer" | "campaigns" | "live-tv" | "payment-settings" | "mail-dispatch" | "reports" | "announcements" | "program-tracker" | "activity-log";
 
 function TabSkeleton() {
   return (
@@ -105,6 +106,7 @@ const Dashboard = () => {
             {activeTab === "reports" && <ReportsManager />}
             {activeTab === "announcements" && <AnnouncementsManager />}
             {activeTab === "program-tracker" && <ProgramTrackerManager />}
+            {activeTab === "activity-log" && <ActivityLogManager />}
 
           </Suspense>
         </div>
