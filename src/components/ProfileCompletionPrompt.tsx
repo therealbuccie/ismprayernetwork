@@ -180,24 +180,19 @@ const ProfileCompletionPrompt = () => {
             </div>
             <div>
               <Label className="text-xs">City</Label>
-              {cityOptions.length > 0 ? (
-                <>
-                  <Select
-                    value={citySelect}
-                    onValueChange={(v) => { setCitySelect(v); setCity(v === OTHER_CITY ? "" : v); }}
-                  >
-                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select your city" /></SelectTrigger>
-                    <SelectContent className="max-h-64">
-                      {cityOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      <SelectItem value={OTHER_CITY}>Other (type manually)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {citySelect === OTHER_CITY && (
-                    <Input className="mt-2" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Enter your city" />
-                  )}
-                </>
-              ) : (
-                <Input className="mt-1" value={city} onChange={(e) => setCity(e.target.value)} placeholder={country ? "Your city" : "Select a country first"} disabled={!country} />
+              <Select
+                value={citySelect}
+                onValueChange={(v) => { setCitySelect(v); setCity(v === OTHER_CITY ? "" : v); }}
+                disabled={!country}
+              >
+                <SelectTrigger className="mt-1"><SelectValue placeholder={country ? "Select your city" : "Select country first"} /></SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {cityOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  <SelectItem value={OTHER_CITY}>Other (type manually)</SelectItem>
+                </SelectContent>
+              </Select>
+              {citySelect === OTHER_CITY && (
+                <Input className="mt-2" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Enter your city" />
               )}
             </div>
           </div>
