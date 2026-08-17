@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import brandingJoin from "@/assets/branding-join.png";
 
 const CTASection = () => (
@@ -43,9 +44,9 @@ const CTASection = () => (
                 Start Praying Today
               </HeroButton>
             </Link>
-            <Link to="/join">
+            <Link to={user ? "/groups" : "/join"}>
               <HeroButton variant="outline" size="lg" className="text-foreground border-border hover:bg-muted">
-                Join the Network
+                {user ? "Join a Prayer Group" : "Join the Network"}
               </HeroButton>
             </Link>
           </div>

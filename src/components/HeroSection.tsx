@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Volume2, VolumeX } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -122,9 +123,9 @@ const HeroSection = () => {
             transition={{ delay: 1.3, duration: 0.6 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <Link to="/join">
+            <Link to={user ? "/groups" : "/join"}>
               <HeroButton variant="gold" size="lg">
-                Join the Network
+                {user ? "Join a Prayer Group" : "Join the Network"}
               </HeroButton>
             </Link>
             <Link to="/prayer-room">
