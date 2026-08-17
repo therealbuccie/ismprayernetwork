@@ -10,6 +10,7 @@ import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Join from "./pages/Join";
 import PrayerRequests from "./pages/PrayerRequests";
 import PrayerGroups from "./pages/PrayerGroups";
 import JoinGroup from "./pages/JoinGroup";
