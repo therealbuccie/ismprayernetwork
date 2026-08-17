@@ -32,15 +32,15 @@ const TestimoniesSection = () => (
       />
     </div>
 
-    <div className="container mx-auto px-4 relative z-10">
-      <div className="text-center mb-16">
-        <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-          Testimonies of <span className="gold-gradient">God's Faithfulness</span>
-        </h2>
-        <p className="text-primary-foreground/70 max-w-2xl mx-auto">
-          Real stories from ministers of the gospel experiencing the power of united prayer.
-        </p>
-      </div>
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4 text-foreground drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+            Testimonies of <span className="gold-gradient drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">God's Faithfulness</span>
+          </h2>
+          <p className="text-foreground/90 max-w-2xl mx-auto drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
+            Real stories from ministers of the gospel experiencing the power of united prayer.
+          </p>
+        </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {testimonies.map((testimony, i) => (
