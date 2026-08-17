@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
 import { HeroButton } from "./HeroButton";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import brandingJoin from "@/assets/branding-join.png";
 
-const CTASection = () => (
+const CTASection = () => {
+  const { user } = useAuth();
+  return (
   <section className="py-24 bg-background overflow-hidden">
     <div className="container mx-auto px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -43,9 +46,9 @@ const CTASection = () => (
                 Start Praying Today
               </HeroButton>
             </Link>
-            <Link to="/join">
+            <Link to={user ? "/groups" : "/join"}>
               <HeroButton variant="outline" size="lg" className="text-foreground border-border hover:bg-muted">
-                Join the Network
+                {user ? "Join a Prayer Group" : "Join the Network"}
               </HeroButton>
             </Link>
           </div>
@@ -53,6 +56,7 @@ const CTASection = () => (
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default CTASection;
