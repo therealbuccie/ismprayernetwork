@@ -41,7 +41,7 @@ const CTASection = () => {
             Your intercession can transform nations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            <Link to="/groups">
+            <Link to="/prayer-room">
               <HeroButton variant="gold" size="lg" className="text-accent-foreground">
                 Start Praying Today
               </HeroButton>
