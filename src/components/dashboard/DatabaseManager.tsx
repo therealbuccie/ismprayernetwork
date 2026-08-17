@@ -30,15 +30,18 @@ type Contact = {
   created_at: string;
 };
 
-const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "country"] as const;
+const COLUMNS = ["title", "first_name", "last_name", "email", "phone", "country", "group_name", "notes"] as const;
 
 const HEADER_ALIASES: Record<string, string> = {
-  title: "title", salutation: "title", prefix: "title",
+  title: "title", salutation: "title", prefix: "title", "ministerial role": "title", ministerial_role: "title",
   first_name: "first_name", firstname: "first_name", "first name": "first_name", given_name: "first_name",
   last_name: "last_name", lastname: "last_name", "last name": "last_name", surname: "last_name", family_name: "last_name",
   email: "email", "email address": "email", mail: "email",
-  phone: "phone", "phone number": "phone", mobile: "phone", telephone: "phone", number: "phone",
+  phone: "phone", "phone number": "phone", mobile: "phone", telephone: "phone", number: "phone", whatsapp: "phone",
   country: "country", nation: "country",
+  group_name: "group_name", "group name": "group_name", ministry: "group_name", ministry_name: "group_name",
+  "ministry name": "group_name", church: "group_name", "church name": "group_name", organisation: "group_name", organization: "group_name",
+  notes: "notes", note: "notes", remark: "notes", remarks: "notes", comment: "notes",
 };
 
 function normalizeRow(raw: Record<string, any>) {
@@ -316,6 +319,8 @@ export function DatabaseManager() {
         email: (r.email || "").replace(/\s/g, "").toLowerCase() || null,
         phone: r.phone || null,
         country: r.country || null,
+        group_name: r.group_name || null,
+        notes: r.notes || null,
         source: "bulk_upload",
       })).filter(r => r.email || r.first_name || r.last_name);
 
@@ -360,8 +365,9 @@ export function DatabaseManager() {
 
   const downloadSample = (type: "csv" | "xlsx") => {
     const sample = [
-      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "2348012345678", country: "Nigeria" },
-      { title: "Sister", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "2348098765432", country: "Ghana" },
+      { title: "Pastor", first_name: "John", last_name: "Doe", email: "john.doe@example.com", phone: "+2348012345678", country: "Nigeria", group_name: "Grace Life Ministry", notes: "Lagos" },
+      { title: "Evangelist", first_name: "Mary", last_name: "Grace", email: "mary.grace@example.com", phone: "+233201234567", country: "Ghana", group_name: "Hope Chapel International", notes: "Accra" },
+      { title: "Minister", first_name: "Samuel", last_name: "Adeyemi", email: "samuel.adeyemi@example.com", phone: "+447700900123", country: "United Kingdom", group_name: "Living Word Assembly", notes: "London" },
     ];
     if (type === "csv") {
       download("contacts-sample.csv", toCSV(sample, [...COLUMNS]));
