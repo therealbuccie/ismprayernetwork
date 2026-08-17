@@ -329,13 +329,17 @@ export type Database = {
       }
       contacts: {
         Row: {
+          city: string | null
           country: string | null
           created_at: string
+          dob_day: number | null
+          dob_month: number | null
           email: string | null
           first_name: string
           group_name: string | null
           id: string
           last_name: string
+          ministerial_role: string | null
           notes: string | null
           phone: string | null
           source: string
@@ -343,13 +347,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city?: string | null
           country?: string | null
           created_at?: string
+          dob_day?: number | null
+          dob_month?: number | null
           email?: string | null
           first_name?: string
           group_name?: string | null
           id?: string
           last_name?: string
+          ministerial_role?: string | null
           notes?: string | null
           phone?: string | null
           source?: string
@@ -357,13 +365,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city?: string | null
           country?: string | null
           created_at?: string
+          dob_day?: number | null
+          dob_month?: number | null
           email?: string | null
           first_name?: string
           group_name?: string | null
           id?: string
           last_name?: string
+          ministerial_role?: string | null
           notes?: string | null
           phone?: string | null
           source?: string
