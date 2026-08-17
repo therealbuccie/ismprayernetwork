@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "./components/ScrollToTop";
 import RouteSeo from "./components/RouteSeo";
 import FloatingTranslate from "./components/FloatingTranslate";
+import ProfileCompletionPrompt from "./components/ProfileCompletionPrompt";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
@@ -62,6 +63,7 @@ const App = () => (
           <ScrollToTop />
           <RouteSeo />
           <FloatingTranslate />
+          <ProfileCompletionPrompt />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
