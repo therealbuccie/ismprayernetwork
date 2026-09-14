@@ -248,25 +248,53 @@ const PrayerRequests = () => {
                 <motion.div key={req.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                   <GlassCard variant="hover" className="h-full">
                     <div className="flex items-center justify-between mb-3">
-                      <Badge variant="secondary" className="text-xs">{req.category}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">{req.category}</Badge>
+                        <Badge variant="outline" className={`text-xs ${statusClass(req.status || "submitted")}`}>
+                          {STATUS_LABELS[req.status || "submitted"]}
+                        </Badge>
+                      </div>
                       <span className="text-xs text-muted-foreground">{timeAgo(req.created_at)}</span>
                     </div>
                     <h3 className="font-serif font-semibold text-lg mb-2">{req.title}</h3>
                     {req.description && <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{req.description}</p>}
-                    <p className="text-sm text-muted-foreground mb-4">By {req.author_name}</p>
-                    <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground mb-3">By {req.author_name}</p>
+                    {req.response_text && (
+                      <div className="mb-4 rounded-lg border border-accent/20 bg-accent/5 p-3">
+                        <p className="text-xs text-accent flex items-center gap-1 mb-1">
+                          <MessageSquareQuote size={12} /> From the prayer coordinators
+                        </p>
+                        <p className="text-sm text-foreground/85 whitespace-pre-wrap">{req.response_text}</p>
+                        {req.responded_at && (
+                          <p className="text-[11px] text-muted-foreground mt-1">{new Date(req.responded_at).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className="text-sm text-muted-foreground flex items-center gap-1">
                         <Heart size={14} className="text-accent" /> {req.prayer_count} praying
                       </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs gap-1"
-                        disabled={myInteractions?.includes(req.id)}
-                        onClick={() => handlePray(req.id)}
-                      >
-                        <Heart size={12} /> {myInteractions?.includes(req.id) ? "Praying" : "Pray"}
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {isAdmin && (
+                          <Button size="sm" variant="ghost" className="text-xs gap-1" onClick={() => openRespond(req)}>
+                            <MessageSquareQuote size={12} /> Respond
+                          </Button>
+                        )}
+                        {req.status === "answered" && (isAdmin || req.user_id === user?.id) && (
+                          <Button size="sm" variant="ghost" className="text-xs gap-1 text-accent" onClick={() => openTestimony(req)}>
+                            <Sparkles size={12} /> Share Testimony
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs gap-1"
+                          disabled={myInteractions?.includes(req.id)}
+                          onClick={() => handlePray(req.id)}
+                        >
+                          <Heart size={12} /> {myInteractions?.includes(req.id) ? "Praying" : "Pray"}
+                        </Button>
+                      </div>
                     </div>
                   </GlassCard>
                 </motion.div>
