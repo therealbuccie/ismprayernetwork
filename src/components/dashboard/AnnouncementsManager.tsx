@@ -11,6 +11,30 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Megaphone, Plus, Pencil, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { toast } from "sonner";
+import { getStoredPin, adminQuery, adminInsert, adminUpdate, adminDelete } from "@/hooks/useBookstoreAdmin";
+
+// Session tokens can expire while the dashboard stays open, which surfaces as
+// "JWT expired" / RLS errors. Refresh once, then fall back to the PIN-backed
+// admin service so admins never lose their work.
+const isAuthIssue = (e: any) => {
+  const m = String(e?.message || e || "").toLowerCase();
+  return m.includes("jwt") || m.includes("token") || m.includes("row-level") ||
+    m.includes("row level") || m.includes("permission") || m.includes("401") || m.includes("403");
+};
+
+async function withAuthFallback<T>(direct: () => Promise<T>, viaAdmin: () => Promise<T>): Promise<T> {
+  try {
+    return await direct();
+  } catch (e) {
+    if (!isAuthIssue(e)) throw e;
+    try {
+      const { data } = await supabase.auth.refreshSession();
+      if (data?.session) return await direct();
+    } catch { /* fall through */ }
+    if (getStoredPin()) return await viaAdmin();
+    throw new Error("Your admin session expired. Please refresh the page and sign in again.");
+  }
+}
 
 interface Announcement {
   id: string;
@@ -33,14 +57,21 @@ export function AnnouncementsManager() {
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["announcements-admin"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("announcements")
-        .select("*")
-        .order("published_at", { ascending: false });
-      if (error) throw error;
-      return data as Announcement[];
-    },
+    queryFn: async () =>
+      withAuthFallback<Announcement[]>(
+        async () => {
+          const { data, error } = await supabase
+            .from("announcements")
+            .select("*")
+            .order("published_at", { ascending: false });
+          if (error) throw error;
+          return data as Announcement[];
+        },
+        async () =>
+          (await adminQuery("announcements", "*", undefined, [
+            { column: "published_at", ascending: false },
+          ])) as Announcement[],
+      ),
   });
 
   const invalidate = () => {
@@ -59,11 +90,21 @@ export function AnnouncementsManager() {
         is_active: values.is_active,
       };
       if (values.id) {
-        const { error } = await supabase.from("announcements").update(payload).eq("id", values.id);
-        if (error) throw error;
+        await withAuthFallback(
+          async () => {
+            const { error } = await supabase.from("announcements").update(payload).eq("id", values.id!);
+            if (error) throw error;
+          },
+          async () => { await adminUpdate("announcements", { id: values.id, ...payload }); },
+        );
       } else {
-        const { error } = await supabase.from("announcements").insert(payload);
-        if (error) throw error;
+        await withAuthFallback(
+          async () => {
+            const { error } = await supabase.from("announcements").insert(payload);
+            if (error) throw error;
+          },
+          async () => { await adminInsert("announcements", payload); },
+        );
       }
     },
     onSuccess: () => {
@@ -75,19 +116,27 @@ export function AnnouncementsManager() {
   });
 
   const patchMutation = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Announcement> }) => {
-      const { error } = await supabase.from("announcements").update(patch).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Announcement> }) =>
+      withAuthFallback(
+        async () => {
+          const { error } = await supabase.from("announcements").update(patch).eq("id", id);
+          if (error) throw error;
+        },
+        async () => { await adminUpdate("announcements", { id, ...patch }); },
+      ),
     onSuccess: () => invalidate(),
     onError: (e: any) => toast.error(e.message),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("announcements").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: async (id: string) =>
+      withAuthFallback(
+        async () => {
+          const { error } = await supabase.from("announcements").delete().eq("id", id);
+          if (error) throw error;
+        },
+        async () => { await adminDelete("announcements", id); },
+      ),
     onSuccess: () => { invalidate(); toast.success("Announcement deleted"); },
     onError: (e: any) => toast.error(e.message),
   });
