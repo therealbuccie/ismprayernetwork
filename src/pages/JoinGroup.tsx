@@ -21,7 +21,7 @@ const JoinGroup = () => {
   const navigate = useNavigate();
   const [joining, setJoining] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-  const [callInfo, setCallInfo] = useState<{ url: string; token: string } | null>(null);
+  const [callInfo, setCallInfo] = useState<{ url: string; token: string; isModerator: boolean } | null>(null);
   const [joiningCall, setJoiningCall] = useState(false);
 
   const { data: group, isLoading } = useQuery({
@@ -86,7 +86,7 @@ const JoinGroup = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setCallInfo({ url: data.url, token: data.token });
+      setCallInfo({ url: data.url, token: data.token, isModerator: !!data.is_moderator });
     } catch (err: any) {
       toast.error(err.message || "Failed to join call");
     } finally {
@@ -103,6 +103,8 @@ const JoinGroup = () => {
         userName={profile?.full_name || user?.user_metadata?.full_name || "Guest"}
         groupId={group?.id}
         userId={user?.id}
+        groupName={group?.name}
+        isModerator={callInfo.isModerator}
         onLeave={() => setCallInfo(null)}
       />
     );
