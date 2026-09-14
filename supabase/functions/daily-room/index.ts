@@ -63,6 +63,13 @@ serve(async (req) => {
     // Use a deterministic room name based on group slug
     const roomName = `prayer-${group_slug}`;
 
+    const isModerator = await resolveModerator(req, group_slug);
+    const tokenProperties = {
+      room_name: roomName,
+      exp: Math.floor(Date.now() / 1000) + 3600 * 4, // 4 hours
+      ...(isModerator ? { is_owner: true } : {}),
+    };
+
     // Check if room already exists
     const checkRes = await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
       headers: { Authorization: `Bearer ${DAILY_API_KEY}` },
@@ -77,17 +84,12 @@ serve(async (req) => {
           Authorization: `Bearer ${DAILY_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          properties: {
-            room_name: roomName,
-            exp: Math.floor(Date.now() / 1000) + 3600 * 4, // 4 hours
-          },
-        }),
+        body: JSON.stringify({ properties: tokenProperties }),
       });
       const tokenData = await tokenRes.json();
 
       return new Response(
-        JSON.stringify({ url: existingRoom.url, token: tokenData.token, room_name: roomName }),
+        JSON.stringify({ url: existingRoom.url, token: tokenData.token, room_name: roomName, is_moderator: isModerator }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
