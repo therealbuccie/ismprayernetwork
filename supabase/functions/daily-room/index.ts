@@ -131,17 +131,12 @@ serve(async (req) => {
         Authorization: `Bearer ${DAILY_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        properties: {
-          room_name: roomName,
-          exp: Math.floor(Date.now() / 1000) + 3600 * 4,
-        },
-      }),
+      body: JSON.stringify({ properties: tokenProperties }),
     });
     const tokenData = await tokenRes.json();
 
     return new Response(
-      JSON.stringify({ url: room.url, token: tokenData.token, room_name: roomName }),
+      JSON.stringify({ url: room.url, token: tokenData.token, room_name: roomName, is_moderator: isModerator }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
