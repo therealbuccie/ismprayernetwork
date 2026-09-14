@@ -130,6 +130,66 @@ const PrayerRequests = () => {
     }
   };
 
+  const openRespond = (req: any) => {
+    setRespondTarget(req);
+    setResponseStatus(req.status || "praying");
+    setResponseText(req.response_text || "");
+  };
+
+  const saveResponse = async () => {
+    if (!respondTarget) return;
+    setSavingResponse(true);
+    try {
+      const { error } = await supabase
+        .from("prayer_requests")
+        .update({
+          status: responseStatus,
+          response_text: responseText.trim() || null,
+          responded_by: user?.id ?? null,
+          responded_at: new Date().toISOString(),
+        })
+        .eq("id", respondTarget.id);
+      if (error) throw error;
+      toast.success("Response saved");
+      setRespondTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["prayer-requests"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingResponse(false);
+    }
+  };
+
+  const openTestimony = (req: any) => {
+    setTestimonyTarget(req);
+    setTestimonyTitle(req.title || "");
+    setTestimonyText("");
+    setTestimonyDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const saveTestimony = async () => {
+    if (!testimonyTarget || !user) return;
+    if (!testimonyText.trim()) { toast.error("Please share what God did"); return; }
+    setSavingTestimony(true);
+    try {
+      const { error } = await supabase.from("testimonies").insert({
+        title: testimonyTitle.trim() || testimonyTarget.title,
+        content: `${testimonyText.trim()}\n\n(Answered prayer — ${testimonyDate})`,
+        author_name: profile?.full_name || "Anonymous",
+        user_id: user.id,
+        prayer_request_id: testimonyTarget.id,
+      });
+      if (error) throw error;
+      toast.success("Testimony submitted for review. Thank you! 🙏");
+      setTestimonyTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["prayer-requests"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingTestimony(false);
+    }
+  };
+
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime();
     const mins = Math.floor(diff / 60000);
