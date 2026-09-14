@@ -116,10 +116,14 @@ export function AnnouncementsManager() {
   });
 
   const patchMutation = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Announcement> }) => {
-      const { error } = await supabase.from("announcements").update(patch).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Announcement> }) =>
+      withAuthFallback(
+        async () => {
+          const { error } = await supabase.from("announcements").update(patch).eq("id", id);
+          if (error) throw error;
+        },
+        async () => { await adminUpdate("announcements", { id, ...patch }); },
+      ),
     onSuccess: () => invalidate(),
     onError: (e: any) => toast.error(e.message),
   });
