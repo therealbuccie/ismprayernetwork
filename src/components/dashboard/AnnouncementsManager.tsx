@@ -129,10 +129,14 @@ export function AnnouncementsManager() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("announcements").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: async (id: string) =>
+      withAuthFallback(
+        async () => {
+          const { error } = await supabase.from("announcements").delete().eq("id", id);
+          if (error) throw error;
+        },
+        async () => { await adminDelete("announcements", id); },
+      ),
     onSuccess: () => { invalidate(); toast.success("Announcement deleted"); },
     onError: (e: any) => toast.error(e.message),
   });
