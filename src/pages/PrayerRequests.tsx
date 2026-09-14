@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { GlassCard } from "@/components/GlassCard";
 import { motion } from "framer-motion";
-import { Heart, Plus, Send } from "lucide-react";
+import { Heart, Plus, Send, Sparkles, MessageSquareQuote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,21 @@ import { toast } from "sonner";
 
 const categoryOptions = ["General", "Health", "Family", "Finances", "Spiritual", "Relationships", "Career"];
 
+const STATUS_LABELS: Record<string, string> = {
+  submitted: "Submitted",
+  praying: "Praying",
+  answered: "Answered",
+};
+
+const statusClass = (status: string) =>
+  status === "answered"
+    ? "border-green-500/40 text-green-500"
+    : status === "praying"
+      ? "border-accent/40 text-accent"
+      : "border-border text-muted-foreground";
+
 const PrayerRequests = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
@@ -28,6 +41,19 @@ const PrayerRequests = () => {
   const [category, setCategory] = useState("General");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Coordinator response
+  const [respondTarget, setRespondTarget] = useState<any | null>(null);
+  const [responseText, setResponseText] = useState("");
+  const [responseStatus, setResponseStatus] = useState("praying");
+  const [savingResponse, setSavingResponse] = useState(false);
+
+  // Testimony sharing
+  const [testimonyTarget, setTestimonyTarget] = useState<any | null>(null);
+  const [testimonyTitle, setTestimonyTitle] = useState("");
+  const [testimonyText, setTestimonyText] = useState("");
+  const [testimonyDate, setTestimonyDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [savingTestimony, setSavingTestimony] = useState(false);
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["prayer-requests"],
