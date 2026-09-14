@@ -1,4 +1,35 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+
+// Decides, server-side, whether the caller may moderate this group's prayer call.
+// Moderator = the group's creator, or a platform admin/super-admin.
+async function resolveModerator(req: Request, groupSlug: string): Promise<boolean> {
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return false;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+
+    const jwt = authHeader.replace("Bearer ", "");
+    const { data: userData } = await admin.auth.getUser(jwt);
+    const userId = userData?.user?.id;
+    if (!userId) return false;
+
+    const { data: isAdmin } = await admin.rpc("is_admin", { user_uuid: userId });
+    if (isAdmin === true) return true;
+
+    const { data: group } = await admin
+      .from("prayer_groups")
+      .select("created_by")
+      .eq("slug", groupSlug)
+      .maybeSingle();
+
+    return group?.created_by === userId;
+  } catch (_err) {
+    return false;
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,6 +63,13 @@ serve(async (req) => {
     // Use a deterministic room name based on group slug
     const roomName = `prayer-${group_slug}`;
 
+    const isModerator = await resolveModerator(req, group_slug);
+    const tokenProperties = {
+      room_name: roomName,
+      exp: Math.floor(Date.now() / 1000) + 3600 * 4, // 4 hours
+      ...(isModerator ? { is_owner: true } : {}),
+    };
+
     // Check if room already exists
     const checkRes = await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
       headers: { Authorization: `Bearer ${DAILY_API_KEY}` },
@@ -46,17 +84,12 @@ serve(async (req) => {
           Authorization: `Bearer ${DAILY_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          properties: {
-            room_name: roomName,
-            exp: Math.floor(Date.now() / 1000) + 3600 * 4, // 4 hours
-          },
-        }),
+        body: JSON.stringify({ properties: tokenProperties }),
       });
       const tokenData = await tokenRes.json();
 
       return new Response(
-        JSON.stringify({ url: existingRoom.url, token: tokenData.token, room_name: roomName }),
+        JSON.stringify({ url: existingRoom.url, token: tokenData.token, room_name: roomName, is_moderator: isModerator }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -98,17 +131,12 @@ serve(async (req) => {
         Authorization: `Bearer ${DAILY_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        properties: {
-          room_name: roomName,
-          exp: Math.floor(Date.now() / 1000) + 3600 * 4,
-        },
-      }),
+      body: JSON.stringify({ properties: tokenProperties }),
     });
     const tokenData = await tokenRes.json();
 
     return new Response(
-      JSON.stringify({ url: room.url, token: tokenData.token, room_name: roomName }),
+      JSON.stringify({ url: room.url, token: tokenData.token, room_name: roomName, is_moderator: isModerator }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

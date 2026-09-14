@@ -843,6 +843,10 @@ export type Database = {
           id: string
           is_anonymous: boolean
           prayer_count: number
+          responded_at: string | null
+          responded_by: string | null
+          response_text: string | null
+          status: string
           title: string
           user_id: string | null
         }
@@ -854,6 +858,10 @@ export type Database = {
           id?: string
           is_anonymous?: boolean
           prayer_count?: number
+          responded_at?: string | null
+          responded_by?: string | null
+          response_text?: string | null
+          status?: string
           title: string
           user_id?: string | null
         }
@@ -865,6 +873,10 @@ export type Database = {
           id?: string
           is_anonymous?: boolean
           prayer_count?: number
+          responded_at?: string | null
+          responded_by?: string | null
+          response_text?: string | null
+          status?: string
           title?: string
           user_id?: string | null
         }
@@ -1370,6 +1382,7 @@ export type Database = {
           id: string
           is_approved: boolean
           location: string | null
+          prayer_request_id: string | null
           title: string
           user_id: string | null
           video_url: string | null
@@ -1381,6 +1394,7 @@ export type Database = {
           id?: string
           is_approved?: boolean
           location?: string | null
+          prayer_request_id?: string | null
           title: string
           user_id?: string | null
           video_url?: string | null
@@ -1392,11 +1406,20 @@ export type Database = {
           id?: string
           is_approved?: boolean
           location?: string | null
+          prayer_request_id?: string | null
           title?: string
           user_id?: string | null
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "testimonies_prayer_request_id_fkey"
+            columns: ["prayer_request_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -33,7 +33,7 @@ const PrayerGroups = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // Video call state
-  const [callInfo, setCallInfo] = useState<{ url: string; token: string; groupId: string } | null>(null);
+  const [callInfo, setCallInfo] = useState<{ url: string; token: string; groupId: string; groupName?: string; isModerator?: boolean } | null>(null);
   const [joiningCall, setJoiningCall] = useState<string | null>(null);
 
   const { data: groups, isLoading } = useQuery({
@@ -134,7 +134,7 @@ const PrayerGroups = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setCallInfo({ url: data.url, token: data.token, groupId: group.id });
+      setCallInfo({ url: data.url, token: data.token, groupId: group.id, groupName: group.name, isModerator: !!data.is_moderator });
     } catch (err: any) {
       toast.error(err.message || "Failed to start call");
     } finally {
@@ -151,6 +151,8 @@ const PrayerGroups = () => {
         userName={profile?.full_name || user?.user_metadata?.full_name || "Guest"}
         groupId={callInfo.groupId}
         userId={user?.id}
+        groupName={callInfo.groupName}
+        isModerator={callInfo.isModerator}
         onLeave={() => setCallInfo(null)}
       />
     );
