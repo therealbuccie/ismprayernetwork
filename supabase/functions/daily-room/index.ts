@@ -1,4 +1,35 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+
+// Decides, server-side, whether the caller may moderate this group's prayer call.
+// Moderator = the group's creator, or a platform admin/super-admin.
+async function resolveModerator(req: Request, groupSlug: string): Promise<boolean> {
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return false;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+
+    const jwt = authHeader.replace("Bearer ", "");
+    const { data: userData } = await admin.auth.getUser(jwt);
+    const userId = userData?.user?.id;
+    if (!userId) return false;
+
+    const { data: isAdmin } = await admin.rpc("is_admin", { user_uuid: userId });
+    if (isAdmin === true) return true;
+
+    const { data: group } = await admin
+      .from("prayer_groups")
+      .select("created_by")
+      .eq("slug", groupSlug)
+      .maybeSingle();
+
+    return group?.created_by === userId;
+  } catch (_err) {
+    return false;
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
