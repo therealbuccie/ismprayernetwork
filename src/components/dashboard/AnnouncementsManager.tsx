@@ -57,14 +57,21 @@ export function AnnouncementsManager() {
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["announcements-admin"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("announcements")
-        .select("*")
-        .order("published_at", { ascending: false });
-      if (error) throw error;
-      return data as Announcement[];
-    },
+    queryFn: async () =>
+      withAuthFallback<Announcement[]>(
+        async () => {
+          const { data, error } = await supabase
+            .from("announcements")
+            .select("*")
+            .order("published_at", { ascending: false });
+          if (error) throw error;
+          return data as Announcement[];
+        },
+        async () =>
+          (await adminQuery("announcements", "*", undefined, [
+            { column: "published_at", ascending: false },
+          ])) as Announcement[],
+      ),
   });
 
   const invalidate = () => {
