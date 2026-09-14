@@ -341,6 +341,68 @@ const PrayerRequests = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Coordinator response */}
+      <Dialog open={!!respondTarget} onOpenChange={(o) => !o && setRespondTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Respond to Prayer Request</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">{respondTarget?.title}</p>
+            <div>
+              <Label>Status</Label>
+              <Select value={responseStatus} onValueChange={setResponseStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="submitted">Submitted</SelectItem>
+                  <SelectItem value="praying">Praying</SelectItem>
+                  <SelectItem value="answered">Answered</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Response (one short word of encouragement)</Label>
+              <Textarea rows={3} value={responseText} onChange={e => setResponseText(e.target.value)} placeholder="We are standing with you in prayer..." />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setRespondTarget(null)}>Cancel</Button>
+              <Button onClick={saveResponse} disabled={savingResponse}>{savingResponse ? "Saving..." : "Save"}</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share testimony */}
+      <Dialog open={!!testimonyTarget} onOpenChange={(o) => !o && setTestimonyTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Your Testimony</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">In answer to: {testimonyTarget?.title}</p>
+            <div>
+              <Label>Title (optional)</Label>
+              <Input value={testimonyTitle} onChange={e => setTestimonyTitle(e.target.value)} />
+            </div>
+            <div>
+              <Label>Your testimony *</Label>
+              <Textarea rows={4} value={testimonyText} onChange={e => setTestimonyText(e.target.value)} placeholder="Share what God did..." />
+            </div>
+            <div>
+              <Label>Date</Label>
+              <Input type="date" value={testimonyDate} onChange={e => setTestimonyDate(e.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground">Your testimony is reviewed before it appears publicly.</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setTestimonyTarget(null)}>Cancel</Button>
+              <Button onClick={saveTestimony} disabled={savingTestimony} className="gap-2">
+                <Sparkles size={14} /> {savingTestimony ? "Sharing..." : "Share"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
