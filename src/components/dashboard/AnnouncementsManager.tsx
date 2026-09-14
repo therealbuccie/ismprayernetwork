@@ -90,11 +90,21 @@ export function AnnouncementsManager() {
         is_active: values.is_active,
       };
       if (values.id) {
-        const { error } = await supabase.from("announcements").update(payload).eq("id", values.id);
-        if (error) throw error;
+        await withAuthFallback(
+          async () => {
+            const { error } = await supabase.from("announcements").update(payload).eq("id", values.id!);
+            if (error) throw error;
+          },
+          async () => { await adminUpdate("announcements", { id: values.id, ...payload }); },
+        );
       } else {
-        const { error } = await supabase.from("announcements").insert(payload);
-        if (error) throw error;
+        await withAuthFallback(
+          async () => {
+            const { error } = await supabase.from("announcements").insert(payload);
+            if (error) throw error;
+          },
+          async () => { await adminInsert("announcements", payload); },
+        );
       }
     },
     onSuccess: () => {
