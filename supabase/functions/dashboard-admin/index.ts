@@ -13,7 +13,7 @@ const ALLOWED_TABLES = [
   "purchase_orders", "purchases", "site_settings", "combo_packs", "combo_pack_items",
   "campaigns", "contacts",
   "announcements", "prayer_reports", "prayer_points", "group_prayer_assignments",
-  "group_call_participations", "group_members",
+  "group_call_participations", "group_members", "prayer_weeks",
 ];
 
 Deno.serve(async (req) => {
