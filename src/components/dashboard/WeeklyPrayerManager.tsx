@@ -137,11 +137,15 @@ export function WeeklyPrayerManager() {
       await withAuthFallback(
         async () => {
           if (values.id) {
-            const { error } = await supabase.from("prayer_weeks").update(payload).eq("id", values.id);
+            const { data, error } = await supabase
+              .from("prayer_weeks").update(payload).eq("id", values.id).select("id");
             if (error) throw error;
+            if (!data || data.length === 0) throw new Error("row-level security: update blocked");
           } else {
-            const { error } = await supabase.from("prayer_weeks").insert(payload as any);
+            const { data, error } = await supabase
+              .from("prayer_weeks").insert(payload as any).select("id");
             if (error) throw error;
+            if (!data || data.length === 0) throw new Error("row-level security: insert blocked");
           }
         },
         async () => {
@@ -163,8 +167,10 @@ export function WeeklyPrayerManager() {
       const patch = { archived, is_active: archived ? false : true };
       await withAuthFallback(
         async () => {
-          const { error } = await supabase.from("prayer_weeks").update(patch).eq("id", id);
+          const { data, error } = await supabase
+            .from("prayer_weeks").update(patch).eq("id", id).select("id");
           if (error) throw error;
+          if (!data || data.length === 0) throw new Error("row-level security: update blocked");
         },
         async () => { await adminUpdate("prayer_weeks", { id, ...patch }); },
       );
@@ -177,8 +183,10 @@ export function WeeklyPrayerManager() {
     mutationFn: async (id: string) => {
       await withAuthFallback(
         async () => {
-          const { error } = await supabase.from("prayer_weeks").delete().eq("id", id);
+          const { data, error } = await supabase
+            .from("prayer_weeks").delete().eq("id", id).select("id");
           if (error) throw error;
+          if (!data || data.length === 0) throw new Error("row-level security: delete blocked");
         },
         async () => { await adminDelete("prayer_weeks", id); },
       );
@@ -186,6 +194,7 @@ export function WeeklyPrayerManager() {
     onSuccess: () => { invalidate(); toast.success("Deleted"); },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const openNew = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (w: PrayerWeek) => {
