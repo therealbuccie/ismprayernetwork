@@ -10,6 +10,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CalendarRange, Plus, Pencil, Trash2, Archive, ArchiveRestore, Music, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { getStoredPin, adminQuery, adminInsert, adminUpdate, adminDelete } from "@/hooks/useBookstoreAdmin";
+
+// Sessions can expire while the dashboard stays open, surfacing as JWT/RLS
+// errors. Refresh once, then fall back to the PIN-backed admin service.
+const isAuthIssue = (e: any) => {
+  const m = String(e?.message || e || "").toLowerCase();
+  return m.includes("jwt") || m.includes("token") || m.includes("row-level") ||
+    m.includes("row level") || m.includes("permission") || m.includes("401") || m.includes("403");
+};
+
+async function withAuthFallback<T>(direct: () => Promise<T>, viaAdmin: () => Promise<T>): Promise<T> {
+  try {
+    return await direct();
+  } catch (e) {
+    if (!isAuthIssue(e)) throw e;
+    try {
+      const { data } = await supabase.auth.refreshSession();
+      if (data?.session) return await direct();
+    } catch { /* fall through */ }
+    if (getStoredPin()) return await viaAdmin();
+    throw new Error("Your admin session expired. Please refresh the page and sign in again.");
+  }
+}
 
 export interface WeekPoint {
   label: string;
