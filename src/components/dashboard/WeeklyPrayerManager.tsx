@@ -10,6 +10,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CalendarRange, Plus, Pencil, Trash2, Archive, ArchiveRestore, Music, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { getStoredPin, adminQuery, adminInsert, adminUpdate, adminDelete } from "@/hooks/useBookstoreAdmin";
+
+// Sessions can expire while the dashboard stays open, surfacing as JWT/RLS
+// errors. Refresh once, then fall back to the PIN-backed admin service.
+const isAuthIssue = (e: any) => {
+  const m = String(e?.message || e || "").toLowerCase();
+  return m.includes("jwt") || m.includes("token") || m.includes("row-level") ||
+    m.includes("row level") || m.includes("permission") || m.includes("401") || m.includes("403");
+};
+
+async function withAuthFallback<T>(direct: () => Promise<T>, viaAdmin: () => Promise<T>): Promise<T> {
+  try {
+    return await direct();
+  } catch (e) {
+    if (!isAuthIssue(e)) throw e;
+    try {
+      const { data } = await supabase.auth.refreshSession();
+      if (data?.session) return await direct();
+    } catch { /* fall through */ }
+    if (getStoredPin()) return await viaAdmin();
+    throw new Error("Your admin session expired. Please refresh the page and sign in again.");
+  }
+}
 
 export interface WeekPoint {
   label: string;
@@ -70,14 +93,23 @@ export function WeeklyPrayerManager() {
 
   const { data: weeks = [], isLoading } = useQuery({
     queryKey: ["prayer-weeks-admin"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("prayer_weeks")
-        .select("*")
-        .order("week_start", { ascending: false });
-      if (error) throw error;
-      return (data as any[]).map(w => ({ ...w, points: (w.points || []) as WeekPoint[] })) as PrayerWeek[];
-    },
+    queryFn: async () =>
+      withAuthFallback<PrayerWeek[]>(
+        async () => {
+          const { data, error } = await supabase
+            .from("prayer_weeks")
+            .select("*")
+            .order("week_start", { ascending: false });
+          if (error) throw error;
+          return (data as any[]).map(w => ({ ...w, points: (w.points || []) as WeekPoint[] })) as PrayerWeek[];
+        },
+        async () => {
+          const rows = (await adminQuery("prayer_weeks", "*", undefined, [
+            { column: "week_start", ascending: false },
+          ])) as any[];
+          return (rows || []).map(w => ({ ...w, points: (w.points || []) as WeekPoint[] })) as PrayerWeek[];
+        },
+      ),
   });
 
   const invalidate = () => {
@@ -87,7 +119,7 @@ export function WeeklyPrayerManager() {
 
   const saveMutation = useMutation({
     mutationFn: async (values: typeof form & { id?: string }) => {
-      const payload = {
+      const payload: Record<string, any> = {
         week_start: values.week_start,
         title: values.title,
         intro: values.intro || null,
@@ -102,13 +134,21 @@ export function WeeklyPrayerManager() {
         song_lyrics: values.song_lyrics || null,
         is_active: values.is_active,
       };
-      if (values.id) {
-        const { error } = await supabase.from("prayer_weeks").update(payload).eq("id", values.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("prayer_weeks").insert(payload);
-        if (error) throw error;
-      }
+      await withAuthFallback(
+        async () => {
+          if (values.id) {
+            const { error } = await supabase.from("prayer_weeks").update(payload).eq("id", values.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from("prayer_weeks").insert(payload as any);
+            if (error) throw error;
+          }
+        },
+        async () => {
+          if (values.id) await adminUpdate("prayer_weeks", { id: values.id, ...payload });
+          else await adminInsert("prayer_weeks", payload);
+        },
+      );
     },
     onSuccess: () => {
       invalidate();
@@ -120,11 +160,14 @@ export function WeeklyPrayerManager() {
 
   const archiveMutation = useMutation({
     mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
-      const { error } = await supabase
-        .from("prayer_weeks")
-        .update({ archived, is_active: archived ? false : true })
-        .eq("id", id);
-      if (error) throw error;
+      const patch = { archived, is_active: archived ? false : true };
+      await withAuthFallback(
+        async () => {
+          const { error } = await supabase.from("prayer_weeks").update(patch).eq("id", id);
+          if (error) throw error;
+        },
+        async () => { await adminUpdate("prayer_weeks", { id, ...patch }); },
+      );
     },
     onSuccess: () => { invalidate(); toast.success("Updated"); },
     onError: (e: any) => toast.error(e.message),
@@ -132,8 +175,13 @@ export function WeeklyPrayerManager() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("prayer_weeks").delete().eq("id", id);
-      if (error) throw error;
+      await withAuthFallback(
+        async () => {
+          const { error } = await supabase.from("prayer_weeks").delete().eq("id", id);
+          if (error) throw error;
+        },
+        async () => { await adminDelete("prayer_weeks", id); },
+      );
     },
     onSuccess: () => { invalidate(); toast.success("Deleted"); },
     onError: (e: any) => toast.error(e.message),
