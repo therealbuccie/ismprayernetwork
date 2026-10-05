@@ -117,7 +117,7 @@ export function WeeklyPrayerBulletin() {
             )}
             {p.body && (
               <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                {p.body.split(/\n+/).filter(Boolean)[0]}
+                {previewLine(p.body)}
               </p>
             )}
             <span className="mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-accent">
