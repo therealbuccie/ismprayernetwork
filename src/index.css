@@ -214,3 +214,31 @@
 body {
   top: 0 !important;
 }
+
+/* Prayer Point card — one shared abstract navy/gold background */
+.prayer-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 1.125rem;
+  border: 1px solid hsl(var(--accent) / 0.16);
+  background:
+    radial-gradient(120% 90% at 0% 0%, hsl(222 45% 12%) 0%, transparent 60%),
+    linear-gradient(160deg, hsl(224 40% 8%) 0%, hsl(226 45% 5%) 100%);
+  box-shadow: 0 1px 0 hsl(0 0% 100% / 0.03) inset, 0 12px 30px -18px hsl(226 60% 2% / 0.9);
+  transition: border-color .25s ease, transform .25s ease;
+}
+.prayer-card::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 100% 85%, hsl(var(--accent) / 0.16), transparent 70%),
+    radial-gradient(140% 60% at 115% 120%, transparent 52%, hsl(var(--accent) / 0.55) 53.2%, hsl(var(--accent) / 0.12) 55%, transparent 58%),
+    radial-gradient(150% 70% at 125% 130%, transparent 56%, hsl(var(--accent) / 0.22) 57%, transparent 59.5%);
+}
+.prayer-card::after {
+  content: "";
+  position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .06; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.prayer-card:hover { border-color: hsl(var(--accent) / 0.38); transform: translateY(-2px); }
