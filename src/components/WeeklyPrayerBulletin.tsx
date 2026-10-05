@@ -80,11 +80,18 @@ export function WeeklyPrayerBulletin() {
 
   return (
     <section className="mb-10">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-5">
-        <h2 className="text-2xl md:text-3xl font-serif font-bold">{week.title}</h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Week of {new Date(week.week_start + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-5">
+        <p className="text-[11px] uppercase tracking-[0.2em] text-foreground/60">
+          <span className="text-accent font-semibold">This Week</span>
+          <span className="mx-2">•</span>
+          {(() => {
+            const s0 = new Date(week.week_start + "T00:00:00");
+            const e0 = new Date(s0); e0.setDate(s0.getDate() + 6);
+            const f = (d: Date, y = false) => d.toLocaleDateString(undefined, { month: "short", day: "numeric", ...(y ? { year: "numeric" } : {}) });
+            return `${f(s0)} — ${f(e0, true)}`;
+          })()}
         </p>
+        <h2 className="text-sm md:text-base font-serif text-foreground/80 mt-1.5 max-w-2xl mx-auto">{week.title}</h2>
       </motion.div>
 
       {week.intro && (
