@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Music, Sparkles, ListChecks, ExternalLink, ArrowRight, X } from "lucide-react";
+import { Music, Sparkles, ListChecks, ExternalLink, ArrowRight } from "lucide-react";
 import { useState } from "react";
 
 interface WeekPoint {
