@@ -53,7 +53,7 @@ const PrayerSchedule = ({ onStartPraying }: PrayerScheduleProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("prayer_slots")
-        .select("*")
+        .select("id, user_id, user_name, slot_date, slot_time, status, reminder_sent, created_at")
         .eq("slot_date", dateStr)
         .eq("status", "booked");
       if (error) throw error;
@@ -66,7 +66,7 @@ const PrayerSchedule = ({ onStartPraying }: PrayerScheduleProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("prayer_slots")
-        .select("*")
+        .select("id, user_id, user_name, slot_date, slot_time, status, reminder_sent, created_at")
         .eq("user_id", user!.id)
         .eq("status", "booked")
         .gte("slot_date", format(new Date(), "yyyy-MM-dd"))
