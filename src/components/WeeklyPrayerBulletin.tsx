@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Music, Sparkles, ListChecks, ExternalLink, ArrowRight } from "lucide-react";
+import { Music, Sparkles, ListChecks, ExternalLink, ChevronRight, BookOpen, HandHeart } from "lucide-react";
 import { useState } from "react";
 
 interface WeekPoint {
@@ -93,8 +93,8 @@ export function WeeklyPrayerBulletin() {
         </div>
       )}
 
-      {/* Compact 2-column prayer point cards */}
-      <div className="grid gap-3 sm:grid-cols-2 mb-5">
+      {/* Prayer point cards — one shared navy/gold design */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
         {points.map((p, i) => (
           <motion.button
             type="button"
@@ -103,25 +103,32 @@ export function WeeklyPrayerBulletin() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
             onClick={() => setActive(p)}
-            className="glass-card rounded-xl border border-border/40 p-4 text-left flex flex-col gap-1.5 hover:border-accent/40 transition-colors cursor-pointer"
+            className="prayer-card p-5 text-left flex flex-col gap-2 min-h-[260px] cursor-pointer"
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-accent font-semibold truncate">
-                {p.label || `Prayer Point ${i + 1}`}
+            <div className="flex items-center gap-3">
+              <span className="rounded-md bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground tabular-nums">
+                {String(i + 1).padStart(2, "0")}
               </span>
-              {p.time && <span className="text-[10px] text-muted-foreground shrink-0">{p.time}</span>}
+              {p.time && <span className="text-xs text-foreground/70 truncate">{p.time}</span>}
             </div>
-            {p.focus && <h3 className="font-serif font-bold text-sm leading-snug">{p.focus}</h3>}
+            <h3 className="font-serif font-bold text-xl leading-tight text-foreground pr-6 mt-1">
+              {p.focus || p.label || `Prayer Point ${i + 1}`}
+            </h3>
             {p.scripture && (
-              <p className="text-[11px] italic text-accent/80">{scriptureRef(p.scripture)}</p>
+              <p className="flex items-center gap-1.5 text-sm font-medium text-accent">
+                <BookOpen size={14} className="shrink-0" /> <span className="truncate">{scriptureRef(p.scripture)}</span>
+              </p>
             )}
             {p.body && (
-              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+              <p className="text-sm text-foreground/70 leading-relaxed line-clamp-3 pr-8">
                 {previewLine(p.body)}
               </p>
             )}
-            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-accent">
-              View &amp; Pray <ArrowRight size={12} />
+            <span className="mt-auto pt-3">
+              <span className="flex items-center justify-between rounded-xl border border-accent/60 bg-background/40 px-4 py-2.5 text-sm font-semibold text-accent backdrop-blur-sm">
+                <span className="inline-flex items-center gap-2"><HandHeart size={16} /> View &amp; Pray</span>
+                <span className="grid h-6 w-6 place-items-center rounded-full border border-accent/60"><ChevronRight size={14} /></span>
+              </span>
             </span>
           </motion.button>
         ))}
