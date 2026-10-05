@@ -59,25 +59,20 @@ const PrayerPoints = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <div className="pt-16">
-        <div className="hero-gradient py-10 px-4">
+        <div className="prayer-hero py-6 md:py-8 px-4">
           <div className="container mx-auto text-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <BookOpen size={48} className="mx-auto text-accent mb-4" />
-              <h1 className="text-3xl md:text-4xl font-serif font-bold text-primary-foreground mb-2">
-                Prayer <span className="gold-gradient">Points</span>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <BookOpen size={26} className="mx-auto text-accent mb-2" />
+              <h1 className="text-3xl md:text-4xl font-serif font-bold leading-tight">
+                <span className="text-foreground">Prayer</span> <span className="text-accent">Points</span>
               </h1>
-              <p className="text-primary-foreground/70 max-w-xl mx-auto">
-                Structured and guided prayer sessions for ministers around the world.
-              </p>
-              <p className="text-primary-foreground/50 text-sm mt-2 flex items-center justify-center gap-1.5">
-                <Calendar size={14} /> {today}
-              </p>
+              <p className="text-sm text-foreground/60 mt-1.5">United in prayer. One purpose. One voice.</p>
             </motion.div>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 container mx-auto px-4 py-10 max-w-6xl">
+      <div className="flex-1 container mx-auto px-4 pt-6 pb-10 max-w-6xl">
         <WeeklyPrayerBulletin />
         <div className="max-w-3xl mx-auto">
         {isLoading ? (
