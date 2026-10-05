@@ -40,9 +40,17 @@ const Paragraphs = ({ text, className = "" }: { text: string; className?: string
 
 /** Pull just the reference (e.g. "1 Timothy 2:1–2") out of a full scripture text. */
 const scriptureRef = (s: string) => {
-  const m = s.match(/^((?:\d[\s.])?[A-Za-z\u00C0-\u024F .']+?)\s+\d+(?::\d+(?:\s*[-–—]\s*\d+)?)?/);
-  if (m) return m[0].trim();
+  const m = s.match(
+    /((?:\d[\s.])?[A-Za-z\u00C0-\u024F .']+?)\s+\d+(?:\s*[-–—]\s*\d+)?(?::\d+(?:\s*[-–—]\s*\d+)?)?(\s*\((?:KJV|NKJV|NIV|NLT|AMP|ESV|MSG|CEV)\))?/
+  );
+  if (m) return m[0].trim().replace(/[:;,.]+$/, "");
   return s.split(/[—–-]/)[0].trim().slice(0, 60);
+};
+
+/** First meaningful line for the card preview (skips stray numbering lines). */
+const previewLine = (s: string) => {
+  const lines = s.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  return lines.find(l => l.length > 12) || lines[0] || "";
 };
 
 export function WeeklyPrayerBulletin() {
