@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isPublicDashboard, adminQuery, adminUpdate, adminInsert } from "@/hooks/useBookstoreAdmin";
@@ -20,6 +20,20 @@ export function OrdersManager() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [viewOrder, setViewOrder] = useState<PurchaseOrder | null>(null);
+  const [popUrl, setPopUrl] = useState<string | null>(null);
+
+  // Payment proofs are private: open them through a short-lived signed link
+  useEffect(() => {
+    setPopUrl(null);
+    const raw = viewOrder?.pop_image_url;
+    if (!raw) return;
+    const marker = "/pop-uploads/";
+    const idx = raw.indexOf(marker);
+    const path = idx >= 0 ? decodeURIComponent(raw.slice(idx + marker.length).split("?")[0]) : raw;
+    supabase.storage.from("pop-uploads").createSignedUrl(path, 600).then(({ data }) => {
+      setPopUrl(data?.signedUrl ?? raw);
+    });
+  }, [viewOrder]);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["all-orders"],
@@ -135,8 +149,8 @@ export function OrdersManager() {
               {viewOrder.pop_image_url && (
                 <div>
                   <p className="text-sm font-semibold mb-2 flex items-center gap-1"><Image size={14} /> Proof of Payment</p>
-                  <a href={viewOrder.pop_image_url} target="_blank" rel="noopener noreferrer">
-                    <img src={viewOrder.pop_image_url} alt="POP" className="max-h-60 rounded-lg border border-border object-contain" />
+                  <a href={popUrl ?? "#"} target="_blank" rel="noopener noreferrer">
+                    <img src={popUrl ?? undefined} alt="POP" className="max-h-60 rounded-lg border border-border object-contain" />
                   </a>
                 </div>
               )}
