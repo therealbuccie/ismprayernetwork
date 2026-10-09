@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EmailAPIError, sendLovableEmail } from "npm:@lovable.dev/email-js@0.3.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -198,24 +199,6 @@ serve(async (req) => {
             .replace(/[ \t]+/g, " ")
             .trim();
 
-          const { data: existingToken, error: tokenReadError } = await supabase
-            .from("email_unsubscribe_tokens")
-            .select("token")
-            .eq("email", email)
-            .is("used_at", null)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (tokenReadError) throw tokenReadError;
-
-          const unsubscribeToken = existingToken?.token || crypto.randomUUID();
-          if (!existingToken?.token) {
-            const { error: tokenInsertError } = await supabase
-              .from("email_unsubscribe_tokens")
-              .insert({ email, token: unsubscribeToken });
-            if (tokenInsertError) throw tokenInsertError;
-          }
-
           // Per-recipient tracking: pixel + click-through links
           let personalizedHtml = html_body;
           if (dispatchId && program) {
@@ -248,45 +231,62 @@ serve(async (req) => {
             }
           }
 
-          const payload = {
+          const request = {
             to: email,
             from: `${fromName} <${fromEmail}>`,
             sender_domain: senderDomain,
             subject,
             html: personalizedHtml,
             text: textBody || subject,
-            purpose: "transactional",
+            purpose: "transactional" as const,
             label: "mail-dispatch",
-            unsubscribe_token: unsubscribeToken,
-            message_id: messageId,
             idempotency_key: messageId,
-            queued_at: new Date().toISOString(),
           };
 
-          const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-            queue_name: "transactional_emails",
-            payload,
-          });
-          if (enqueueError) throw enqueueError;
+          let suppressedRecipient = false;
+          for (let attempt = 0; ; attempt++) {
+            try {
+              await sendLovableEmail(request, {
+                apiKey: LOVABLE_API_KEY,
+                sendUrl: Deno.env.get("LOVABLE_SEND_URL"),
+              });
+              break;
+            } catch (sendErr) {
+              if (sendErr instanceof EmailAPIError && sendErr.code === "recipient_suppressed") {
+                suppressedRecipient = true;
+                break;
+              }
+              if (sendErr instanceof EmailAPIError && sendErr.status === 429 && attempt < 3) {
+                await new Promise((r) => setTimeout(r, (sendErr.retryAfterSeconds ?? 5) * 1000));
+                continue;
+              }
+              throw sendErr;
+            }
+          }
 
+          const status = suppressedRecipient ? "suppressed" : "sent";
           const { error: logError } = await supabase.from("email_send_log").insert({
             message_id: messageId,
             template_name: "mail-dispatch",
             recipient_email: email,
-            status: "pending",
-            metadata: {
-              subject,
-              sender_name: fromName,
-            },
+            status,
+            metadata: { subject, sender_name: fromName },
           });
-          if (logError) {
-            console.error("Failed to write pending email log:", logError);
-          }
+          if (logError) console.error("Failed to write email log:", logError.code, logError.message);
 
-          results.push({ email, status: "queued", message_id: messageId });
+          results.push({ email, status: suppressedRecipient ? "suppressed" : "queued", message_id: messageId });
         } catch (err: any) {
-          console.error("Failed to queue email:", email, err?.message || err);
-          results.push({ email, status: "failed", error: err?.message || String(err) });
+          console.error("Failed to send email:", err?.message || err);
+          const { error: logError } = await supabase.from("email_send_log").insert({
+            message_id: messageId,
+            template_name: "mail-dispatch",
+            recipient_email: email,
+            status: "failed",
+            error_message: String(err?.message || err).slice(0, 1000),
+            metadata: { subject, sender_name: fromName },
+          });
+          if (logError) console.error("Failed to write email log:", logError.code, logError.message);
+          results.push({ email, status: "failed", error: err?.message || String(err), message_id: messageId });
         }
       }
 
