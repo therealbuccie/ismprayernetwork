@@ -190,16 +190,12 @@ export function MailDispatchManager() {
     setPollingActive(false);
     try {
       const htmlBody = `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff;">
-          <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #d4a843;">
-            <h2 style="color: #1a1a1a; margin: 0; font-size: 20px;">${senderName}</h2>
-          </div>
-          <div style="color: #333333; line-height: 1.7; font-size: 15px;">
+        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px 16px; background: #ffffff; color: #202124;">
+          <p style="margin: 0 0 20px; font-size: 15px; font-weight: 600;">${senderName}</p>
+          <div style="line-height: 1.65; font-size: 15px;">
             ${body}
           </div>
-          <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e5e5; text-align: center;">
-            <p style="color: #999; font-size: 12px; margin: 0;">Sent from ISM Prayer Network</p>
-          </div>
+          <p style="margin: 28px 0 0; color: #5f6368; font-size: 12px;">ISM Prayer Network</p>
         </div>
       `;
 
@@ -674,6 +670,9 @@ export function MailDispatchManager() {
           <p className="text-sm text-muted-foreground">
             <strong className="text-foreground">Sending limits:</strong> Max <strong>500 recipients</strong> per dispatch.
             Delivery results update automatically. Large batches may take a few minutes to fully process.
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Gmail decides whether a message appears in Primary, Promotions, Social, or Spam. New dispatches use a simpler letter-style format to reduce promotional signals, but no sender can force a specific Gmail tab.
           </p>
         </CardContent>
       </Card>
