@@ -19,6 +19,9 @@ interface ContactRow {
   group_name: string | null;
 }
 
+const contactName = (contact: ContactRow) =>
+  [contact.first_name, contact.last_name].filter(Boolean).join(" ").trim();
+
 const SOURCE_LABELS: Record<string, string> = {
   bulk_upload: "Uploaded Database",
   platform_signup: "Platform Sign-ups",
@@ -140,6 +143,50 @@ export function DispatchContactCategories({
     );
   };
 
+  const filteredRecords = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return contacts;
+    return contacts.filter((contact) =>
+      [contactName(contact), contact.email, contact.country, contact.group_name]
+        .some((value) => (value || "").toLowerCase().includes(term))
+    );
+  }, [contacts, search]);
+
+  const renderRecords = () => {
+    if (!filteredRecords.length) {
+      return <p className="text-sm text-muted-foreground py-3">No database records match.</p>;
+    }
+    return (
+      <div className="max-h-[320px] overflow-y-auto space-y-1.5 pr-1">
+        {filteredRecords.map((contact, index) => {
+          const email = (contact.email || "").toLowerCase().trim();
+          if (!email.includes("@")) return null;
+          const added = selectedEmails.includes(email);
+          const name = contactName(contact);
+          return (
+            <div key={`${email}-${index}`} className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{name || email}</p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {name ? email : [contact.country, contact.group_name].filter(Boolean).join(" · ")}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 shrink-0 text-xs"
+                disabled={added}
+                onClick={() => add(name || email, [email])}
+              >
+                <Plus size={12} className="mr-1" /> {added ? "Added" : "Add"}
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -183,17 +230,19 @@ export function DispatchContactCategories({
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search categories..."
+                placeholder="Search names, emails, countries..."
                 className="pl-8 h-9 text-sm"
               />
             </div>
 
-            <Tabs defaultValue="source">
-              <TabsList className="grid grid-cols-3 w-full h-8">
+            <Tabs defaultValue="records">
+              <TabsList className="grid grid-cols-4 w-full h-8">
+                <TabsTrigger value="records" className="text-xs">Records</TabsTrigger>
                 <TabsTrigger value="source" className="text-xs">Source</TabsTrigger>
                 <TabsTrigger value="country" className="text-xs">Country</TabsTrigger>
                 <TabsTrigger value="letter" className="text-xs">A–Z</TabsTrigger>
               </TabsList>
+              <TabsContent value="records" className="mt-3">{renderRecords()}</TabsContent>
               <TabsContent value="source" className="mt-3">{renderGroups(bySource)}</TabsContent>
               <TabsContent value="country" className="mt-3">{renderGroups(byCountry)}</TabsContent>
               <TabsContent value="letter" className="mt-3">{renderGroups(byLetter)}</TabsContent>

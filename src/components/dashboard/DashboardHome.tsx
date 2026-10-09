@@ -31,6 +31,21 @@ interface DashboardHomeProps {
 export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
   const isPublic = isPublicDashboard();
 
+  const { data: liveDatabaseCount } = useQuery({
+    queryKey: ["dashboard-database-count", isPublic],
+    queryFn: async () => {
+      if (isPublic) {
+        const meta = await dashboardAdminCall("database_contacts_meta") as { total?: number };
+        return meta.total ?? 0;
+      }
+      const { count, error } = await supabase.from("contacts").select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
+
   const { data: participationCount = 0 } = useQuery({
     queryKey: ["dashboard-program-participation"],
     queryFn: async () => {
@@ -147,7 +162,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
 
   const statCards = [
     { label: "Total Users", value: stats.counts.users, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", tab: "users" },
-    { label: "Database Records", value: (stats.counts.contacts ?? 0).toLocaleString(), icon: Database, color: "text-indigo-500", bg: "bg-indigo-500/10", tab: "database" },
+    { label: "Database Records", value: (liveDatabaseCount ?? stats.counts.contacts ?? 0).toLocaleString(), icon: Database, color: "text-indigo-500", bg: "bg-indigo-500/10", tab: "database" },
     { label: "Total Books", value: stats.counts.books, icon: BookOpen, color: "text-accent", bg: "bg-accent/10", tab: "books" },
     { label: "Revenue", value: `$${stats.orders.totalRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", tab: "bookstore-analytics" },
     { label: "Orders", value: stats.orders.total, icon: ShoppingBag, color: "text-violet-500", bg: "bg-violet-500/10", tab: "orders" },
