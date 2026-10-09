@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { COUNTRIES } from "@/lib/countries";
 import { citiesForCountry, OTHER_CITY } from "@/lib/cities";
+import { dashboardAdminCall, isPublicDashboard } from "@/hooks/useBookstoreAdmin";
 
 
 
@@ -178,6 +179,7 @@ function EditableCell({
 
 export function DatabaseManager() {
   const { profile: currentProfile } = useAuth();
+  const isPublic = isPublicDashboard();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -202,6 +204,17 @@ export function DatabaseManager() {
   const { data: contactData, isLoading, isFetching } = useQuery({
     queryKey: ["db-contacts", search, page, countryFilter, sortBy],
     queryFn: async () => {
+      if (isPublic) {
+        const [sortColumn, sortDirection] = sortBy.split(".");
+        return dashboardAdminCall("database_contacts", {
+          page,
+          page_size: PAGE_SIZE,
+          search,
+          country: countryFilter,
+          sort_column: sortColumn,
+          sort_direction: sortDirection,
+        }) as Promise<{ rows: Contact[]; count: number }>;
+      }
       let q = supabase.from("contacts").select("*", { count: "exact" });
       const term = search.trim().replace(/[%,()]/g, "");
       if (term) q = q.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,country.ilike.%${term}%`);
@@ -220,6 +233,14 @@ export function DatabaseManager() {
   const { data: meta } = useQuery({
     queryKey: ["db-contacts-meta"],
     queryFn: async () => {
+      if (isPublic) {
+        return dashboardAdminCall("database_contacts_meta") as Promise<{
+          total: number;
+          countries: number;
+          countryList: [string, number][];
+          unknown: number;
+        }>;
+      }
       const { count } = await supabase.from("contacts").select("*", { count: "exact", head: true });
       const tally = new Map<string, number>();
       let unknown = 0;
@@ -243,6 +264,13 @@ export function DatabaseManager() {
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
+      if (isPublic) {
+        const data = await dashboardAdminCall("select", {
+          table: "profiles",
+          order: [{ column: "created_at", ascending: false }],
+        });
+        return data as Profile[];
+      }
       const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data as Profile[];
