@@ -70,16 +70,34 @@ serve(async (req) => {
         });
       }
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      let statusQuery = supabase
+      let trackedMessageIds = message_ids as string[] | undefined;
+      if (action === "get_recent_dispatch_status") {
+        const { data: dispatchRows, error: dispatchError } = await supabase
+          .from("email_send_log")
+          .select("message_id")
+          .eq("template_name", "mail-dispatch")
+          .not("message_id", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1000);
+        if (dispatchError) throw dispatchError;
+        trackedMessageIds = Array.from(new Set((dispatchRows || []).map((row) => row.message_id).filter(Boolean)));
+      }
+
+      if (!trackedMessageIds?.length) {
+        return new Response(JSON.stringify({
+          sent: 0, failed: 0, pending: 0, suppressed: 0, total: 0, results: [],
+          updated_at: new Date().toISOString(),
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Include later webhook outcomes, which retain the original message ID
+      // but may use a system template label.
+      const { data, error } = await supabase
         .from("email_send_log")
         .select("message_id, recipient_email, status, error_message, created_at")
-        .eq("template_name", "mail-dispatch")
+        .in("message_id", trackedMessageIds)
         .order("created_at", { ascending: false })
-        .limit(1000);
-      if (action === "get_dispatch_status") {
-        statusQuery = statusQuery.in("message_id", message_ids);
-      }
-      const { data, error } = await statusQuery;
+        .limit(2000);
       if (error) throw error;
 
       // Deduplicate: latest status per message_id
@@ -91,7 +109,7 @@ serve(async (req) => {
       }
       const results = Array.from(latest.values());
       const sent = results.filter(r => ["sent", "delivered"].includes(r.status)).length;
-      const failed = results.filter(r => ["dlq", "failed"].includes(r.status)).length;
+      const failed = results.filter(r => ["dlq", "failed", "bounced", "complained", "rejected"].includes(r.status)).length;
       const pending = results.filter(r => ["pending", "queued", "processing"].includes(r.status)).length;
       const suppressed = results.filter(r => r.status === "suppressed").length;
 
