@@ -48,6 +48,56 @@ Deno.serve(async (req) => {
     let result;
 
     switch (action) {
+      case "database_contacts": {
+        const requestedPage = Math.max(0, Number(body.page) || 0);
+        const pageSize = Math.min(100, Math.max(1, Number(body.page_size) || 50));
+        const search = String(body.search || "").trim().replace(/[%,()]/g, "");
+        const country = String(body.country || "all");
+        const allowedSortColumns = new Set(["created_at", "first_name", "last_name", "email", "country"]);
+        const sortColumn = allowedSortColumns.has(body.sort_column) ? body.sort_column : "created_at";
+        const ascending = body.sort_direction === "asc";
+
+        let query = supabase.from("contacts").select("*", { count: "exact" });
+        if (search) {
+          query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,country.ilike.%${search}%`);
+        }
+        if (country === "none") query = query.is("country", null);
+        else if (country !== "all") query = query.ilike("country", country);
+
+        const from = requestedPage * pageSize;
+        const { data: rows, count, error } = await query
+          .order(sortColumn, { ascending, nullsFirst: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        result = { rows: rows || [], count: count || 0 };
+        break;
+      }
+
+      case "database_contacts_meta": {
+        const { count, error: countError } = await supabase.from("contacts").select("*", { count: "exact", head: true });
+        if (countError) throw countError;
+        const tally = new Map<string, number>();
+        let unknown = 0;
+        for (let from = 0; ; from += 1000) {
+          const { data: rows, error } = await supabase.from("contacts").select("country").range(from, from + 999);
+          if (error) throw error;
+          for (const row of rows || []) {
+            const raw = String(row.country || "").trim();
+            if (!raw) { unknown++; continue; }
+            const key = raw.replace(/\b\w/g, (character: string) => character.toUpperCase());
+            tally.set(key, (tally.get(key) || 0) + 1);
+          }
+          if (!rows || rows.length < 1000) break;
+        }
+        result = {
+          total: count || 0,
+          countries: tally.size,
+          countryList: [...tally.entries()].sort((a, b) => b[1] - a[1]),
+          unknown,
+        };
+        break;
+      }
+
       case "select": {
         let query = supabase.from(table).select(select || "*");
         if (filters) {
