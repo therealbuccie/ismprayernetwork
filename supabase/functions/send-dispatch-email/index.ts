@@ -49,14 +49,19 @@ serve(async (req) => {
 
     if (action === "get_contacts") {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("email, first_name, last_name, country, source, group_name")
-        .not("email", "is", null)
-        .order("created_at", { ascending: false })
-        .range(0, 19999);
-      if (error) throw error;
-      return new Response(JSON.stringify({ contacts: data }), {
+      const contacts: any[] = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase
+          .from("contacts")
+          .select("email, first_name, last_name, country, source, group_name")
+          .not("email", "is", null)
+          .order("created_at", { ascending: false })
+          .range(from, from + 999);
+        if (error) throw error;
+        contacts.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      return new Response(JSON.stringify({ contacts }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
