@@ -78,7 +78,7 @@ serve(async (req) => {
           .eq("template_name", "mail-dispatch")
           .not("message_id", "is", null)
           .order("created_at", { ascending: false })
-          .limit(1000);
+          .limit(500);
         if (dispatchError) throw dispatchError;
         trackedMessageIds = Array.from(new Set((dispatchRows || []).map((row) => row.message_id).filter(Boolean)));
       }
@@ -92,17 +92,21 @@ serve(async (req) => {
 
       // Include later webhook outcomes, which retain the original message ID
       // but may use a system template label.
-      const { data, error } = await supabase
-        .from("email_send_log")
-        .select("message_id, recipient_email, status, error_message, created_at")
-        .in("message_id", trackedMessageIds)
-        .order("created_at", { ascending: false })
-        .limit(2000);
-      if (error) throw error;
+      const data: any[] = [];
+      for (let start = 0; start < trackedMessageIds.length; start += 100) {
+        const { data: rows, error } = await supabase
+          .from("email_send_log")
+          .select("message_id, recipient_email, status, error_message, created_at")
+          .in("message_id", trackedMessageIds.slice(start, start + 100))
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        data.push(...(rows || []));
+      }
+      data.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
 
       // Deduplicate: latest status per message_id
       const latest = new Map<string, any>();
-      for (const row of data || []) {
+      for (const row of data) {
         if (!latest.has(row.message_id)) {
           latest.set(row.message_id, row);
         }
