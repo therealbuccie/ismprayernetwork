@@ -19,7 +19,7 @@ const Unsubscribe = () => {
     const validate = async () => {
       if (!token) { setState("invalid"); return; }
       try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/handle-email-unsubscribe?token=${encodeURIComponent(token)}`;
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/email-unsubscribe-link?token=${encodeURIComponent(token)}`;
         const res = await fetch(url, { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { setState("invalid"); return; }
@@ -34,7 +34,7 @@ const Unsubscribe = () => {
 
   const confirm = async () => {
     setSubmitting(true);
-    const { error } = await supabase.functions.invoke("handle-email-unsubscribe", { body: { token } });
+    const { error } = await supabase.functions.invoke("email-unsubscribe-link", { body: { token } });
     setSubmitting(false);
     setState(error ? "error" : "done");
   };
