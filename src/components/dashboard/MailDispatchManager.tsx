@@ -31,6 +31,7 @@ interface DispatchResult {
   pending: number;
   suppressed: number;
   total: number;
+  updated_at?: string;
   results: { message_id: string; recipient_email: string; status: string; error_message?: string; created_at: string }[];
 }
 
@@ -65,6 +66,13 @@ export function MailDispatchManager() {
   const [pollingActive, setPollingActive] = useState(false);
   const [drilldownStatus, setDrilldownStatus] = useState<string | null>(null);
   const [programId, setProgramId] = useState<string>("auto");
+
+  const { data: recentStatus, refetch: refetchRecentStatus, isFetching: refreshingRecentStatus } = useQuery<DispatchResult>({
+    queryKey: ["recent-dispatch-status"],
+    queryFn: () => dispatchCall(getPin(), "get_recent_dispatch_status"),
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
 
   const { data: subscribers = [], isLoading: loadingSubs, refetch: refetchSubs } = useQuery({
     queryKey: ["dispatch-subscribers"],
@@ -210,18 +218,18 @@ export function MailDispatchManager() {
 
       setLastMessageIds(messageIds);
       setLastResult({
-        sent: 0, queued, failed: result.failed, pending: queued, suppressed: 0,
-        total: result.total, results: [],
+        sent: queued, queued: 0, failed: result.failed, pending: 0,
+        suppressed: result.results?.filter((r: any) => r.status === "suppressed").length ?? 0,
+        total: result.total, results: result.results || [], updated_at: new Date().toISOString(),
       });
 
-      if (messageIds.length > 0) {
-        setPollingActive(true);
-      }
+      if (messageIds.length > 0) setPollingActive(true);
+      refetchRecentStatus();
 
       if (result.failed === 0) {
-        toast.success(`✅ ${queued} email${queued !== 1 ? "s" : ""} queued successfully!`);
+        toast.success(`${queued} email${queued !== 1 ? "s" : ""} sent successfully`);
       } else {
-        toast.warning(`${queued} queued, ${result.failed} failed out of ${result.total}`);
+        toast.warning(`${queued} sent, ${result.failed} failed out of ${result.total}`);
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to send emails");
@@ -238,23 +246,20 @@ export function MailDispatchManager() {
         message_ids: lastMessageIds,
       });
       setLastResult(data as DispatchResult);
-      // Stop polling when no more pending
-      if (data.pending === 0) {
-        setPollingActive(false);
-      }
+      setPollingActive(false);
+      refetchRecentStatus();
     } catch (err) {
       console.error("Status check failed:", err);
     }
-  }, [lastMessageIds]);
+  }, [lastMessageIds, refetchRecentStatus]);
 
   useEffect(() => {
     if (!pollingActive || lastMessageIds.length === 0) return;
-    // Initial check after 5s, then every 8s
+    // Confirm the final managed-delivery result shortly after sending.
     const timeout = setTimeout(() => {
       checkStatus();
     }, 5000);
-    const interval = setInterval(checkStatus, 8000);
-    return () => { clearTimeout(timeout); clearInterval(interval); };
+    return () => clearTimeout(timeout);
   }, [pollingActive, checkStatus]);
 
   return (
@@ -267,6 +272,31 @@ export function MailDispatchManager() {
         Compose and send emails to subscribers or specific addresses from{" "}
         <span className="font-semibold text-foreground">info@notify.ismprayernetwork.org</span>
       </p>
+
+      <Card className="border-accent/30">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="font-semibold text-sm">Recent Delivery Activity</p>
+              <p className="text-xs text-muted-foreground">
+                {recentStatus?.updated_at
+                  ? `Updated ${new Date(recentStatus.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+                  : "Loading current delivery status…"}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetchRecentStatus()} disabled={refreshingRecentStatus}>
+              <RefreshCw size={14} className={refreshingRecentStatus ? "animate-spin mr-1" : "mr-1"} /> Refresh
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="rounded-md bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Sent</p><p className="text-xl font-bold text-foreground">{recentStatus?.sent ?? 0}</p></div>
+            <div className="rounded-md bg-muted/50 p-3"><p className="text-xs text-muted-foreground">In progress</p><p className="text-xl font-bold text-foreground">{recentStatus?.pending ?? 0}</p></div>
+            <div className="rounded-md bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Suppressed</p><p className="text-xl font-bold text-foreground">{recentStatus?.suppressed ?? 0}</p></div>
+            <div className="rounded-md bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Failed</p><p className="text-xl font-bold text-foreground">{recentStatus?.failed ?? 0}</p></div>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2">Latest {recentStatus?.total ?? 0} mail-dispatch records. Refreshes automatically every 15 seconds.</p>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Compose area */}
@@ -543,7 +573,7 @@ export function MailDispatchManager() {
                       className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
                     >
                       <span className="flex items-center gap-1.5 text-amber-600">
-                        <Clock size={14} /> Queued / Pending
+                        <Clock size={14} /> In progress
                       </span>
                       <span className="font-semibold">{lastResult.pending}</span>
                     </button>
@@ -627,7 +657,7 @@ export function MailDispatchManager() {
                     }
                     {drilldownStatus === "pending" && (
                       <p className="text-xs text-muted-foreground italic">
-                        Pending emails are being processed. They'll move to Sent or Failed shortly.
+                        Emails still in progress will move to Sent, Suppressed, or Failed when processing finishes.
                       </p>
                     )}
                   </div>
@@ -643,7 +673,7 @@ export function MailDispatchManager() {
         <CardContent className="pt-4 pb-4">
           <p className="text-sm text-muted-foreground">
             <strong className="text-foreground">Sending limits:</strong> Max <strong>500 recipients</strong> per dispatch.
-            Emails are queued and processed at ~120 emails/minute. Large batches may take a few minutes to fully deliver.
+            Delivery results update automatically. Large batches may take a few minutes to fully process.
           </p>
         </CardContent>
       </Card>
