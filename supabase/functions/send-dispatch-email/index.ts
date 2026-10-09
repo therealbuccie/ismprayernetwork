@@ -62,19 +62,24 @@ serve(async (req) => {
     }
 
 
-    if (action === "get_dispatch_status") {
+    if (action === "get_dispatch_status" || action === "get_recent_dispatch_status") {
       const { message_ids } = body;
-      if (!message_ids?.length) {
+      if (action === "get_dispatch_status" && !message_ids?.length) {
         return new Response(JSON.stringify({ error: "message_ids required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      const { data, error } = await supabase
+      let statusQuery = supabase
         .from("email_send_log")
         .select("message_id, recipient_email, status, error_message, created_at")
-        .in("message_id", message_ids)
-        .order("created_at", { ascending: false });
+        .eq("template_name", "mail-dispatch")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (action === "get_dispatch_status") {
+        statusQuery = statusQuery.in("message_id", message_ids);
+      }
+      const { data, error } = await statusQuery;
       if (error) throw error;
 
       // Deduplicate: latest status per message_id
@@ -85,13 +90,14 @@ serve(async (req) => {
         }
       }
       const results = Array.from(latest.values());
-      const sent = results.filter(r => r.status === "sent").length;
+      const sent = results.filter(r => ["sent", "delivered"].includes(r.status)).length;
       const failed = results.filter(r => ["dlq", "failed"].includes(r.status)).length;
-      const pending = results.filter(r => r.status === "pending").length;
+      const pending = results.filter(r => ["pending", "queued", "processing"].includes(r.status)).length;
       const suppressed = results.filter(r => r.status === "suppressed").length;
 
       return new Response(JSON.stringify({
         sent, failed, pending, suppressed, total: results.length, results,
+        updated_at: new Date().toISOString(),
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

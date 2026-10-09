@@ -30,6 +30,17 @@ export function RichEmailComposer({ value, onChange, senderName }: RichEmailComp
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
   const savedSelection = useRef<Range | null>(null);
+  const lastEmittedValue = useRef(value);
+
+  // The visual editor owns its DOM while typing. Replacing innerHTML on every
+  // keystroke resets the caret and makes text appear in reverse order.
+  useEffect(() => {
+    if (mode !== "visual" || !editorRef.current || value === lastEmittedValue.current) return;
+    if (editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value;
+    }
+    lastEmittedValue.current = value;
+  }, [mode, value]);
 
   // Sync code value when switching modes
   useEffect(() => {
@@ -46,7 +57,9 @@ export function RichEmailComposer({ value, onChange, senderName }: RichEmailComp
 
   const syncContent = useCallback(() => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      const nextValue = editorRef.current.innerHTML;
+      lastEmittedValue.current = nextValue;
+      onChange(nextValue);
     }
   }, [onChange]);
 
@@ -343,16 +356,17 @@ export function RichEmailComposer({ value, onChange, senderName }: RichEmailComp
         <div
           ref={editorRef}
           contentEditable
+          dir="ltr"
           suppressContentEditableWarning
           onInput={syncContent}
           onBlur={syncContent}
           className="border border-border border-t-0 rounded-b-lg p-4 min-h-[250px] max-h-[500px] overflow-y-auto focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground prose prose-sm max-w-none [&_img]:rounded-lg [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline"
-          style={{ lineHeight: 1.7, fontSize: "14px" }}
-          dangerouslySetInnerHTML={{ __html: value }}
+          style={{ lineHeight: 1.7, fontSize: "14px", textAlign: "left", unicodeBidi: "plaintext" }}
         />
       ) : (
         <Textarea
           value={codeValue}
+          dir="ltr"
           onChange={(e) => handleCodeChange(e.target.value)}
           className="border-t-0 rounded-t-none min-h-[250px] max-h-[500px] font-mono text-xs"
           placeholder="<h1>Hello!</h1>\n<p>Your HTML code here...</p>"
