@@ -17,6 +17,17 @@ import AuthGateModal from "@/components/AuthGateModal";
 import PrayerSchedule from "@/components/prayer-schedule/PrayerSchedule";
 import PrayerTimer from "@/components/prayer-schedule/PrayerTimer";
 
+/** Split a run-on prayer point body into readable sections at "PRAYER POINT n" markers and newlines. */
+const formatPrayerBody = (body: string) =>
+  body
+    // Markers with a time range ("PRAYER POINT 1 – 00:00AM TO 10:00 GMT+1") become their own heading line
+    .replace(/\s*(PRAYER POINT\s*\d+\s*[-–—:]\s*[\d:]+\s*[AP]M\s+TO\s+[\d:]+\s*[AP]M\s+GMT[+\-]?\d+)\s*/gi, "\n\n$1\n")
+    // Bare markers without a time range
+    .replace(/\s*(PRAYER POINT\s*\d+\s*[-–—:])/gi, "\n\n$1")
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
 const todaysDate = new Date().toLocaleDateString("en-US", {
   weekday: "long",
   year: "numeric",
@@ -524,13 +535,23 @@ const PrayerRoom = () => {
                   </p>
                   {todaysPrayerPoint ? (
                     <>
-                      <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
+                      <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug break-words">
                         {todaysPrayerPoint.title}
                       </h3>
-                      <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
+                      <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3 break-words">
                         {todaysPrayerPoint.scripture}
                       </p>
-                      <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                      <div className="text-sm text-foreground/80 leading-relaxed space-y-3 break-words max-h-[60vh] overflow-y-auto pr-1">
+                        {formatPrayerBody(todaysPrayerPoint.body).map((line, i) =>
+                          /^PRAYER POINT\s*\d+/i.test(line) ? (
+                            <p key={i} className="font-serif font-semibold text-accent text-xs uppercase tracking-wide pt-1">
+                              {line}
+                            </p>
+                          ) : (
+                            <p key={i}>{line}</p>
+                          )
+                        )}
+                      </div>
                     </>
                   ) : (
                     <p className="text-sm text-muted-foreground">No prayer point available.</p>
@@ -587,13 +608,23 @@ const PrayerRoom = () => {
                     </p>
                     {todaysPrayerPoint ? (
                       <>
-                        <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug">
+                        <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug break-words">
                           {todaysPrayerPoint.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3">
+                        <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3 break-words">
                           {todaysPrayerPoint.scripture}
                         </p>
-                        <p className="text-sm text-foreground/80 leading-relaxed">{todaysPrayerPoint.body}</p>
+                        <div className="text-sm text-foreground/80 leading-relaxed space-y-3 break-words max-h-[60vh] overflow-y-auto pr-1">
+                          {formatPrayerBody(todaysPrayerPoint.body).map((line, i) =>
+                            /^PRAYER POINT\s*\d+/i.test(line) ? (
+                              <p key={i} className="font-serif font-semibold text-accent text-xs uppercase tracking-wide pt-1">
+                                {line}
+                              </p>
+                            ) : (
+                              <p key={i}>{line}</p>
+                            )
+                          )}
+                        </div>
                       </>
                     ) : (
                       <p className="text-sm text-muted-foreground">No prayer point available.</p>
