@@ -72,6 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    // Clear any previous account's profile immediately so its role never carries over
+    setProfile(null);
+    setLoading(true);
     supabase
       .from("profiles")
       .select("*")
@@ -111,8 +114,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const isAdmin = profile?.role === "admin" || profile?.role === "super-admin";
-  const isSuperAdmin = profile?.role === "super-admin";
+  // Role only counts when the profile belongs to the account currently signed in
+  const ownProfile = profile && user && (profile as any).user_id === user.id ? profile : null;
+  const isAdmin = ownProfile?.role === "admin" || ownProfile?.role === "super-admin";
+  const isSuperAdmin = ownProfile?.role === "super-admin";
 
   return (
     <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, isAdmin, isSuperAdmin }}>
