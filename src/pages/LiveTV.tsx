@@ -33,19 +33,28 @@ import bannerLibrary from "@/assets/banner-digital-library.png";
 import brandingJoin from "@/assets/branding-join.png";
 import brandingHands from "@/assets/branding-prayer-hands.png";
 
+const DEFAULT_HLS = "https://netshiftstudiokit.online:5443/LiveApp/streams/mopc_main.m3u8";
+
 const LiveTV = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLive, setIsLive] = useState(false);
   const { data: hlsSetting, isLoading: hlsLoading } = useSiteSettings("hls_url");
 
-  const hlsUrl = (hlsSetting as string) || "";
+  const envHls = import.meta.env.VITE_LIVE_TV_HLS_URL;
+  const hlsUrl = (hlsSetting as string) || envHls || DEFAULT_HLS;
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !hlsUrl) return;
 
+    const onPlay = () => setIsLive(true);
+    video.addEventListener("play", onPlay);
+
+    let hlsInstance: Hls | null = null;
+
     if (Hls.isSupported()) {
       const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+      hlsInstance = hls;
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -53,9 +62,20 @@ const LiveTV = () => {
         video.play().catch(() => {});
       });
       hls.on(Hls.Events.ERROR, (_e, data) => {
-        if (data.fatal) setIsLive(false);
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hls.recoverMediaError();
+              break;
+            default:
+              setIsLive(false);
+              break;
+          }
+        }
       });
-      return () => hls.destroy();
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = hlsUrl;
       video.addEventListener("loadedmetadata", () => {
@@ -63,6 +83,11 @@ const LiveTV = () => {
         video.play().catch(() => {});
       });
     }
+
+    return () => {
+      video.removeEventListener("play", onPlay);
+      if (hlsInstance) hlsInstance.destroy();
+    };
   }, [hlsUrl]);
 
   const featured = [
@@ -150,12 +175,23 @@ const LiveTV = () => {
                     </div>
                   )}
                   {!isLive && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20">
+                    <div
+                      className="absolute inset-0 flex items-center justify-center bg-black/70 z-20 cursor-pointer"
+                      onClick={() => {
+                        videoRef.current?.play().catch(() => {});
+                        setIsLive(true);
+                      }}
+                    >
                       <div className="text-center px-6">
                         <Tv size={56} className="mx-auto mb-3 text-accent/50" />
                         <p className="text-foreground/80 font-medium">
                           {hlsLoading ? "Loading stream…" : hlsUrl ? "Connecting to live stream…" : "No stream configured"}
                         </p>
+                        {hlsUrl && (
+                          <span className="inline-block mt-3 px-3 py-1 text-xs rounded-full bg-accent/20 text-accent font-medium hover:bg-accent/30 transition">
+                            Tap to Play
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}

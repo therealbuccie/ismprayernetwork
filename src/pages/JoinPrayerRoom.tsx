@@ -30,7 +30,8 @@ const JoinPrayerRoom = () => {
   const queryClient = useQueryClient();
 
   const { data: hlsSetting } = useSiteSettings("hls_url");
-  const hlsUrl = (hlsSetting as string) || "";
+  const envHls = import.meta.env.VITE_LIVE_TV_HLS_URL;
+  const hlsUrl = (hlsSetting as string) || envHls || "https://netshiftstudiokit.online:5443/LiveApp/streams/mopc_main.m3u8";
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ["prayer-session", slug],

@@ -1,7 +1,18 @@
-ALTER FUNCTION public.move_to_dlq(text,text,bigint,jsonb) SET search_path = public, pgmq;
-ALTER FUNCTION public.read_email_batch(text,integer,integer) SET search_path = public, pgmq;
-ALTER FUNCTION public.enqueue_email(text,jsonb) SET search_path = public, pgmq;
-ALTER FUNCTION public.delete_email(text,bigint) SET search_path = public, pgmq;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'move_to_dlq') THEN
+    ALTER FUNCTION public.move_to_dlq(text,text,bigint,jsonb) SET search_path = public, pgmq;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'read_email_batch') THEN
+    ALTER FUNCTION public.read_email_batch(text,integer,integer) SET search_path = public, pgmq;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'enqueue_email') THEN
+    ALTER FUNCTION public.enqueue_email(text,jsonb) SET search_path = public, pgmq;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'delete_email') THEN
+    ALTER FUNCTION public.delete_email(text,bigint) SET search_path = public, pgmq;
+  END IF;
+END $$;
 
 DROP POLICY IF EXISTS "Authenticated users can submit prayer requests" ON public.prayer_requests;
 CREATE POLICY "Authenticated users can submit prayer requests" ON public.prayer_requests
