@@ -31,7 +31,7 @@ const JoinPrayerRoom = () => {
 
   const { data: hlsSetting } = useSiteSettings("hls_url");
   const envHls = import.meta.env.VITE_LIVE_TV_HLS_URL;
-  const hlsUrl = (hlsSetting as string) || envHls || "https://netshiftstudiokit.online:5443/LiveApp/streams/mopc_main.m3u8";
+  const hlsUrl = (hlsSetting as string) || envHls || "https://senkvvxlkvvkfrkpeopj.supabase.co/functions/v1/live-playlist/9bd66611-f2e5-4f59-9c35-c124c4463f26.m3u8";
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ["prayer-session", slug],
