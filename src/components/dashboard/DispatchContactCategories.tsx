@@ -46,12 +46,38 @@ export function DispatchContactCategories({
   const { data: contacts = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ["dispatch-contacts"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("send-dispatch-email", {
-        body: { pin: getPin(), action: "get_contacts" },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return (data.contacts || []) as ContactRow[];
+      try {
+        const { data, error } = await supabase.functions.invoke("send-dispatch-email", {
+          body: { pin: getPin(), action: "get_contacts" },
+        });
+        if (!error && !data?.error && data?.contacts?.length) {
+          return data.contacts as ContactRow[];
+        }
+      } catch (err) {
+        console.warn("Edge function get_contacts unavailable, falling back to direct database query", err);
+      }
+
+      // Direct database query fallback
+      const allContacts: ContactRow[] = [];
+      const PAGE_SIZE = 1000;
+      for (let from = 0; ; from += PAGE_SIZE) {
+        const { data, error } = await supabase
+          .from("contacts")
+          .select("email, first_name, last_name, country, source, group_name")
+          .not("email", "is", null)
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+
+        if (error) {
+          console.error("Direct contacts query error:", error);
+          break;
+        }
+        if (data && data.length > 0) {
+          allContacts.push(...data);
+        }
+        if (!data || data.length < PAGE_SIZE) break;
+      }
+      return allContacts;
     },
   });
 

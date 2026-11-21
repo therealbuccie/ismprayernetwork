@@ -69,7 +69,45 @@ export function MailDispatchManager() {
 
   const { data: recentStatus, refetch: refetchRecentStatus, isFetching: refreshingRecentStatus } = useQuery<DispatchResult>({
     queryKey: ["recent-dispatch-status"],
-    queryFn: () => dispatchCall(getPin(), "get_recent_dispatch_status"),
+    queryFn: async () => {
+      try {
+        const res = await dispatchCall(getPin(), "get_recent_dispatch_status");
+        if (res && typeof res.total === "number") return res as DispatchResult;
+      } catch (err) {
+        console.warn("Edge function get_recent_dispatch_status unavailable, falling back to direct database query", err);
+      }
+
+      // Direct database query fallback
+      try {
+        const { data: rows, error } = await supabase
+          .from("email_send_log")
+          .select("message_id, recipient_email, status, error_message, created_at")
+          .order("created_at", { ascending: false })
+          .limit(300);
+
+        if (error || !rows || rows.length === 0) {
+          return { sent: 0, queued: 0, failed: 0, pending: 0, suppressed: 0, total: 0, results: [], updated_at: new Date().toISOString() };
+        }
+
+        const sent = rows.filter((r) => ["sent", "delivered"].includes(r.status)).length;
+        const failed = rows.filter((r) => ["failed", "bounced", "complained", "rejected", "dlq"].includes(r.status)).length;
+        const pending = rows.filter((r) => ["pending", "queued", "processing"].includes(r.status)).length;
+        const suppressed = rows.filter((r) => r.status === "suppressed").length;
+
+        return {
+          sent,
+          queued: pending,
+          failed,
+          pending,
+          suppressed,
+          total: rows.length,
+          results: rows,
+          updated_at: new Date().toISOString(),
+        };
+      } catch {
+        return { sent: 0, queued: 0, failed: 0, pending: 0, suppressed: 0, total: 0, results: [], updated_at: new Date().toISOString() };
+      }
+    },
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
@@ -77,8 +115,27 @@ export function MailDispatchManager() {
   const { data: subscribers = [], isLoading: loadingSubs, refetch: refetchSubs } = useQuery({
     queryKey: ["dispatch-subscribers"],
     queryFn: async () => {
-      const res = await dispatchCall(getPin(), "get_subscribers");
-      return (res.subscribers || []) as Subscriber[];
+      try {
+        const res = await dispatchCall(getPin(), "get_subscribers");
+        if (res?.subscribers?.length) {
+          return (res.subscribers || []) as Subscriber[];
+        }
+      } catch (err) {
+        console.warn("Edge function get_subscribers unavailable, falling back to direct database query", err);
+      }
+
+      // Direct database query fallback
+      const { data, error } = await supabase
+        .from("newsletter_subscribers")
+        .select("email, full_name, is_active")
+        .eq("is_active", true)
+        .order("subscribed_at", { ascending: false });
+
+      if (error) {
+        console.error("Direct subscribers query error:", error);
+        return [];
+      }
+      return (data || []) as Subscriber[];
     },
   });
 
