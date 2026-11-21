@@ -81,12 +81,27 @@ const JoinGroup = () => {
     if (!user || !group) return;
     setJoiningCall(true);
     try {
-      const { data, error } = await supabase.functions.invoke("daily-room", {
-        body: { group_slug: group.slug, group_name: group.name },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setCallInfo({ url: data.url, token: data.token, isModerator: !!data.is_moderator });
+      let callData: any = null;
+      try {
+        const { data, error } = await supabase.functions.invoke("daily-room", {
+          body: { group_slug: group.slug, group_name: group.name },
+        });
+        if (!error && !data?.error && data?.url) {
+          callData = data;
+        }
+      } catch {}
+
+      if (!callData) {
+        const res = await fetch("/api/daily-room", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group_slug: group.slug, group_name: group.name }),
+        });
+        callData = await res.json();
+        if (!res.ok || callData?.error) throw new Error(callData?.error || "Failed to join call");
+      }
+
+      setCallInfo({ url: callData.url, token: callData.token, isModerator: !!callData.is_moderator });
     } catch (err: any) {
       toast.error(err.message || "Failed to join call");
     } finally {
