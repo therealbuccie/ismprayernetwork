@@ -1,14 +1,14 @@
 -- ISM PRAYER NETWORK — COMPLETE DATABASE RESTORATION PART 1 (AUTH & CORE DATA)
 -- Generated from production backup at 2026-11-21 16:26:51
--- Run this in your Supabase SQL Editor.
+-- Run this in your Supabase SQL Editor or via psql.
 
 BEGIN;
 
 -- Temporarily bypass triggers and foreign key checks during batch restore
 SET session_replication_role = 'replica';
 
--- Temporarily disable trigger on auth.users to prevent duplicate profile insertion
-ALTER TABLE auth.users DISABLE TRIGGER ALL;
+-- Clean placeholder seed data before inserting real production data
+TRUNCATE TABLE public.books, public.categories, public.prayer_points, public.site_settings CASCADE;
 
 -- ==========================================================================
 -- Table: auth.users (512 rows)
@@ -5699,7 +5699,6 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- Re-enable triggers and foreign key checks
-ALTER TABLE auth.users ENABLE TRIGGER ALL;
 SET session_replication_role = 'origin';
 
 COMMIT;
