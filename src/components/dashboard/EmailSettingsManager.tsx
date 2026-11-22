@@ -16,6 +16,7 @@ import {
 
 interface EmailSettings {
   provider: "resend" | "smtp";
+  account_tier?: "free" | "pro";
   api_key: string;
   from_name: string;
   from_email: string;
@@ -42,6 +43,7 @@ export function EmailSettingsManager() {
 
   const [settings, setSettings] = useState<EmailSettings>({
     provider: "resend",
+    account_tier: "free",
     api_key: "",
     from_name: "ISM Prayer Network",
     from_email: "info@notify.ismprayernetwork.org",
@@ -315,6 +317,46 @@ export function EmailSettingsManager() {
                     <p className="text-[11px] text-muted-foreground mt-1.5">
                       Your API key is securely saved and used on Cloudflare Pages to send dispatches via Resend's high-speed batch API.
                     </p>
+                  </div>
+
+                  {/* Resend Tier Selection */}
+                  <div className="pt-3 border-t border-border/40">
+                    <Label className="text-xs font-semibold block mb-1.5">Resend Account Plan (Sending Guard)</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div
+                        onClick={() => setSettings(s => ({ ...s, account_tier: "free" }))}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                          settings.account_tier !== "pro"
+                            ? "border-accent bg-accent/10 shadow-sm"
+                            : "border-border/50 bg-muted/20 hover:border-border"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-foreground">Free Plan</span>
+                          {settings.account_tier !== "pro" && <Check size={14} className="text-accent" />}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          <strong>100 emails/day</strong> cap • 3,000/mo. The dispatcher automatically protects you from exceeding limits.
+                        </p>
+                      </div>
+
+                      <div
+                        onClick={() => setSettings(s => ({ ...s, account_tier: "pro" }))}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                          settings.account_tier === "pro"
+                            ? "border-accent bg-accent/10 shadow-sm"
+                            : "border-border/50 bg-muted/20 hover:border-border"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-foreground">Pro Plan ($20/mo)</span>
+                          {settings.account_tier === "pro" && <Check size={14} className="text-accent" />}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          <strong>50,000 emails/month</strong> • No daily limit. Perfect for broadcasting to all 6,000+ contacts at once.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

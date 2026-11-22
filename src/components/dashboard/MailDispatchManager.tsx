@@ -125,7 +125,17 @@ export function MailDispatchManager({ onNavigate }: MailDispatchManagerProps = {
   });
 
   const isConfigured = Boolean(emailConfig?.is_configured);
+  const isFreeTier = emailConfig?.account_tier !== "pro";
   const fromEmail = emailConfig?.from_email || "info@notify.ismprayernetwork.org";
+
+  const handleCapTo100 = () => {
+    const capped = allRecipients.slice(0, 100);
+    const subSet = new Set(capped.filter((e) => selectedSubscribers.includes(e)));
+    const manSet = capped.filter((e) => !subSet.has(e));
+    setSelectedSubscribers(Array.from(subSet));
+    setManualEmails(manSet);
+    toast.info("Recipients capped at 100 to stay within Resend's daily free tier limit.");
+  };
 
   const { data: recentStatus, refetch: refetchRecentStatus, isFetching: refreshingRecentStatus } = useQuery<DispatchResult>({
     queryKey: ["recent-dispatch-status"],
@@ -371,6 +381,16 @@ export function MailDispatchManager({ onNavigate }: MailDispatchManagerProps = {
             res.results.forEach((r: any) => {
               if (r.message_id) collectedMessageIds.push(r.message_id);
             });
+          }
+
+          if (res.is_limit_reached) {
+            setBatchProgress(prev => ({
+              ...prev,
+              isComplete: true,
+              errorMessage: "Resend daily email limit reached (100 emails/day). Transmission safely halted. Upgrade to Resend Pro or wait until tomorrow (00:00 UTC) to send the next batch.",
+            }));
+            toast.error("Resend daily limit reached. Transmission safely halted.");
+            break;
           }
 
           setBatchProgress(prev => ({
@@ -751,6 +771,28 @@ export function MailDispatchManager({ onNavigate }: MailDispatchManagerProps = {
                   <span className="text-accent">{allRecipients.length}</span>
                 </div>
               </div>
+
+              {/* Free Tier Limit Warning & Cap Button */}
+              {isFreeTier && allRecipients.length > 100 && (
+                <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs space-y-2">
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    <AlertCircle size={14} className="text-amber-400 shrink-0" />
+                    <span>Free Plan Daily Limit: 100 Emails</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    You selected <strong>{allRecipients.length}</strong> recipients. Resend's free tier has a daily limit of <strong>100 emails</strong>.
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleCapTo100}
+                    className="w-full text-xs h-7 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 font-semibold"
+                  >
+                    Cap to first 100 for today
+                  </Button>
+                </div>
+              )}
 
               <Button
                 onClick={handleSend}

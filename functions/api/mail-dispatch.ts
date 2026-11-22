@@ -9,6 +9,7 @@ const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 interface EmailSettings {
   provider: "resend" | "smtp";
+  account_tier?: "free" | "pro";
   api_key: string;
   from_name: string;
   from_email: string;
@@ -22,6 +23,7 @@ interface EmailSettings {
 
 const DEFAULT_SETTINGS: EmailSettings = {
   provider: "resend",
+  account_tier: "free",
   api_key: "",
   from_name: "ISM Prayer Network",
   from_email: "info@notify.ismprayernetwork.org",
@@ -157,6 +159,7 @@ export async function onRequest(context: { request: Request }): Promise<Response
       // Don't overwrite if masked value was sent back without changing
       const toSave: EmailSettings = {
         provider: incoming.provider || current.provider,
+        account_tier: incoming.account_tier || current.account_tier || "free",
         api_key: (incoming.api_key && !incoming.api_key.includes("••••")) ? incoming.api_key.trim() : current.api_key,
         from_name: incoming.from_name?.trim() || current.from_name,
         from_email: incoming.from_email?.trim() || current.from_email,
@@ -345,11 +348,13 @@ export async function onRequest(context: { request: Request }): Promise<Response
 
       if (!resendRes.ok) {
         const errMsg = resendData.message || resendData.error || `HTTP ${resendRes.status}`;
+        const isLimit = resendRes.status === 429 || /limit|daily|exceeded|quota/i.test(errMsg);
         return new Response(
           JSON.stringify({
             sent: 0,
             failed: batchRecipients.length,
             error: errMsg,
+            is_limit_reached: isLimit,
             total: batchRecipients.length,
             results: batchRecipients.map((em: string) => ({ email: em, status: "failed", error: errMsg })),
           }),
