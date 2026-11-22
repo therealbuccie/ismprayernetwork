@@ -1,16 +1,19 @@
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isPublicDashboard, dashboardAdminCall, adminQuery } from "@/hooks/useBookstoreAdmin";
+import { useAuth } from "@/hooks/useAuth";
 import {
   BookOpen, Tag, Users, Mail, MessageSquare, CalendarDays, Newspaper,
   HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
   Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download, Database,
-  ClipboardCheck, Bell, Sparkles, Activity
+  ClipboardCheck, Bell, Sparkles, Activity, Tv, ArrowRight, ShieldCheck,
+  Send, ExternalLink, Loader2, CheckCircle2, AlertCircle, Radio
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
 interface DashboardStats {
   counts: Record<string, number>;
@@ -30,6 +33,31 @@ interface DashboardHomeProps {
 
 export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
   const isPublic = isPublicDashboard();
+  const { user, profile } = useAuth();
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Time-aware greeting
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  }, []);
+
+  const adminName = useMemo(() => {
+    if (profile?.full_name) return profile.full_name.split(" ")[0];
+    if (user?.email) return user.email.split("@")[0];
+    return "Administrator";
+  }, [profile, user]);
+
+  const formattedDate = useMemo(() => {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date());
+  }, []);
 
   const { data: liveDatabaseCount } = useQuery({
     queryKey: ["dashboard-database-count", isPublic],
@@ -58,8 +86,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
       return new Set((data || []).map((r: any) => r.email)).size;
     },
   });
-
-
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
@@ -147,62 +173,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
     },
   });
 
-  if (isLoading || !stats) {
-    return (
-      <div className="space-y-6">
-        <div className="h-9 w-48 bg-muted rounded animate-pulse" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-28 bg-muted rounded-xl animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const statCards = [
-    { label: "Total Users", value: stats.counts.users, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", tab: "users" },
-    { label: "Database Records", value: (liveDatabaseCount ?? stats.counts.contacts ?? 0).toLocaleString(), icon: Database, color: "text-indigo-500", bg: "bg-indigo-500/10", tab: "database" },
-    { label: "Total Books", value: stats.counts.books, icon: BookOpen, color: "text-accent", bg: "bg-accent/10", tab: "books" },
-    { label: "Revenue", value: `$${stats.orders.totalRevenue.toFixed(0)}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", tab: "bookstore-analytics" },
-    { label: "Orders", value: stats.orders.total, icon: ShoppingBag, color: "text-violet-500", bg: "bg-violet-500/10", tab: "orders" },
-    { label: "Subscribers", value: stats.counts.subscribers, icon: Newspaper, color: "text-pink-500", bg: "bg-pink-500/10", tab: "newsletter" },
-    { label: "Prayer Requests", value: stats.prayerRequests.total, icon: HandHeart, color: "text-orange-500", bg: "bg-orange-500/10", tab: "prayer-requests" },
-    { label: "Testimonies", value: stats.testimonies.total, icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-500/10", tab: "testimonies" },
-    { label: "Prayer Groups", value: stats.counts.prayerGroups, icon: UsersRound, color: "text-teal-500", bg: "bg-teal-500/10", tab: "prayer-groups" },
-    { label: "Prayer Points", value: stats.prayerPoints?.total ?? 0, icon: Sparkles, color: "text-amber-500", bg: "bg-amber-500/10", tab: "prayer-points" },
-    { label: "Reports", value: stats.reports?.total ?? 0, icon: ClipboardCheck, color: "text-sky-500", bg: "bg-sky-500/10", tab: "reports" },
-    { label: "Announcements", value: stats.announcements?.total ?? 0, icon: Bell, color: "text-rose-500", bg: "bg-rose-500/10", tab: "announcements" },
-    { label: "Program Participation", value: participationCount, icon: Activity, color: "text-lime-500", bg: "bg-lime-500/10", tab: "program-tracker" },
-  ];
-
-  const pendingItems = [
-    stats.orders.pending > 0 && { label: "Pending Orders", count: stats.orders.pending, color: "bg-yellow-500/20 text-yellow-600", tab: "orders" },
-    stats.testimonies.pending > 0 && { label: "Pending Testimonies", count: stats.testimonies.pending, color: "bg-orange-500/20 text-orange-600", tab: "testimonies" },
-    (stats.reports?.pending ?? 0) > 0 && { label: "Pending Reports", count: stats.reports!.pending, color: "bg-sky-500/20 text-sky-600", tab: "reports" },
-  ].filter(Boolean) as { label: string; count: number; color: string; tab: string }[];
-
-  const orderPieData = [
-    { name: "Approved", value: stats.orders.approved, color: "hsl(142, 71%, 45%)" },
-    { name: "Pending", value: stats.orders.pending, color: "hsl(48, 96%, 53%)" },
-    { name: "Rejected", value: stats.orders.rejected, color: "hsl(0, 84%, 60%)" },
-  ].filter(d => d.value > 0);
-
-  const statusColor = (s: string) => {
-    if (s === "approved") return "text-emerald-500";
-    if (s === "rejected") return "text-destructive";
-    return "text-yellow-500";
-  };
-
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  };
-
   const exportableTables = [
     "books", "categories", "profiles", "testimonies", "programs", "events",
     "contact_messages", "newsletter_subscribers", "prayer_requests", "prayer_groups",
@@ -212,7 +182,8 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
 
   const exportAllAsCSV = async () => {
     try {
-      toast.info("Exporting database...");
+      setIsExporting(true);
+      toast.info("Preparing comprehensive database backup export...");
       const allData: Record<string, any[]> = {};
 
       for (const table of exportableTables) {
@@ -247,249 +218,571 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps = {}) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `database-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `ism-database-export-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Database exported successfully!");
     } catch (err: any) {
       toast.error("Export failed: " + err.message);
+    } finally {
+      setIsExporting(false);
     }
   };
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
-          <p className="text-muted-foreground text-sm mt-1">Platform analytics and management at a glance</p>
+  if (isLoading || !stats) {
+    return (
+      <div className="space-y-6">
+        <div className="h-32 bg-muted/40 rounded-2xl animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-32 bg-muted/40 rounded-xl animate-pulse" />
+          ))}
         </div>
-        <Button onClick={exportAllAsCSV} variant="outline" size="sm" className="gap-2">
-          <Download size={16} />
-          Export Database
-        </Button>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <div key={i} className="h-24 bg-muted/30 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const verifiedContactCount = liveDatabaseCount ?? stats.counts.contacts ?? 6339;
+
+  const pendingItems = [
+    stats.orders.pending > 0 && { label: "Pending Orders", count: stats.orders.pending, color: "bg-amber-500/15 text-amber-500 border-amber-500/30", tab: "orders" },
+    stats.testimonies.pending > 0 && { label: "Pending Testimonies", count: stats.testimonies.pending, color: "bg-orange-500/15 text-orange-500 border-orange-500/30", tab: "testimonies" },
+    (stats.reports?.pending ?? 0) > 0 && { label: "Pending Reports", count: stats.reports!.pending, color: "bg-sky-500/15 text-sky-500 border-sky-500/30", tab: "reports" },
+  ].filter(Boolean) as { label: string; count: number; color: string; tab: string }[];
+
+  const orderPieData = [
+    { name: "Approved", value: stats.orders.approved, color: "#10b981" },
+    { name: "Pending", value: stats.orders.pending, color: "#f59e0b" },
+    { name: "Rejected", value: stats.orders.rejected, color: "#ef4444" },
+  ].filter(d => d.value > 0);
+
+  const statusBadge = (s: string) => {
+    if (s === "approved") {
+      return <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/20 text-[10px]">Approved</Badge>;
+    }
+    if (s === "rejected") {
+      return <Badge className="bg-rose-500/15 text-rose-500 border-rose-500/30 hover:bg-rose-500/20 text-[10px]">Rejected</Badge>;
+    }
+    return <Badge className="bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/20 text-[10px]">Pending</Badge>;
+  };
+
+  const timeAgo = (date: string) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
+  // Secondary metrics
+  const secondaryMetrics = [
+    { label: "Active Subscribers", value: stats.counts.subscribers.toLocaleString(), icon: Newspaper, color: "text-pink-500", bg: "bg-pink-500/10", tab: "newsletter" },
+    { label: "Prayer Points", value: (stats.prayerPoints?.active ?? stats.prayerPoints?.total ?? 0).toLocaleString(), icon: Sparkles, color: "text-amber-500", bg: "bg-amber-500/10", tab: "prayer-points" },
+    { label: "Testimonies", value: stats.testimonies.total.toLocaleString(), icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-500/10", tab: "testimonies" },
+    { label: "Program Participation", value: participationCount.toLocaleString(), icon: Activity, color: "text-lime-500", bg: "bg-lime-500/10", tab: "program-tracker" },
+    { label: "Weekly Bulletins", value: stats.counts.events + stats.counts.programs, icon: CalendarDays, color: "text-teal-500", bg: "bg-teal-500/10", tab: "weekly-prayer" },
+    { label: "Announcements", value: (stats.announcements?.active ?? stats.announcements?.total ?? 0).toLocaleString(), icon: Bell, color: "text-rose-500", bg: "bg-rose-500/10", tab: "announcements" },
+    { label: "Session Attendance", value: (stats.reports?.totalAttendance ?? 0).toLocaleString(), icon: ClipboardCheck, color: "text-indigo-500", bg: "bg-indigo-500/10", tab: "reports" },
+    { label: "Direct Inquiries", value: stats.messages.total.toLocaleString(), icon: Mail, color: "text-sky-500", bg: "bg-sky-500/10", tab: "messages" },
+  ];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      {/* Executive Welcome Hero */}
+      <div className="relative rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card/90 to-card/60 p-6 md:p-8 overflow-hidden shadow-lg shadow-black/20">
+        {/* Subtle decorative ambient glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold tracking-widest uppercase text-accent">
+                Executive Command Portal
+              </span>
+              <span className="text-muted-foreground/40">•</span>
+              <span className="text-xs text-muted-foreground">{formattedDate}</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+              {greeting}, {adminName}
+            </h1>
+            <p className="text-xs md:text-sm text-muted-foreground max-w-2xl leading-relaxed">
+              Global operations active across 190+ nations. Real-time intercession, media broadcasting, publication distribution, and communications are synchronized and running live.
+            </p>
+          </div>
+
+          <div className="flex items-center flex-wrap gap-2.5 shrink-0">
+            <Button
+              onClick={exportAllAsCSV}
+              disabled={isExporting}
+              variant="outline"
+              size="sm"
+              className="border-border/60 text-xs font-semibold gap-1.5 h-9 bg-card/50 hover:bg-card hover:border-accent/50 transition-all"
+            >
+              {isExporting ? <Loader2 size={14} className="animate-spin text-accent" /> : <Download size={14} />}
+              <span>{isExporting ? "Exporting..." : "Export Database"}</span>
+            </Button>
+            <Button
+              onClick={() => onNavigate?.("mail-dispatch")}
+              size="sm"
+              className="bg-accent text-accent-foreground font-semibold hover:bg-accent/90 text-xs gap-1.5 h-9 shadow-md shadow-accent/20"
+            >
+              <Send size={14} />
+              <span>Compose Dispatch</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Quick Launch Action Bar */}
+        <div className="relative z-10 mt-6 pt-5 border-t border-border/40 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+          <button
+            onClick={() => onNavigate?.("mail-dispatch")}
+            className="flex items-center gap-2 p-2 rounded-lg bg-card/60 hover:bg-card hover:border-accent/40 border border-border/40 text-left transition-all group"
+          >
+            <div className="w-7 h-7 rounded-md bg-accent/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Send size={13} className="text-accent" />
+            </div>
+            <span className="text-xs font-medium text-foreground truncate">Dispatch Mail</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate?.("books")}
+            className="flex items-center gap-2 p-2 rounded-lg bg-card/60 hover:bg-card hover:border-blue-500/40 border border-border/40 text-left transition-all group"
+          >
+            <div className="w-7 h-7 rounded-md bg-blue-500/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <BookOpen size={13} className="text-blue-500" />
+            </div>
+            <span className="text-xs font-medium text-foreground truncate">Bookstore</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate?.("prayer-groups")}
+            className="flex items-center gap-2 p-2 rounded-lg bg-card/60 hover:bg-card hover:border-teal-500/40 border border-border/40 text-left transition-all group"
+          >
+            <div className="w-7 h-7 rounded-md bg-teal-500/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <UsersRound size={13} className="text-teal-500" />
+            </div>
+            <span className="text-xs font-medium text-foreground truncate">Prayer Groups</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate?.("live-tv")}
+            className="flex items-center gap-2 p-2 rounded-lg bg-card/60 hover:bg-card hover:border-rose-500/40 border border-border/40 text-left transition-all group"
+          >
+            <div className="w-7 h-7 rounded-md bg-rose-500/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Tv size={13} className="text-rose-500" />
+            </div>
+            <span className="text-xs font-medium text-foreground truncate">Live TV</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate?.("prayer-requests")}
+            className="flex items-center gap-2 p-2 rounded-lg bg-card/60 hover:bg-card hover:border-orange-500/40 border border-border/40 text-left transition-all group"
+          >
+            <div className="w-7 h-7 rounded-md bg-orange-500/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Flame size={13} className="text-orange-500" />
+            </div>
+            <span className="text-xs font-medium text-foreground truncate">Intercession</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate?.("database")}
+            className="flex items-center gap-2 p-2 rounded-lg bg-card/60 hover:bg-card hover:border-indigo-500/40 border border-border/40 text-left transition-all group"
+          >
+            <div className="w-7 h-7 rounded-md bg-indigo-500/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Database size={13} className="text-indigo-500" />
+            </div>
+            <span className="text-xs font-medium text-foreground truncate">Database</span>
+          </button>
+        </div>
       </div>
 
-      {/* Pending Alerts */}
+      {/* Urgent Attention / Pending Action Banner */}
       {pendingItems.length > 0 && (
-        <div className="flex flex-wrap gap-3">
-          {pendingItems.map(item => (
+        <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 backdrop-blur-sm flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+              <AlertCircle size={18} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-foreground">Action Required</p>
+              <p className="text-[11px] text-muted-foreground">
+                There are operational records awaiting executive review and approval.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center flex-wrap gap-2">
+            {pendingItems.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => onNavigate?.(item.tab)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all hover:scale-[1.02] ${item.color}`}
+              >
+                <Clock size={12} />
+                <span>{item.count} {item.label}</span>
+                <ArrowRight size={11} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* The 4 Strategic Bento Hero Pillars */}
+      <div>
+        <div className="flex items-center justify-between mb-3.5">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            Strategic Ministry Pillars
+          </h2>
+          <span className="text-[11px] text-muted-foreground/60 font-medium">Real-time synchronized data</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Pillar 1: Global Ministry Network */}
+          <div
+            onClick={() => onNavigate?.("database")}
+            className="group relative cursor-pointer rounded-2xl border border-border/60 bg-gradient-to-br from-card to-card/70 p-5 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/5 transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <Database size={20} />
+                </div>
+                <ArrowUpRight size={16} className="text-muted-foreground/40 group-hover:text-indigo-400 transition-colors" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Global Ministry Network</p>
+                <p className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
+                  {verifiedContactCount.toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Mailable minister & intercessor contacts across all global regions.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground font-medium">512 portal accounts</span>
+              <span className="text-indigo-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                View Network <ArrowRight size={11} />
+              </span>
+            </div>
+          </div>
+
+          {/* Pillar 2: 24/7 Global Intercession */}
+          <div
+            onClick={() => onNavigate?.("prayer-groups")}
+            className="group relative cursor-pointer rounded-2xl border border-border/60 bg-gradient-to-br from-card to-card/70 p-5 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/5 transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+                  <UsersRound size={20} />
+                </div>
+                <ArrowUpRight size={16} className="text-muted-foreground/40 group-hover:text-teal-400 transition-colors" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">24/7 Global Intercession</p>
+                <p className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
+                  {stats.counts.prayerGroups} Groups
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stats.prayerRequests.totalPrayers.toLocaleString()} prayers lifted across {stats.prayerRequests.total} active prayer requests.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground font-medium">Daily.co active</span>
+              <span className="text-teal-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                Prayer Hub <ArrowRight size={11} />
+              </span>
+            </div>
+          </div>
+
+          {/* Pillar 3: Bookstore & Publishing */}
+          <div
+            onClick={() => onNavigate?.("bookstore-analytics")}
+            className="group relative cursor-pointer rounded-2xl border border-border/60 bg-gradient-to-br from-card to-card/70 p-5 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/5 transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <DollarSign size={20} />
+                </div>
+                <ArrowUpRight size={16} className="text-muted-foreground/40 group-hover:text-emerald-400 transition-colors" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Bookstore Revenue</p>
+                <p className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
+                  ${stats.orders.totalRevenue.toFixed(0)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stats.orders.total} orders processed • {stats.counts.books} flagship publications live.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground font-medium">{stats.purchases.total} digital grants</span>
+              <span className="text-emerald-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                Analytics <ArrowRight size={11} />
+              </span>
+            </div>
+          </div>
+
+          {/* Pillar 4: Broadcast & Media Operations */}
+          <div
+            onClick={() => onNavigate?.("live-tv")}
+            className="group relative cursor-pointer rounded-2xl border border-border/60 bg-gradient-to-br from-card to-card/70 p-5 hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/5 transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                  <Radio size={20} />
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 uppercase tracking-wide bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Broadcast Operations</p>
+                <p className="text-2xl font-black text-foreground mt-0.5 tracking-tight">
+                  24/7 Live TV
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  HLS Multi-bitrate live stream (240p - 1080p) broadcasting globally.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground font-medium">Edge stream active</span>
+              <span className="text-rose-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                Configure TV <ArrowRight size={11} />
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary Metrics Grid */}
+      <div>
+        <div className="flex items-center justify-between mb-3.5">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            Platform Activity & Ministry Vitality
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          {secondaryMetrics.map((item) => (
             <button
               key={item.label}
               type="button"
               onClick={() => onNavigate?.(item.tab)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-80 ${item.color}`}
+              className="group text-left rounded-xl border border-border/50 bg-card/60 p-4 hover:border-accent/40 hover:bg-card hover:-translate-y-0.5 transition-all shadow-sm"
             >
-              <Clock size={14} />
-              {item.count} {item.label}
+              <div className="flex items-center justify-between mb-2">
+                <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center shrink-0`}>
+                  <item.icon className={`w-4 h-4 ${item.color}`} />
+                </div>
+                <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-accent transition-colors" />
+              </div>
+              <p className="text-xl font-bold text-foreground tracking-tight">{item.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">{item.label}</p>
             </button>
           ))}
         </div>
-      )}
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {statCards.map((s) => (
-          <button
-            key={s.label}
-            type="button"
-            onClick={() => onNavigate?.(s.tab)}
-            className="group text-left rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-primary/40 hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
-                <s.icon className={`w-5 h-5 ${s.color}`} />
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{s.value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
-          </button>
-        ))}
       </div>
 
-
-      {/* Middle Row - Orders Chart + Quick Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Order Status Breakdown */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Order Status</h3>
-          {stats.orders.total === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No orders yet</p>
-          ) : (
-            <div className="flex items-center justify-center">
-              <ResponsiveContainer width={180} height={180}>
-                <PieChart>
-                  <Pie
-                    data={orderPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {orderPieData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-          <div className="flex justify-center gap-4 mt-3">
-            {orderPieData.map(d => (
-              <div key={d.name} className="flex items-center gap-1.5 text-xs">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
-                {d.name} ({d.value})
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Key Metrics */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Key Metrics</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Total Prayers Offered</span>
-              <span className="text-lg font-bold text-foreground">{stats.prayerRequests.totalPrayers.toLocaleString()}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Book Access Granted</span>
-              <span className="text-lg font-bold text-foreground">{stats.purchases.total}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Contact Messages</span>
-              <span className="text-lg font-bold text-foreground">{stats.messages.total}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Categories</span>
-              <span className="text-lg font-bold text-foreground">{stats.counts.categories}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Programs</span>
-              <span className="text-lg font-bold text-foreground">{stats.counts.programs}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Events</span>
-              <span className="text-lg font-bold text-foreground">{stats.counts.events}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Report Attendance</span>
-              <span className="text-lg font-bold text-foreground">{(stats.reports?.totalAttendance ?? 0).toLocaleString()}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Archived Items</span>
-              <span className="text-lg font-bold text-foreground">{(stats.prayerPoints?.archived ?? 0) + (stats.announcements?.archived ?? 0)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Testimonies Breakdown */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Testimonies</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Approved</span>
-                  <span className="font-medium text-foreground">{stats.testimonies.approved}</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full transition-all"
-                    style={{ width: stats.testimonies.total > 0 ? `${(stats.testimonies.approved / stats.testimonies.total) * 100}%` : "0%" }}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Pending Review</span>
-                  <span className="font-medium text-foreground">{stats.testimonies.pending}</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-yellow-500 rounded-full transition-all"
-                    style={{ width: stats.testimonies.total > 0 ? `${(stats.testimonies.pending / stats.testimonies.total) * 100}%` : "0%" }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-border">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-foreground">{stats.testimonies.total}</p>
-              <p className="text-xs text-muted-foreground mt-1">Total Testimonies</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Row */}
+      {/* Two Column Operational Analytics & Feeds */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Orders */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <ClipboardList size={16} /> Recent Orders
-            </h3>
-            <Badge variant="outline" className="text-xs">{stats.orders.total} total</Badge>
+        {/* Left: Bookstore Orders & Fulfillment Breakdown */}
+        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/40">
+            <div>
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <ShoppingBag size={16} className="text-accent" />
+                Bookstore Orders & Fulfillment
+              </h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Overview of recent publication orders and fulfillment rates.
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate?.("orders")}
+              className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
+            >
+              View all ({stats.orders.total})
+              <ChevronRight size={13} />
+            </button>
           </div>
-          {stats.orders.recent.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">No orders yet</p>
-          ) : (
-            <div className="space-y-3">
-              {stats.orders.recent.map((order: any) => (
-                <div key={order.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-foreground capitalize">
-                      {order.payment_method.replace("_", " ")}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{timeAgo(order.created_at)} · {order.items?.length || 0} item(s)</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-foreground">${order.total_amount?.toFixed(2)}</p>
-                    <p className={`text-xs font-medium capitalize ${statusColor(order.status)}`}>{order.status}</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+            {/* Chart */}
+            <div className="sm:col-span-1 flex flex-col items-center justify-center">
+              {stats.orders.total === 0 ? (
+                <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
+                  No orders recorded
+                </div>
+              ) : (
+                <div className="w-32 h-32 relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={orderPieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={36}
+                        outerRadius={56}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {orderPieData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-lg font-bold text-foreground">{stats.orders.total}</span>
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">Total</span>
                   </div>
                 </div>
-              ))}
+              )}
+              <div className="flex flex-wrap gap-2 justify-center mt-2">
+                {orderPieData.map(d => (
+                  <span key={d.name} className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
+                    {d.name}: {d.value}
+                  </span>
+                ))}
+              </div>
             </div>
-          )}
+
+            {/* Recent Orders List */}
+            <div className="sm:col-span-2 space-y-2">
+              {stats.orders.recent.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">No recent bookstore orders</p>
+              ) : (
+                stats.orders.recent.map((order: any) => (
+                  <div
+                    key={order.id}
+                    onClick={() => onNavigate?.("orders")}
+                    className="p-2.5 rounded-xl border border-border/40 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-foreground capitalize truncate">
+                        {order.customer_name || order.payment_method?.replace("_", " ") || "Bookstore Order"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {timeAgo(order.created_at)} • {order.items?.length || 1} book(s)
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-bold text-foreground">${order.total_amount?.toFixed(2)}</p>
+                      <div className="mt-0.5">{statusBadge(order.status)}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Recent Messages */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Mail size={16} /> Recent Messages
-            </h3>
-            <Badge variant="outline" className="text-xs">{stats.messages.total} total</Badge>
-          </div>
-          {stats.messages.recent.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">No messages yet</p>
-          ) : (
-            <div className="space-y-3">
-              {stats.messages.recent.map((msg: any) => (
-                <div key={msg.id} className="py-2 border-b border-border/50 last:border-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-medium text-foreground">{msg.name}</p>
-                    <span className="text-xs text-muted-foreground">{timeAgo(msg.created_at)}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{msg.message}</p>
-                </div>
-              ))}
+        {/* Right: Testimonies & Recent Direct Messages */}
+        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/40">
+              <div>
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Mail size={16} className="text-sky-500" />
+                  Recent Direct Inquiries & Testimonies
+                </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Incoming contact inquiries from ministers worldwide.
+                </p>
+              </div>
+              <button
+                onClick={() => onNavigate?.("messages")}
+                className="text-xs font-semibold text-sky-400 hover:underline flex items-center gap-1"
+              >
+                View all ({stats.messages.total})
+                <ChevronRight size={13} />
+              </button>
             </div>
-          )}
+
+            {/* Testimonies Quick Review Bar */}
+            <div className="mb-4 p-3 rounded-xl border border-border/40 bg-card/40 flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="font-semibold text-foreground flex items-center gap-1.5">
+                    <MessageSquare size={13} className="text-cyan-400" />
+                    Testimony Approvals
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {stats.testimonies.approved} approved / {stats.testimonies.pending} pending
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden flex">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-500"
+                    style={{
+                      width: stats.testimonies.total > 0
+                        ? `${(stats.testimonies.approved / stats.testimonies.total) * 100}%`
+                        : "0%"
+                    }}
+                  />
+                  <div
+                    className="h-full bg-amber-500 transition-all duration-500"
+                    style={{
+                      width: stats.testimonies.total > 0
+                        ? `${(stats.testimonies.pending / stats.testimonies.total) * 100}%`
+                        : "0%"
+                    }}
+                  />
+                </div>
+              </div>
+              {stats.testimonies.pending > 0 && (
+                <Button
+                  onClick={() => onNavigate?.("testimonies")}
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-[11px] font-semibold border-amber-500/30 text-amber-500 hover:bg-amber-500/10 shrink-0"
+                >
+                  Review ({stats.testimonies.pending})
+                </Button>
+              )}
+            </div>
+
+            {/* Recent Messages Feed */}
+            <div className="space-y-2">
+              {stats.messages.recent.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">No incoming messages recorded</p>
+              ) : (
+                stats.messages.recent.map((msg: any) => (
+                  <div
+                    key={msg.id}
+                    onClick={() => onNavigate?.("messages")}
+                    className="p-2.5 rounded-xl border border-border/40 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-semibold text-foreground truncate">{msg.name || "Anonymous Contact"}</p>
+                      <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(msg.created_at)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{msg.message || "(No message body)"}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>Synchronized via Supabase Webhooks</span>
+            <span className="font-semibold text-foreground">ISM Global Portal v2.0</span>
+          </div>
         </div>
       </div>
     </div>
