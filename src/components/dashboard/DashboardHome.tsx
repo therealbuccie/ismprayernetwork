@@ -8,7 +8,7 @@ import {
   HandHeart, UsersRound, ShoppingBag, ClipboardList, TrendingUp, DollarSign,
   Clock, CheckCircle, XCircle, ArrowUpRight, Flame, Download, Database,
   ClipboardCheck, Bell, Sparkles, Activity, Tv, ArrowRight, ShieldCheck,
-  Send, ExternalLink, Loader2, CheckCircle2, AlertCircle, Radio
+  Send, ExternalLink, Loader2, CheckCircle2, AlertCircle, Radio, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
