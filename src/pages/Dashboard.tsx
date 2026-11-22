@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -290,35 +291,37 @@ const Dashboard = () => {
         {/* Dynamic Content Body */}
         <main className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-8 max-w-7xl mx-auto">
-            <Suspense fallback={<TabSkeleton />}>
-              {activeTab === "home" && <DashboardHome onNavigate={(t) => setActiveTab(t as DashboardTab)} />}
-              {activeTab === "books" && <BooksManager />}
-              {activeTab === "categories" && <CategoriesManager />}
-              {activeTab === "users" && <UsersManager />}
-              {activeTab === "database" && <DatabaseManager />}
-              {activeTab === "messages" && <ContactMessagesManager />}
-              {activeTab === "testimonies" && <TestimoniesManager />}
-              {activeTab === "events" && <EventsManager />}
-              {activeTab === "programs" && <ProgramsManager />}
-              {activeTab === "newsletter" && <NewsletterManager />}
-              {activeTab === "prayer-requests" && <PrayerRequestsManager />}
-              {activeTab === "prayer-groups" && <PrayerGroupsManager />}
-              {activeTab === "prayer-points" && <PrayerPointsManager />}
-              {activeTab === "weekly-prayer" && <WeeklyPrayerManager />}
-              {activeTab === "purchases" && <PurchasesManager />}
-              {activeTab === "orders" && <OrdersManager />}
-              {activeTab === "combo-packs" && <ComboPacksManager />}
-              {activeTab === "bookstore-analytics" && <BookstoreAnalytics />}
-              {activeTab === "campaigns" && <CampaignsManager />}
-              {activeTab === "live-tv" && <LiveTVManager />}
-              {activeTab === "payment-settings" && <PaymentSettingsManager />}
-              {activeTab === "settings" && <SiteSettingsManager />}
-              {activeTab === "mail-dispatch" && <MailDispatchManager />}
-              {activeTab === "reports" && <ReportsManager />}
-              {activeTab === "announcements" && <AnnouncementsManager />}
-              {activeTab === "program-tracker" && <ProgramTrackerManager />}
-              {activeTab === "activity-log" && <ActivityLogManager />}
-            </Suspense>
+            <ErrorBoundary fallbackTitle="Dashboard component temporarily unavailable">
+              <Suspense fallback={<TabSkeleton />}>
+                {activeTab === "home" && <DashboardHome onNavigate={(t) => setActiveTab(t as DashboardTab)} />}
+                {activeTab === "books" && <BooksManager />}
+                {activeTab === "categories" && <CategoriesManager />}
+                {activeTab === "users" && <UsersManager />}
+                {activeTab === "database" && <DatabaseManager />}
+                {activeTab === "messages" && <ContactMessagesManager />}
+                {activeTab === "testimonies" && <TestimoniesManager />}
+                {activeTab === "events" && <EventsManager />}
+                {activeTab === "programs" && <ProgramsManager />}
+                {activeTab === "newsletter" && <NewsletterManager />}
+                {activeTab === "prayer-requests" && <PrayerRequestsManager />}
+                {activeTab === "prayer-groups" && <PrayerGroupsManager />}
+                {activeTab === "prayer-points" && <PrayerPointsManager />}
+                {activeTab === "weekly-prayer" && <WeeklyPrayerManager />}
+                {activeTab === "purchases" && <PurchasesManager />}
+                {activeTab === "orders" && <OrdersManager />}
+                {activeTab === "combo-packs" && <ComboPacksManager />}
+                {activeTab === "bookstore-analytics" && <BookstoreAnalytics />}
+                {activeTab === "campaigns" && <CampaignsManager />}
+                {activeTab === "live-tv" && <LiveTVManager />}
+                {activeTab === "payment-settings" && <PaymentSettingsManager />}
+                {activeTab === "settings" && <SiteSettingsManager />}
+                {activeTab === "mail-dispatch" && <MailDispatchManager />}
+                {activeTab === "reports" && <ReportsManager />}
+                {activeTab === "announcements" && <AnnouncementsManager />}
+                {activeTab === "program-tracker" && <ProgramTrackerManager />}
+                {activeTab === "activity-log" && <ActivityLogManager />}
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </main>
       </div>
