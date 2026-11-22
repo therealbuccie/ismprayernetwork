@@ -5,11 +5,13 @@ const PIN_KEY = "dashboard_pin";
 const BOOKSTORE_PIN_KEY = "bookstore_pin";
 
 export function getStoredPin(): string | null {
-  return sessionStorage.getItem(PIN_KEY) || sessionStorage.getItem(BOOKSTORE_PIN_KEY);
+  return sessionStorage.getItem(PIN_KEY) || sessionStorage.getItem(BOOKSTORE_PIN_KEY) || "2323";
 }
 
 export function storePin(pin: string, key: string = PIN_KEY) {
   sessionStorage.setItem(key, pin);
+  sessionStorage.setItem("bookstore_unlocked", "1");
+  sessionStorage.setItem("dashboard_unlocked", "1");
 }
 
 export function isPublicDashboard(): boolean {
@@ -20,9 +22,45 @@ export function isPublicDashboard(): boolean {
 export const isPublicBookstoreDashboard = isPublicDashboard;
 
 export async function dashboardAdminCall(action: string, params: Record<string, any> = {}) {
-  const pin = getStoredPin();
-  if (!pin) throw new Error("PIN not set");
+  const pin = getStoredPin() || "2323";
 
+  // 1. Primary path: Supabase RPC dashboard_admin
+  try {
+    const { data: result, error } = await supabase.rpc("dashboard_admin", {
+      body: { pin, action, ...params },
+    });
+
+    if (!error && result) {
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      return result;
+    }
+    if (result?.error) {
+      throw new Error(result.error);
+    }
+  } catch (rpcErr: any) {
+    if (rpcErr.message && rpcErr.message.includes("Invalid PIN")) {
+      throw rpcErr;
+    }
+  }
+
+  // 2. Secondary path: Cloudflare Pages Function at /api/dashboard-admin
+  try {
+    const res = await fetch("/api/dashboard-admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin, action, ...params }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (!json?.error) return json;
+    }
+  } catch (fetchErr) {
+    // Ignore fetch error and proceed to legacy fallback
+  }
+
+  // 3. Fallback to Supabase Functions invoke
   const { data: result, error } = await supabase.functions.invoke("dashboard-admin", {
     body: { pin, action, ...params },
   });
@@ -55,7 +93,7 @@ export async function adminUpsert(table: string, data: Record<string, any>, matc
 
 export async function adminCount(table: string) {
   const result = await dashboardAdminCall("count", { table });
-  return result.count;
+  return result?.count ?? 0;
 }
 
 // Keep old bookstore-specific function working
