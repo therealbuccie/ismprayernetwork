@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Heart, BookOpen, Share2, Copy, Check, Users, Send } from "lucide-react";
 import { HeroButton } from "@/components/HeroButton";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -16,17 +16,7 @@ import { toast } from "sonner";
 import AuthGateModal from "@/components/AuthGateModal";
 import PrayerSchedule from "@/components/prayer-schedule/PrayerSchedule";
 import PrayerTimer from "@/components/prayer-schedule/PrayerTimer";
-
-/** Split a run-on prayer point body into readable sections at "PRAYER POINT n" markers and newlines. */
-const formatPrayerBody = (body: string) =>
-  body
-    // Markers with a time range ("PRAYER POINT 1 – 00:00AM TO 10:00 GMT+1") become their own heading line
-    .replace(/\s*(PRAYER POINT\s*\d+\s*[-–—:]\s*[\d:]+\s*[AP]M\s+TO\s+[\d:]+\s*[AP]M\s+GMT[+\-]?\d+)\s*/gi, "\n\n$1\n")
-    // Bare markers without a time range
-    .replace(/\s*(PRAYER POINT\s*\d+\s*[-–—:])/gi, "\n\n$1")
-    .split(/\n+/)
-    .map((l) => l.trim())
-    .filter(Boolean);
+import { PrayerPointDisplay } from "@/components/prayer/PrayerPointDisplay";
 
 const todaysDate = new Date().toLocaleDateString("en-US", {
   weekday: "long",
@@ -51,21 +41,29 @@ const PrayerRoom = () => {
   const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
 
-  const { data: todaysPrayerPoint } = useQuery({
-    queryKey: ["prayer-points-room"],
+  const { data: allPrayerPoints = [] } = useQuery({
+    queryKey: ["prayer-points-room-all"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("prayer_points")
         .select("*")
         .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .eq("archived", false)
+        .order("sort_order", { ascending: true });
       if (error) throw error;
       return data;
     },
   });
+
+  const activePrayerPoint = useMemo(() => {
+    if (selectedPointId) {
+      const found = allPrayerPoints.find((p: any) => p.id === selectedPointId);
+      if (found) return found;
+    }
+    return allPrayerPoints[0] || null;
+  }, [allPrayerPoints, selectedPointId]);
 
   useEffect(() => {
     setShowAuthModal(!loading && !user);
@@ -526,37 +524,12 @@ const PrayerRoom = () => {
               {/* Right Sidebar */}
               <div className="flex flex-col gap-4">
                 {/* Today's Prayer Point */}
-                <div className="glass-card rounded-xl p-5 border border-border/50">
-                  <div className="bg-accent/10 rounded-lg p-3 mb-4 text-center">
-                    <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-                    📅 {todaysDate}
-                  </p>
-                  {todaysPrayerPoint ? (
-                    <>
-                      <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug break-words">
-                        {todaysPrayerPoint.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3 break-words">
-                        {todaysPrayerPoint.scripture}
-                      </p>
-                      <div className="text-sm text-foreground/80 leading-relaxed space-y-3 break-words max-h-[60vh] overflow-y-auto pr-1">
-                        {formatPrayerBody(todaysPrayerPoint.body).map((line, i) =>
-                          /^PRAYER POINT\s*\d+/i.test(line) ? (
-                            <p key={i} className="font-serif font-semibold text-accent text-xs uppercase tracking-wide pt-1">
-                              {line}
-                            </p>
-                          ) : (
-                            <p key={i}>{line}</p>
-                          )
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No prayer point available.</p>
-                  )}
-                </div>
+                <PrayerPointDisplay
+                  prayerPoint={activePrayerPoint}
+                  allPrayerPoints={allPrayerPoints}
+                  onSelectPrayerPoint={(p) => setSelectedPointId(p.id)}
+                  maxHeight="max-h-[58vh]"
+                />
 
                 {/* Participants */}
                 {participants && participants.length > 0 && (
@@ -599,37 +572,12 @@ const PrayerRoom = () => {
                   className="flex flex-col gap-4"
                 >
                   {/* Today's Prayer Point */}
-                  <div className="glass-card rounded-xl p-5 border border-border/50">
-                    <div className="bg-accent/10 rounded-lg p-3 mb-4 text-center">
-                      <h2 className="text-lg font-serif font-bold text-accent">Today's Prayer Point</h2>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-                      📅 {todaysDate}
-                    </p>
-                    {todaysPrayerPoint ? (
-                      <>
-                        <h3 className="font-serif font-bold text-sm mb-3 text-foreground leading-snug break-words">
-                          {todaysPrayerPoint.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground italic mb-4 leading-relaxed border-l-2 border-accent/50 pl-3 break-words">
-                          {todaysPrayerPoint.scripture}
-                        </p>
-                        <div className="text-sm text-foreground/80 leading-relaxed space-y-3 break-words max-h-[60vh] overflow-y-auto pr-1">
-                          {formatPrayerBody(todaysPrayerPoint.body).map((line, i) =>
-                            /^PRAYER POINT\s*\d+/i.test(line) ? (
-                              <p key={i} className="font-serif font-semibold text-accent text-xs uppercase tracking-wide pt-1">
-                                {line}
-                              </p>
-                            ) : (
-                              <p key={i}>{line}</p>
-                            )
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No prayer point available.</p>
-                    )}
-                  </div>
+                  <PrayerPointDisplay
+                    prayerPoint={activePrayerPoint}
+                    allPrayerPoints={allPrayerPoints}
+                    onSelectPrayerPoint={(p) => setSelectedPointId(p.id)}
+                    maxHeight="max-h-[62vh]"
+                  />
 
                   {/* Prayer Room Info */}
                   <div className="glass-card rounded-xl p-5 border border-border/50">
