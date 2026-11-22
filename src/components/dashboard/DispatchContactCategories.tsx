@@ -47,14 +47,17 @@ export function DispatchContactCategories({
     queryKey: ["dispatch-contacts"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("send-dispatch-email", {
-          body: { pin: getPin(), action: "get_contacts" },
+        const res = await fetch("/api/mail-dispatch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin: getPin(), action: "get_contacts" }),
         });
-        if (!error && !data?.error && data?.contacts?.length) {
+        const data = await res.json();
+        if (res.ok && data?.contacts?.length) {
           return data.contacts as ContactRow[];
         }
       } catch (err) {
-        console.warn("Edge function get_contacts unavailable, falling back to direct database query", err);
+        console.warn("Mail dispatch get_contacts unavailable, falling back to direct database query", err);
       }
 
       // Direct database query fallback

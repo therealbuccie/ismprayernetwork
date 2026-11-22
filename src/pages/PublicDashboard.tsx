@@ -23,6 +23,7 @@ const SiteSettingsManager = lazy(() => import("@/components/dashboard/SiteSettin
 const CampaignsManager = lazy(() => import("@/components/dashboard/CampaignsManager").then(m => ({ default: m.CampaignsManager })));
 const LiveTVManager = lazy(() => import("@/components/dashboard/LiveTVManager").then(m => ({ default: m.LiveTVManager })));
 const PaymentSettingsManager = lazy(() => import("@/components/dashboard/PaymentSettingsManager").then(m => ({ default: m.PaymentSettingsManager })));
+const EmailSettingsManager = lazy(() => import("@/components/dashboard/EmailSettingsManager").then(m => ({ default: m.EmailSettingsManager })));
 const BookstoreAnalytics = lazy(() => import("@/components/dashboard/BookstoreAnalytics").then(m => ({ default: m.BookstoreAnalytics })));
 const ComboPacksManager = lazy(() => import("@/components/dashboard/ComboPacksManager").then(m => ({ default: m.ComboPacksManager })));
 const MailDispatchManager = lazy(() => import("@/components/dashboard/MailDispatchManager").then(m => ({ default: m.MailDispatchManager })));
@@ -90,10 +91,11 @@ const PublicDashboard = () => {
               {activeTab === "campaigns" && <CampaignsManager />}
               {activeTab === "live-tv" && <LiveTVManager />}
               {activeTab === "payment-settings" && <PaymentSettingsManager />}
+              {activeTab === "email-settings" && <EmailSettingsManager />}
               {activeTab === "settings" && <SiteSettingsManager />}
               {activeTab === "combo-packs" && <ComboPacksManager />}
               {activeTab === "bookstore-analytics" && <BookstoreAnalytics />}
-              {activeTab === "mail-dispatch" && <MailDispatchManager />}
+              {activeTab === "mail-dispatch" && <MailDispatchManager onNavigate={(t) => setActiveTab(t as DashboardTab)} />}
               {activeTab === "program-tracker" && <ProgramTrackerManager />}
             </Suspense>
           </ErrorBoundary>

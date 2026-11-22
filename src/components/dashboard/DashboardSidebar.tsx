@@ -81,6 +81,7 @@ export const tabGroups: TabGroup[] = [
   {
     label: "Configuration",
     tabs: [
+      { id: "email-settings", label: "SMTP & Email", icon: Mail },
       { id: "live-tv", label: "Live TV", icon: Tv },
       { id: "payment-settings", label: "Payment Settings", icon: Banknote },
       { id: "settings", label: "General Settings", icon: Settings },

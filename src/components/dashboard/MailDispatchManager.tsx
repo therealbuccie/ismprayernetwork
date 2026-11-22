@@ -8,13 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload, ClipboardPaste, CheckCircle, XCircle, Clock } from "lucide-react";
+import {
+  Send, Users, Plus, X, Loader2, Mail, RefreshCw, Upload,
+  ClipboardPaste, CheckCircle, XCircle, Clock, Settings,
+  AlertCircle, ShieldCheck, Sparkles, CheckCircle2, PauseCircle
+} from "lucide-react";
 import { RichEmailComposer } from "./RichEmailComposer";
 import { DispatchContactCategories } from "./DispatchContactCategories";
-
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -35,16 +38,38 @@ interface DispatchResult {
   results: { message_id: string; recipient_email: string; status: string; error_message?: string; created_at: string }[];
 }
 
-async function dispatchCall(pin: string, action: string, params: Record<string, any> = {}) {
-  const { data, error } = await supabase.functions.invoke("send-dispatch-email", {
-    body: { pin, action, ...params },
-  });
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
-  return data;
+interface MailDispatchManagerProps {
+  onNavigate?: (tab: string) => void;
 }
 
-export function MailDispatchManager() {
+async function dispatchCall(pin: string, action: string, params: Record<string, any> = {}) {
+  try {
+    const res = await fetch("/api/mail-dispatch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin, action, ...params }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    return data;
+  } catch (err: any) {
+    // Edge function fallback if cloudflare worker route is unavailable
+    try {
+      const { data, error } = await supabase.functions.invoke("send-dispatch-email", {
+        body: { pin, action, ...params },
+      });
+      if (error) throw err;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    } catch {
+      throw err;
+    }
+  }
+}
+
+export function MailDispatchManager({ onNavigate }: MailDispatchManagerProps = {}) {
   const { profile } = useAuth();
   const isPublic = isPublicDashboard();
 
@@ -63,9 +88,44 @@ export function MailDispatchManager() {
   const [sending, setSending] = useState(false);
   const [lastResult, setLastResult] = useState<DispatchResult | null>(null);
   const [lastMessageIds, setLastMessageIds] = useState<string[]>([]);
-  const [pollingActive, setPollingActive] = useState(false);
   const [drilldownStatus, setDrilldownStatus] = useState<string | null>(null);
   const [programId, setProgramId] = useState<string>("auto");
+
+  // Chunked batch dispatch state
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({
+    currentBatch: 0,
+    totalBatches: 0,
+    sent: 0,
+    failed: 0,
+    totalRecipients: 0,
+    isComplete: false,
+    errorMessage: "",
+  });
+  const abortSendingRef = useRef(false);
+
+  // Email provider configuration query
+  const { data: emailConfig, refetch: refetchEmailConfig } = useQuery({
+    queryKey: ["email-dispatcher-config"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/mail-dispatch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_settings", pin: getPin() }),
+        });
+        const data = await res.json();
+        return data?.settings || null;
+      } catch (err) {
+        console.warn("Could not query email settings:", err);
+        return null;
+      }
+    },
+    staleTime: 30000,
+  });
+
+  const isConfigured = Boolean(emailConfig?.is_configured);
+  const fromEmail = emailConfig?.from_email || "info@notify.ismprayernetwork.org";
 
   const { data: recentStatus, refetch: refetchRecentStatus, isFetching: refreshingRecentStatus } = useQuery<DispatchResult>({
     queryKey: ["recent-dispatch-status"],
@@ -74,7 +134,7 @@ export function MailDispatchManager() {
         const res = await dispatchCall(getPin(), "get_recent_dispatch_status");
         if (res && typeof res.total === "number") return res as DispatchResult;
       } catch (err) {
-        console.warn("Edge function get_recent_dispatch_status unavailable, falling back to direct database query", err);
+        console.warn("Mail dispatch status query error:", err);
       }
 
       // Direct database query fallback
@@ -124,7 +184,6 @@ export function MailDispatchManager() {
         console.warn("Edge function get_subscribers unavailable, falling back to direct database query", err);
       }
 
-      // Direct database query fallback
       const { data, error } = await supabase
         .from("newsletter_subscribers")
         .select("email, full_name, is_active")
@@ -236,170 +295,276 @@ export function MailDispatchManager() {
 
   const allRecipients = [...new Set([...selectedSubscribers, ...manualEmails])];
 
+  // High-Speed Chunked Batch Send
   const handleSend = async () => {
     if (!subject.trim()) { toast.error("Subject is required"); return; }
     if (!body.trim()) { toast.error("Email body is required"); return; }
     if (allRecipients.length === 0) { toast.error("Select at least one recipient"); return; }
 
-    setSending(true);
-    setLastResult(null);
-    setLastMessageIds([]);
-    setPollingActive(false);
-    try {
-      const htmlBody = `
-        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px 16px; background: #ffffff; color: #202124;">
-          <p style="margin: 0 0 20px; font-size: 15px; font-weight: 600;">${senderName}</p>
-          <div style="line-height: 1.65; font-size: 15px;">
-            ${body}
-          </div>
-          <p style="margin: 28px 0 0; color: #5f6368; font-size: 12px;">ISM Prayer Network</p>
+    if (!isConfigured) {
+      toast.error("Email provider not configured. Please add your Resend API Key in SMTP & Email settings.");
+      if (onNavigate) onNavigate("email-settings");
+      return;
+    }
+
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px 16px; background: #ffffff; color: #202124;">
+        <p style="margin: 0 0 20px; font-size: 15px; font-weight: 600;">${senderName}</p>
+        <div style="line-height: 1.65; font-size: 15px;">
+          ${body}
         </div>
-      `;
+        <p style="margin: 28px 0 0; color: #5f6368; font-size: 12px;">ISM Prayer Network</p>
+      </div>
+    `;
 
-      const result = await dispatchCall(getPin(), "send", {
-        recipients: allRecipients,
-        subject: subject.trim(),
-        html_body: htmlBody,
-        sender_name: senderName.trim(),
-        program_id: programId === "auto" ? null : programId,
-      });
+    // Split into batches of 50 for rapid and safe dispatch
+    const CHUNK_SIZE = 50;
+    const batches: string[][] = [];
+    for (let i = 0; i < allRecipients.length; i += CHUNK_SIZE) {
+      batches.push(allRecipients.slice(i, i + CHUNK_SIZE));
+    }
 
-      const queued = result.queued ?? result.sent;
-      const messageIds = (result.results || [])
-        .filter((r: any) => r.message_id)
-        .map((r: any) => r.message_id);
+    setSending(true);
+    abortSendingRef.current = false;
+    setBatchProgress({
+      currentBatch: 0,
+      totalBatches: batches.length,
+      sent: 0,
+      failed: 0,
+      totalRecipients: allRecipients.length,
+      isComplete: false,
+      errorMessage: "",
+    });
+    setBatchModalOpen(true);
 
-      setLastMessageIds(messageIds);
+    let totalSent = 0;
+    let totalFailed = 0;
+    const collectedResults: any[] = [];
+    const collectedMessageIds: string[] = [];
+
+    try {
+      for (let i = 0; i < batches.length; i++) {
+        if (abortSendingRef.current) {
+          toast.info(`Dispatch paused. Dispatched ${totalSent} emails.`);
+          break;
+        }
+
+        setBatchProgress(prev => ({ ...prev, currentBatch: i + 1 }));
+
+        try {
+          const res = await dispatchCall(getPin(), "send_batch", {
+            recipients: batches[i],
+            subject: subject.trim(),
+            html_body: htmlBody,
+            sender_name: senderName.trim(),
+            program_id: programId === "auto" ? null : programId,
+          });
+
+          const batchSent = res.sent ?? 0;
+          const batchFailed = res.failed ?? 0;
+
+          totalSent += batchSent;
+          totalFailed += batchFailed;
+
+          if (Array.isArray(res.results)) {
+            collectedResults.push(...res.results);
+            res.results.forEach((r: any) => {
+              if (r.message_id) collectedMessageIds.push(r.message_id);
+            });
+          }
+
+          setBatchProgress(prev => ({
+            ...prev,
+            sent: totalSent,
+            failed: totalFailed,
+          }));
+        } catch (batchErr: any) {
+          console.error(`Batch ${i + 1} transmission error:`, batchErr);
+          totalFailed += batches[i].length;
+          setBatchProgress(prev => ({
+            ...prev,
+            failed: totalFailed,
+            errorMessage: batchErr.message || "Batch transmission failed",
+          }));
+        }
+      }
+
+      setLastMessageIds(collectedMessageIds);
       setLastResult({
-        sent: queued, queued: 0, failed: result.failed, pending: 0,
-        suppressed: result.results?.filter((r: any) => r.status === "suppressed").length ?? 0,
-        total: result.total, results: result.results || [], updated_at: new Date().toISOString(),
+        sent: totalSent,
+        queued: 0,
+        failed: totalFailed,
+        pending: 0,
+        suppressed: 0,
+        total: allRecipients.length,
+        results: collectedResults,
+        updated_at: new Date().toISOString(),
       });
 
-      if (messageIds.length > 0) setPollingActive(true);
+      setBatchProgress(prev => ({ ...prev, isComplete: true }));
       refetchRecentStatus();
 
-      if (result.failed === 0) {
-        toast.success(`${queued} email${queued !== 1 ? "s" : ""} sent successfully`);
+      if (totalFailed === 0) {
+        toast.success(`All ${totalSent} emails successfully sent!`);
       } else {
-        toast.warning(`${queued} sent, ${result.failed} failed out of ${result.total}`);
+        toast.warning(`Sent ${totalSent} emails, ${totalFailed} failed.`);
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to send emails");
+      toast.error(err.message || "Error running bulk dispatch");
+      setBatchProgress(prev => ({ ...prev, isComplete: true, errorMessage: err.message }));
     } finally {
       setSending(false);
     }
   };
 
-  // Poll for delivery status
-  const checkStatus = useCallback(async () => {
-    if (lastMessageIds.length === 0) return;
-    try {
-      const data = await dispatchCall(getPin(), "get_dispatch_status", {
-        message_ids: lastMessageIds,
-      });
-      setLastResult(data as DispatchResult);
-      setPollingActive(false);
-      refetchRecentStatus();
-    } catch (err) {
-      console.error("Status check failed:", err);
-    }
-  }, [lastMessageIds, refetchRecentStatus]);
+  const handleAbort = () => {
+    abortSendingRef.current = true;
+    toast.info("Stopping transmission after current batch...");
+  };
 
-  useEffect(() => {
-    if (!pollingActive || lastMessageIds.length === 0) return;
-    // Confirm the final managed-delivery result shortly after sending.
-    const timeout = setTimeout(() => {
-      checkStatus();
-    }, 5000);
-    return () => clearTimeout(timeout);
-  }, [pollingActive, checkStatus]);
+  const handleBatchDialogClose = () => {
+    if (sending) {
+      handleAbort();
+    }
+    setBatchModalOpen(false);
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Send className="w-7 h-7 text-accent" />
-        <h1 className="text-3xl font-bold">Mail Dispatch</h1>
-      </div>
-      <p className="text-muted-foreground text-sm">
-        Compose and send emails to subscribers or specific addresses from{" "}
-        <span className="font-semibold text-foreground">info@notify.ismprayernetwork.org</span>
-      </p>
+      {/* Title & Status */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center">
+            <Send className="w-5 h-5 text-accent" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Mail Dispatch</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              High-throughput email broadcaster for newsletters, announcements, and partner updates.
+            </p>
+          </div>
+        </div>
 
-      <Card className="border-accent/30">
+        {/* Provider Status Pill */}
+        <div className="flex items-center gap-2">
+          {isConfigured ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-semibold text-emerald-300">Resend Active</span>
+              <span className="text-muted-foreground text-[11px] hidden sm:inline">({fromEmail})</span>
+              {onNavigate && (
+                <button
+                  onClick={() => onNavigate("email-settings")}
+                  className="ml-1 text-emerald-400 hover:text-emerald-300 underline font-medium text-[11px]"
+                >
+                  Settings
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs text-amber-300">
+              <AlertCircle size={14} className="text-amber-400" />
+              <span>SMTP Not Configured</span>
+              {onNavigate && (
+                <button
+                  onClick={() => onNavigate("email-settings")}
+                  className="ml-1 font-bold underline hover:text-amber-200"
+                >
+                  Configure Now
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Delivery Metrics Bar */}
+      <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
         <CardContent className="py-4">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
-              <p className="font-semibold text-sm">Recent Delivery Activity</p>
+              <p className="font-semibold text-sm text-foreground">Outbound Delivery Activity</p>
               <p className="text-xs text-muted-foreground">
                 {recentStatus?.updated_at
                   ? `Updated ${new Date(recentStatus.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
-                  : "Loading current delivery status…"}
+                  : "Loading live status…"}
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => refetchRecentStatus()} disabled={refreshingRecentStatus}>
-              <RefreshCw size={14} className={refreshingRecentStatus ? "animate-spin mr-1" : "mr-1"} /> Refresh
+            <Button variant="outline" size="sm" onClick={() => refetchRecentStatus()} disabled={refreshingRecentStatus} className="h-8 text-xs">
+              <RefreshCw size={12} className={refreshingRecentStatus ? "animate-spin mr-1.5" : "mr-1.5"} /> Refresh Stats
             </Button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div className="rounded-md bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Sent</p><p className="text-xl font-bold text-foreground">{recentStatus?.sent ?? 0}</p></div>
-            <div className="rounded-md bg-muted/50 p-3"><p className="text-xs text-muted-foreground">In progress</p><p className="text-xl font-bold text-foreground">{recentStatus?.pending ?? 0}</p></div>
-            <div className="rounded-md bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Suppressed</p><p className="text-xl font-bold text-foreground">{recentStatus?.suppressed ?? 0}</p></div>
-            <div className="rounded-md bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Failed</p><p className="text-xl font-bold text-foreground">{recentStatus?.failed ?? 0}</p></div>
+            <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
+              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Sent & Delivered</p>
+              <p className="text-2xl font-bold text-foreground mt-0.5">{recentStatus?.sent ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
+              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">In Progress</p>
+              <p className="text-2xl font-bold text-amber-400 mt-0.5">{recentStatus?.pending ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
+              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Suppressed / Unsubscribed</p>
+              <p className="text-2xl font-bold text-muted-foreground mt-0.5">{recentStatus?.suppressed ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
+              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Failed / Bounced</p>
+              <p className="text-2xl font-bold text-rose-400 mt-0.5">{recentStatus?.failed ?? 0}</p>
+            </div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-2">Latest {recentStatus?.total ?? 0} mail-dispatch records. Refreshes automatically every 15 seconds.</p>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Compose area */}
         <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Mail className="w-5 h-5" /> Compose Email
+          <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Mail className="w-4 h-4 text-accent" /> Compose Email Broadcast
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="sender-name">Sender Name</Label>
-                <Input
-                  id="sender-name"
-                  value={senderName}
-                  onChange={(e) => setSenderName(e.target.value)}
-                  placeholder="ISM Prayer Network"
-                  className="mt-1"
-                  maxLength={100}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="sender-name" className="text-xs">Sender Name</Label>
+                  <Input
+                    id="sender-name"
+                    value={senderName}
+                    onChange={(e) => setSenderName(e.target.value)}
+                    placeholder="ISM Prayer Network"
+                    className="mt-1 text-xs"
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Program Participation Tracking</Label>
+                  <Select value={programId} onValueChange={setProgramId}>
+                    <SelectTrigger className="mt-1 text-xs">
+                      <SelectValue placeholder="Auto-detect program link" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto-detect from email body links</SelectItem>
+                      {programs.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
               <div>
-                <Label htmlFor="subject">Subject</Label>
+                <Label htmlFor="subject" className="text-xs">Subject Line</Label>
                 <Input
                   id="subject"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Email subject line..."
-                  className="mt-1"
+                  placeholder="e.g. Special Global Prayer Gathering - Live Link & Prayer Points"
+                  className="mt-1 text-xs"
                   maxLength={200}
                 />
               </div>
-              <div>
-                <Label>Link to Program (participation tracking)</Label>
-                <Select value={programId} onValueChange={setProgramId}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Auto-detect from links in the email" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="auto">Auto-detect from links</SelectItem>
-                    {programs.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  Opens and registration-link clicks are recorded in the Program Tracker.
-                </p>
-              </div>
+
               <RichEmailComposer
                 value={body}
                 onChange={setBody}
@@ -408,45 +573,43 @@ export function MailDispatchManager() {
             </CardContent>
           </Card>
 
-          {/* Manual emails */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Plus className="w-5 h-5" /> Add Manual Recipients
+          {/* Manual recipients */}
+          <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Plus className="w-4 h-4 text-accent" /> Add Manual or CSV Recipients
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {/* Single email */}
               <div className="flex gap-2">
                 <Input
                   value={manualEmail}
                   onChange={(e) => setManualEmail(e.target.value)}
-                  placeholder="email@example.com"
+                  placeholder="minister@example.com"
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addManualEmail())}
-                  className="flex-1"
+                  className="flex-1 text-xs"
                 />
-                <Button variant="outline" onClick={addManualEmail} size="sm">
-                  <Plus size={16} /> Add
+                <Button variant="outline" onClick={addManualEmail} size="sm" className="text-xs">
+                  <Plus size={14} className="mr-1" /> Add
                 </Button>
               </div>
 
-              {/* Bulk actions */}
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 text-xs"
                   onClick={() => setBulkPasteOpen(!bulkPasteOpen)}
                 >
-                  <ClipboardPaste size={14} className="mr-1" /> Paste Bulk
+                  <ClipboardPaste size={13} className="mr-1.5" /> Paste Bulk List
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 text-xs"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Upload size={14} className="mr-1" /> Upload CSV
+                  <Upload size={13} className="mr-1.5" /> Import CSV / TXT
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -457,41 +620,41 @@ export function MailDispatchManager() {
                 />
               </div>
 
-              {/* Bulk paste area */}
               {bulkPasteOpen && (
-                <div className="space-y-2 p-3 border border-border rounded-lg bg-muted/30">
+                <div className="space-y-2 p-3 border border-border/60 rounded-xl bg-muted/30">
                   <Label className="text-xs text-muted-foreground">
-                    Paste emails (comma, semicolon, newline, or space separated)
+                    Paste emails separated by commas, semicolons, or line breaks:
                   </Label>
                   <Textarea
                     value={bulkText}
                     onChange={(e) => setBulkText(e.target.value)}
-                    placeholder={"john@example.com, jane@example.com\nmark@example.com; sara@example.com"}
-                    className="min-h-[100px] text-sm"
+                    placeholder={"pastor.john@church.org, minister.mary@loveworld.com\nbrother.stephen@ministry.net"}
+                    className="min-h-[100px] text-xs font-mono"
                   />
                   <div className="flex gap-2 justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => { setBulkPasteOpen(false); setBulkText(""); }}>
+                    <Button variant="ghost" size="sm" onClick={() => { setBulkPasteOpen(false); setBulkText(""); }} className="text-xs">
                       Cancel
                     </Button>
-                    <Button size="sm" onClick={addBulkEmails} disabled={!bulkText.trim()}>
-                      Add Emails
+                    <Button size="sm" onClick={addBulkEmails} disabled={!bulkText.trim()} className="text-xs">
+                      Add to List
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* Tags */}
               {manualEmails.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 pt-2 border-t border-border/40">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{manualEmails.length} manual recipient{manualEmails.length !== 1 ? "s" : ""}</span>
-                    <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={() => setManualEmails([])}>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {manualEmails.length} manual recipient{manualEmails.length !== 1 ? "s" : ""}
+                    </span>
+                    <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive hover:text-destructive" onClick={() => setManualEmails([])}>
                       Clear all
                     </Button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 max-h-[150px] overflow-y-auto">
+                  <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto p-1">
                     {manualEmails.map((email) => (
-                      <Badge key={email} variant="secondary" className="flex items-center gap-1 pr-1 text-xs">
+                      <Badge key={email} variant="secondary" className="flex items-center gap-1 pr-1 text-xs font-normal">
                         {email}
                         <button onClick={() => removeManualEmail(email)} className="ml-1 hover:text-destructive">
                           <X size={12} />
@@ -505,41 +668,44 @@ export function MailDispatchManager() {
           </Card>
         </div>
 
-        {/* Subscribers sidebar */}
+        {/* Right sidebar: Subscribers & Categorized Database */}
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 justify-between">
+          {/* Subscribers card */}
+          <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center justify-between">
                 <span className="flex items-center gap-2">
-                  <Users className="w-5 h-5" /> Subscribers
+                  <Users className="w-4 h-4 text-accent" /> Subscribers
                 </span>
-                <Button variant="ghost" size="icon" onClick={() => refetchSubs()} className="h-7 w-7">
-                  <RefreshCw size={14} />
+                <Button variant="ghost" size="icon" onClick={() => refetchSubs()} className="h-7 w-7 text-muted-foreground">
+                  <RefreshCw size={13} />
                 </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {loadingSubs ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
+                <div className="flex items-center justify-center py-6 text-xs text-muted-foreground gap-2">
+                  <Loader2 size={14} className="animate-spin" /> Loading subscribers...
+                </div>
               ) : subscribers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No active subscribers.</p>
+                <p className="text-xs text-muted-foreground py-4 text-center">No active subscribers found.</p>
               ) : (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 pb-2 border-b border-border">
+                  <div className="flex items-center gap-2 pb-2 border-b border-border/50">
                     <Checkbox
                       checked={selectAll}
                       onCheckedChange={(c) => handleSelectAll(!!c)}
                       id="select-all"
                     />
-                    <Label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+                    <Label htmlFor="select-all" className="text-xs font-semibold cursor-pointer">
                       Select all ({subscribers.length})
                     </Label>
                   </div>
-                  <div className="max-h-[400px] overflow-y-auto space-y-1">
+                  <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1">
                     {subscribers.map((s) => (
                       <div
                         key={s.email}
-                        className="flex items-center gap-2 py-1.5 px-1 rounded hover:bg-muted/50 cursor-pointer"
+                        className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted/40 cursor-pointer text-xs"
                         onClick={() => toggleSubscriber(s.email)}
                       >
                         <Checkbox
@@ -547,9 +713,9 @@ export function MailDispatchManager() {
                           onCheckedChange={() => toggleSubscriber(s.email)}
                         />
                         <div className="min-w-0">
-                          <p className="text-sm truncate">{s.full_name || s.email}</p>
+                          <p className="font-medium truncate">{s.full_name || s.email}</p>
                           {s.full_name && (
-                            <p className="text-[11px] text-muted-foreground truncate">{s.email}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{s.email}</p>
                           )}
                         </div>
                       </div>
@@ -560,7 +726,7 @@ export function MailDispatchManager() {
             </CardContent>
           </Card>
 
-          {/* Uploaded database, categorised */}
+          {/* Categorised database contacts */}
           <DispatchContactCategories
             selectedEmails={manualEmails}
             onAddEmails={(emails) =>
@@ -568,171 +734,157 @@ export function MailDispatchManager() {
             }
           />
 
-          {/* Send summary */}
-
-          <Card>
-            <CardContent className="pt-6 space-y-3">
-              <div className="text-sm space-y-1">
-                <p>
-                  <span className="text-muted-foreground">Subscribers selected:</span>{" "}
-                  <strong>{selectedSubscribers.length}</strong>
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Manual emails:</span>{" "}
-                  <strong>{manualEmails.length}</strong>
-                </p>
-                <p className="border-t border-border pt-1">
-                  <span className="text-muted-foreground">Total recipients:</span>{" "}
-                  <strong className="text-foreground">{allRecipients.length}</strong>
-                </p>
+          {/* Dispatch Action Card */}
+          <Card className="border-accent/40 bg-card/80 shadow-md">
+            <CardContent className="pt-6 space-y-4">
+              <div className="text-xs space-y-1.5">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Subscribers selected:</span>
+                  <strong className="text-foreground">{selectedSubscribers.length}</strong>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Manual / Database emails:</span>
+                  <strong className="text-foreground">{manualEmails.length}</strong>
+                </div>
+                <div className="flex justify-between border-t border-border/60 pt-2 text-sm font-semibold">
+                  <span className="text-foreground">Total recipients:</span>
+                  <span className="text-accent">{allRecipients.length}</span>
+                </div>
               </div>
 
               <Button
                 onClick={handleSend}
                 disabled={sending || allRecipients.length === 0}
-                className="w-full gold-gradient-bg text-accent-foreground hover:opacity-90"
+                className="w-full gold-gradient-bg text-accent-foreground font-bold hover:opacity-90 transition-opacity"
               >
                 {sending ? (
                   <>
-                    <Loader2 size={16} className="animate-spin mr-2" /> Sending...
+                    <Loader2 size={16} className="animate-spin mr-2" /> Dispatched in batches...
                   </>
                 ) : (
                   <>
-                    <Send size={16} className="mr-2" /> Send to {allRecipients.length} recipient
-                    {allRecipients.length !== 1 ? "s" : ""}
+                    <Send size={16} className="mr-2" />
+                    Send to {allRecipients.length} Recipient{allRecipients.length !== 1 ? "s" : ""}
                   </>
                 )}
               </Button>
 
               {lastResult && (
-                <div className="text-sm p-3 rounded-lg bg-muted space-y-2">
+                <div className="text-xs p-3 rounded-xl border border-border/60 bg-muted/20 space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="font-medium">Dispatch Status:</p>
-                    {pollingActive && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Loader2 size={12} className="animate-spin" /> Tracking...
-                      </span>
-                    )}
-                    {!pollingActive && lastMessageIds.length > 0 && (
-                      <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={checkStatus}>
-                        <RefreshCw size={12} className="mr-1" /> Refresh
-                      </Button>
-                    )}
+                    <span className="font-semibold text-foreground">Last Dispatch Result:</span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {lastResult.sent} / {lastResult.total} Sent
+                    </Badge>
                   </div>
-
-                  {lastResult.pending > 0 && (
-                    <button
-                      onClick={() => setDrilldownStatus("pending")}
-                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
-                    >
-                      <span className="flex items-center gap-1.5 text-amber-600">
-                        <Clock size={14} /> In progress
-                      </span>
-                      <span className="font-semibold">{lastResult.pending}</span>
-                    </button>
-                  )}
-                  {lastResult.sent > 0 && (
-                    <button
-                      onClick={() => setDrilldownStatus("sent")}
-                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
-                    >
-                      <span className="flex items-center gap-1.5 text-green-600">
-                        <CheckCircle size={14} /> Sent Successfully
-                      </span>
-                      <span className="font-semibold">{lastResult.sent}</span>
-                    </button>
-                  )}
-                  {lastResult.failed > 0 && (
-                    <button
-                      onClick={() => setDrilldownStatus("failed")}
-                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
-                    >
-                      <span className="flex items-center gap-1.5 text-destructive">
-                        <XCircle size={14} /> Failed
-                      </span>
-                      <span className="font-semibold">{lastResult.failed}</span>
-                    </button>
-                  )}
-                  {lastResult.suppressed > 0 && (
-                    <button
-                      onClick={() => setDrilldownStatus("suppressed")}
-                      className="w-full flex items-center justify-between p-1.5 rounded hover:bg-background/50 transition-colors"
-                    >
-                      <span className="flex items-center gap-1.5 text-muted-foreground">
-                        <X size={14} /> Suppressed
-                      </span>
-                      <span className="font-semibold">{lastResult.suppressed}</span>
-                    </button>
-                  )}
-
-                  <p className="text-xs text-muted-foreground pt-1 border-t border-border">
-                    Total: {lastResult.total} • Click a status to see details
-                  </p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                      <p className="text-[10px]">Delivered</p>
+                      <p className="font-bold text-sm">{lastResult.sent}</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400">
+                      <p className="text-[10px]">Failed</p>
+                      <p className="font-bold text-sm">{lastResult.failed}</p>
+                    </div>
+                  </div>
                 </div>
               )}
-
-              {/* Drilldown dialog */}
-              <Dialog open={!!drilldownStatus} onOpenChange={() => setDrilldownStatus(null)}>
-                <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      {drilldownStatus === "sent" && <><CheckCircle size={18} className="text-green-600" /> Sent Emails</>}
-                      {drilldownStatus === "failed" && <><XCircle size={18} className="text-destructive" /> Failed Emails</>}
-                      {drilldownStatus === "pending" && <><Clock size={18} className="text-amber-600" /> Pending Emails</>}
-                      {drilldownStatus === "suppressed" && <><X size={18} className="text-muted-foreground" /> Suppressed Emails</>}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-2">
-                    {lastResult?.results
-                      ?.filter(r => {
-                        if (drilldownStatus === "failed") return ["dlq", "failed"].includes(r.status);
-                        return r.status === drilldownStatus;
-                      })
-                      .map((r, i) => (
-                        <div key={i} className="flex items-start justify-between p-2 rounded-lg bg-muted/50 text-sm">
-                          <div className="min-w-0">
-                            <p className="truncate font-medium">{r.recipient_email}</p>
-                            {r.error_message && (
-                              <p className="text-xs text-destructive mt-0.5 line-clamp-2">{r.error_message}</p>
-                            )}
-                          </div>
-                          <Badge variant={
-                            r.status === "sent" ? "default" :
-                            ["dlq", "failed"].includes(r.status) ? "destructive" :
-                            "secondary"
-                          } className="shrink-0 ml-2 text-[10px]">
-                            {r.status}
-                          </Badge>
-                        </div>
-                      )) || (
-                        <p className="text-sm text-muted-foreground">No emails in this category.</p>
-                      )
-                    }
-                    {drilldownStatus === "pending" && (
-                      <p className="text-xs text-muted-foreground italic">
-                        Emails still in progress will move to Sent, Suppressed, or Failed when processing finishes.
-                      </p>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Sending limits info */}
-      <Card className="border-accent/30">
-        <CardContent className="pt-4 pb-4">
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">Sending limits:</strong> Max <strong>500 recipients</strong> per dispatch.
-            Delivery results update automatically. Large batches may take a few minutes to fully process.
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            Gmail decides whether a message appears in Primary, Promotions, Social, or Spam. New dispatches use a simpler letter-style format to reduce promotional signals, but no sender can force a specific Gmail tab.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Batch Send Live Progress Modal */}
+      <Dialog open={batchModalOpen} onOpenChange={handleBatchDialogClose}>
+        <DialogContent className="max-w-md bg-card border-border/80 p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              {batchProgress.isComplete ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Dispatch Complete
+                </>
+              ) : (
+                <>
+                  <Loader2 className="w-5 h-5 text-accent animate-spin" /> Transmitting Bulk Dispatch
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {batchProgress.isComplete
+                ? "All recipient chunks have been processed through the Resend batch API."
+                : `Broadcasting batch ${batchProgress.currentBatch} of ${batchProgress.totalBatches} (${batchProgress.totalRecipients} total recipients)...`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3">
+            {/* Progress bar */}
+            <div>
+              <div className="flex justify-between text-xs font-semibold mb-1.5">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="text-accent">
+                  {Math.round(((batchProgress.sent + batchProgress.failed) / (batchProgress.totalRecipients || 1)) * 100)}%
+                </span>
+              </div>
+              <div className="w-full h-3 rounded-full bg-muted/60 overflow-hidden border border-border/40">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-300"
+                  style={{
+                    width: `${Math.min(100, Math.round(((batchProgress.sent + batchProgress.failed) / (batchProgress.totalRecipients || 1)) * 100))}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Metrics cards */}
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="p-2.5 rounded-xl border border-border/40 bg-muted/20">
+                <p className="text-[10px] text-muted-foreground font-semibold">Batches</p>
+                <p className="text-sm font-bold text-foreground mt-0.5">
+                  {batchProgress.currentBatch} / {batchProgress.totalBatches}
+                </p>
+              </div>
+              <div className="p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                <p className="text-[10px] font-semibold">Sent</p>
+                <p className="text-sm font-bold mt-0.5">{batchProgress.sent}</p>
+              </div>
+              <div className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-400">
+                <p className="text-[10px] font-semibold">Failed</p>
+                <p className="text-sm font-bold mt-0.5">{batchProgress.failed}</p>
+              </div>
+            </div>
+
+            {batchProgress.errorMessage && (
+              <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs">
+                <p className="font-semibold flex items-center gap-1.5">
+                  <AlertCircle size={13} /> Batch Error
+                </p>
+                <p className="text-[11px] mt-1 break-words">{batchProgress.errorMessage}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
+            {!batchProgress.isComplete ? (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleAbort}
+                className="text-xs"
+              >
+                <PauseCircle size={14} className="mr-1.5" /> Pause Transmission
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setBatchModalOpen(false)}
+                size="sm"
+                className="gold-gradient-bg text-accent-foreground text-xs font-semibold px-5"
+              >
+                Done
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
