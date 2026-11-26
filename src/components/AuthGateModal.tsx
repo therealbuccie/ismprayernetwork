@@ -37,11 +37,12 @@ const AuthGateModal = ({ open, onOpenChange, title = "Sign In to Continue", desc
 
   const handleUserAccess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) return;
     setSubmitting(true);
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password: DUMMY_PASS,
       });
 
@@ -51,10 +52,22 @@ const AuthGateModal = ({ open, onOpenChange, title = "Sign In to Continue", desc
         return;
       }
 
-      const { data: emailExists } = await supabase.rpc("check_email_exists", { lookup_email: email });
+      const errMsg = (signInError.message || "").toLowerCase();
+      if (errMsg.includes("email not confirmed")) {
+        toast.error("Your email address has not been confirmed yet. Please check your inbox for the confirmation link or contact support.");
+        setSubmitting(false);
+        return;
+      }
+      if (errMsg.includes("too many") || errMsg.includes("rate limit")) {
+        toast.error("Too many sign-in attempts. Please wait a minute and try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      const { data: emailExists } = await supabase.rpc("check_email_exists", { lookup_email: cleanEmail });
 
       if (emailExists) {
-        setAdminEmail(email);
+        setAdminEmail(cleanEmail);
         setMode("admin");
         toast.info("This account uses a password. Please enter it below.");
         setSubmitting(false);
@@ -73,13 +86,13 @@ const AuthGateModal = ({ open, onOpenChange, title = "Sign In to Continue", desc
         return;
       }
 
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: cleanEmail,
         password: DUMMY_PASS,
         options: {
           data: {
-            full_name: fullName,
-            ministry_name: ministryName,
+            full_name: fullName.trim(),
+            ministry_name: ministryName.trim(),
             dob_day: dobDay ? parseInt(dobDay) : null,
             dob_month: dobMonth ? parseInt(dobMonth) : null,
           },
@@ -87,6 +100,12 @@ const AuthGateModal = ({ open, onOpenChange, title = "Sign In to Continue", desc
       });
 
       if (signUpError) throw signUpError;
+
+      if (!signUpData.session) {
+        toast.info("Account created! Please check your email inbox to confirm your address before signing in.");
+        onOpenChange(false);
+        return;
+      }
 
       toast.success("Welcome! You're now signed in.");
       onOpenChange(false);

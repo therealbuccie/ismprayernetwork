@@ -90,12 +90,18 @@ const Join = () => {
 
       const { data: exists } = await supabase.rpc("check_email_exists", { lookup_email: cleanEmail });
       if (exists) {
-        toast.info("You're already registered — signing you in.");
         const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: DUMMY_PASS });
         if (error) {
+          const errMsg = (error.message || "").toLowerCase();
+          if (errMsg.includes("email not confirmed")) {
+            toast.error("Your email address has not been confirmed yet. Please check your inbox or contact support.");
+            return;
+          }
+          toast.info("This account uses a password. Redirecting to sign in.");
           navigate("/auth");
           return;
         }
+        toast.info("You're already registered — signing you in.");
         navigate("/groups", { replace: true });
         return;
       }

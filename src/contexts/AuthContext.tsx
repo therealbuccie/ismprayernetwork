@@ -79,10 +79,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from("profiles")
       .select("*")
       .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn("Profile fetch warning:", error.message);
+        }
         if (mounted) {
-          setProfile(data as Profile | null);
+          setProfile((data as Profile) ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn("Profile fetch exception:", err);
+        if (mounted) {
           setLoading(false);
         }
       });

@@ -44,13 +44,14 @@ export function BookstoreAuthModal({ open, onClose, onSuccess }: BookstoreAuthMo
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) return;
     setLoading(true);
 
     try {
       // Try sign in with dummy password (regular users)
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password: DUMMY_PASS,
       });
 
@@ -62,27 +63,39 @@ export function BookstoreAuthModal({ open, onClose, onSuccess }: BookstoreAuthMo
         return;
       }
 
+      const errMsg = (error.message || "").toLowerCase();
+      if (errMsg.includes("email not confirmed")) {
+        toast({
+          title: "Email confirmation required",
+          description: "Your email address has not been confirmed yet. Please check your inbox or contact support.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      if (errMsg.includes("too many") || errMsg.includes("rate limit")) {
+        toast({
+          title: "Too many attempts",
+          description: "Please wait a minute and try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       // Dummy password failed — check if email exists in database
-      const { data: emailExists } = await supabase.rpc("check_email_exists", { lookup_email: email });
+      const { data: emailExists } = await supabase.rpc("check_email_exists", { lookup_email: cleanEmail });
 
       if (emailExists) {
         // Email exists with custom password — show password field
+        setEmail(cleanEmail);
         setStep("password");
         setLoading(false);
         return;
       }
 
-      // Email not in database — create new account with dummy pass, then collect details
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password: DUMMY_PASS,
-        options: { data: { full_name: "" } },
-      });
-
-      if (signUpError) throw signUpError;
-
-      // Sign them out and show signup form to collect proper details
-      await supabase.auth.signOut();
+      // Email not in database — collect details first, then signUp once
+      setEmail(cleanEmail);
       setStep("signup");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -100,33 +113,30 @@ export function BookstoreAuthModal({ open, onClose, onSuccess }: BookstoreAuthMo
     setLoading(true);
 
     try {
-      // Update the user metadata and sign in (user was already created with dummy pass)
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      const cleanEmail = email.trim().toLowerCase();
+      const { data: signUpData, error } = await supabase.auth.signUp({
+        email: cleanEmail,
         password: DUMMY_PASS,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            ministry_name: ministryName.trim(),
+            dob_day: dobDay ? parseInt(dobDay) : null,
+            dob_month: dobMonth ? parseInt(dobMonth) : null,
+          },
+        },
       });
 
       if (error) throw error;
 
-      // Update user metadata
-      await supabase.auth.updateUser({
-        data: {
-          full_name: fullName,
-          ministry_name: ministryName,
-          dob_day: dobDay ? parseInt(dobDay) : null,
-          dob_month: dobMonth ? parseInt(dobMonth) : null,
-        },
-      });
-
-      // Update profile
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("profiles").update({
-          full_name: fullName,
-          ministry_name: ministryName,
-          dob_day: dobDay ? parseInt(dobDay) : null,
-          dob_month: dobMonth ? parseInt(dobMonth) : null,
-        }).eq("user_id", user.id);
+      if (!signUpData.session) {
+        toast({
+          title: "Account created",
+          description: "Please check your email inbox to confirm your address before signing in.",
+        });
+        onClose();
+        reset();
+        return;
       }
 
       toast({ title: "Welcome! You're now signed in." });

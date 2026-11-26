@@ -51,12 +51,13 @@ const Auth = () => {
 
   const handleUserAccess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) return;
     setSubmitting(true);
     try {
       // Try sign in with dummy password first
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password: DUMMY_PASS,
       });
 
@@ -66,12 +67,24 @@ const Auth = () => {
         return;
       }
 
+      const errMsg = (signInError.message || "").toLowerCase();
+      if (errMsg.includes("email not confirmed")) {
+        toast.error("Your email address has not been confirmed yet. Please check your inbox for the confirmation link or contact support.");
+        setSubmitting(false);
+        return;
+      }
+      if (errMsg.includes("too many") || errMsg.includes("rate limit")) {
+        toast.error("Too many sign-in attempts. Please wait a minute and try again.");
+        setSubmitting(false);
+        return;
+      }
+
       // Dummy password failed — check if email exists in database
-      const { data: emailExists } = await supabase.rpc("check_email_exists", { lookup_email: email });
+      const { data: emailExists } = await supabase.rpc("check_email_exists", { lookup_email: cleanEmail });
 
       if (emailExists) {
         // Email exists but has a custom password — switch to admin login with pre-filled email
-        setAdminEmail(email);
+        setAdminEmail(cleanEmail);
         setMode("admin");
         toast.info("This account uses a password. Please enter it below.");
         setSubmitting(false);
@@ -92,22 +105,26 @@ const Auth = () => {
       }
 
       // Create new account
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: cleanEmail,
         password: DUMMY_PASS,
         options: {
           data: {
-            full_name: fullName,
-            ministry_name: ministryName,
+            full_name: fullName.trim(),
+            ministry_name: ministryName.trim(),
             dob_day: dobDay ? parseInt(dobDay) : null,
             dob_month: dobMonth ? parseInt(dobMonth) : null,
             country: country || null,
-
           },
         },
       });
 
       if (signUpError) throw signUpError;
+
+      if (!signUpData.session) {
+        toast.info("Account created! Please check your email inbox to confirm your address before signing in.");
+        return;
+      }
 
       toast.success("Welcome! You're now signed in.");
       navigate("/", { replace: true });
